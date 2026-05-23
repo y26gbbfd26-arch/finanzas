@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0A0E17" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Finanzas" />
+  <meta name="mobile-web-app-capable" content="yes" />
+
+  <link rel="manifest" href="./manifest.json" />
+  <link rel="apple-touch-icon" href="./icon-192.png" />
+  <link rel="icon" type="image/png" href="./icon-192.png" />
+
+  <title>Finanzas</title>
+
+  <style>
+    html, body { margin: 0; padding: 0; background: #0A0E17; overscroll-behavior: none; }
+    body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+    #root { min-height: 100vh; }
+    .loader {
+      display: flex; align-items: center; justify-content: center;
+      min-height: 100vh; color: #26D07C; font-family: monospace; font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div id="root">
+    <div class="loader">cargando…</div>
+  </div>
+
+  <!-- React desde CDN -->
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <!-- Babel para compilar JSX directamente en el navegador -->
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <!-- La app -->
+  <script type="text/babel" data-type="module" src="./app.jsx"></script>
+
+  <!-- Registrar service worker para que funcione offline -->
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("./service-worker.js")
+          .then(reg => console.log("SW registrado", reg.scope))
+          .catch(err => console.error("SW error", err));
+      });
+    }
+  </script>
+</body>
+</html>

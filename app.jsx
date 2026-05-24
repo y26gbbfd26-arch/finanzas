@@ -2270,6 +2270,21 @@ function BotonAjustes() {
     window.location.reload();
   };
 
+  // Limpia todas las cachés y desregistra service workers para forzar carga limpia
+  const forzarActualizacion = async () => {
+    try {
+      if ("caches" in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => caches.delete(k)));
+      }
+      if ("serviceWorker" in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map(r => r.unregister()));
+      }
+    } catch (e) { console.error(e); }
+    window.location.reload();
+  };
+
   return (
     React.createElement("div", { style: { position: "relative" } },
       React.createElement("button", {
@@ -2316,6 +2331,18 @@ function BotonAjustes() {
             ref: fileRef, type: "file", accept: "application/json",
             onChange: handleImport, style: { display: "none" }
           }),
+          React.createElement("div", {
+            style: { height: 1, background: "rgba(255,255,255,0.06)", margin: "4px 0" }
+          }),
+          React.createElement("button", {
+            onClick: () => { forzarActualizacion(); },
+            style: {
+              display: "flex", alignItems: "center", gap: 8, width: "100%",
+              padding: "8px 10px", borderRadius: 6, border: "none", cursor: "pointer",
+              background: "transparent", fontFamily: "'Syne',sans-serif",
+              fontSize: 12, color: "#00A3E0", textAlign: "left",
+            }
+          }, "🔄 Forzar actualización"),
           React.createElement("div", {
             style: { height: 1, background: "rgba(255,255,255,0.06)", margin: "4px 0" }
           }),

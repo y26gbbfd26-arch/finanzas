@@ -39,13 +39,41 @@
   <!-- La app -->
   <script type="text/babel" data-type="module" src="./app.jsx"></script>
 
-  <!-- Registrar service worker para que funcione offline -->
+  <!-- Registrar service worker y detectar actualizaciones -->
   <script>
     if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => {
-        navigator.serviceWorker.register("./service-worker.js")
-          .then(reg => console.log("SW registrado", reg.scope))
-          .catch(err => console.error("SW error", err));
+      window.addEventListener("load", async () => {
+        try {
+          const reg = await navigator.serviceWorker.register("./service-worker.js");
+          console.log("SW registrado", reg.scope);
+
+          // Forzar comprobación de actualización cada vez que se abre la app
+          reg.update();
+
+          // Si encuentra una nueva versión esperando, activarla
+          if (reg.waiting) reg.waiting.postMessage({ type: "SKIP_WAITING" });
+
+          // Si llega una nueva versión durante la sesión, recargar para usarla
+          reg.addEventListener("updatefound", () => {
+            const nuevo = reg.installing;
+            if (!nuevo) return;
+            nuevo.addEventListener("statechange", () => {
+              if (nuevo.state === "installed" && navigator.serviceWorker.controller) {
+                nuevo.postMessage({ type: "SKIP_WAITING" });
+              }
+            });
+          });
+
+          // Cuando el SW toma control de una versión nueva, recargar la página
+          let recargando = false;
+          navigator.serviceWorker.addEventListener("controllerchange", () => {
+            if (recargando) return;
+            recargando = true;
+            window.location.reload();
+          });
+        } catch (err) {
+          console.error("SW error", err);
+        }
       });
     }
   </script>

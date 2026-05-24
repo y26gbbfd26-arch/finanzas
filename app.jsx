@@ -29,11 +29,12 @@ const PROPOSITOS = {
 };
 
 const TIPOS_ACTIVO = {
-  etf:     { label:"ETF",     color:"#00A3E0", icono:"📊" },
-  accion:  { label:"Acción",  color:"#26D07C", icono:"📈" },
-  fondo:   { label:"Fondo",   color:"#FF6B35", icono:"🏦" },
-  cripto:  { label:"Cripto",  color:"#E8A838", icono:"₿"  },
-  bono:    { label:"Bono",    color:"#B06FE8", icono:"📜" },
+  fondo:   { label:"Fondo",       color:"#FF6B35", icono:"🏦" },
+  etf:     { label:"ETF",         color:"#00A3E0", icono:"📊" },
+  accion:  { label:"Acción",      color:"#26D07C", icono:"📈" },
+  cripto:  { label:"Cripto",      color:"#E8A838", icono:"₿"  },
+  bono:    { label:"Bono",        color:"#B06FE8", icono:"📜" },
+  pension: { label:"Plan/Pensión", color:"#8B9DBB", icono:"🛡", soloValor:true },
 };
 
 // ─────────────────────────────────────────────────────
@@ -305,10 +306,17 @@ function totalAnualesPagado(datos) {
     .reduce((a,cat) => a + pagadoCategoriaAnual(datos, cat), 0);
 }
 
+// Reserva efectiva de impuestos = saldo de la cuenta vinculada (o 0 si no hay)
+function calcularReservaEfectiva(datos) {
+  if (!datos.reservaImpCuenta) return 0;
+  const cuenta = datos.cuentas.find(c => c.id === datos.reservaImpCuenta);
+  return cuenta ? (cuenta.asignado || 0) : 0;
+}
+
 // Fórmula del Excel para la aportación mensual a gastos anuales
 function calcularAportacionAnual(datos, mesNum) {
   const pendiente = totalAnualesPendiente(datos);
-  const reserva = datos.reservaImp || RESERVA_IMP_DEFAULT;
+  const reserva = calcularReservaEfectiva(datos);
   const mesesRestantes = Math.max(1, 11 - mesNum);  // 0=enero…11=diciembre
   const nomina = datos.ingresosBase.nomina || 0;
   const extrasFactor = datos.usarExtras ? (nomina * RATIO_EXTRAS) : 0;
@@ -326,11 +334,16 @@ function remanenteBanco(bancosTotales, cuentas, banco) {
 
 // Inversiones
 function calcularPosicion(inv) {
-  const invertido = (inv.cantidad || 0) * (inv.precioMedio || 0);
-  const valorActual = (inv.cantidad || 0) * (inv.precioActual || 0);
+  const tipo = TIPOS_ACTIVO[inv.tipo] || TIPOS_ACTIVO.fondo;
+  const valorActual = inv.valorActual || 0;
+  // Planes de pensiones: no calculamos plusvalía (no se conoce el coste base)
+  if (tipo.soloValor) {
+    return { invertido: valorActual, valorActual, plusvalia: 0, pctPlusvalia: 0, soloValor: true };
+  }
+  const invertido = inv.invertido || 0;
   const plusvalia = valorActual - invertido;
   const pctPlusvalia = invertido > 0 ? (plusvalia / invertido) * 100 : 0;
-  return { invertido, valorActual, plusvalia, pctPlusvalia };
+  return { invertido, valorActual, plusvalia, pctPlusvalia, soloValor: false };
 }
 
 function calcularTotalCartera(inversiones) {
@@ -884,7 +897,6 @@ function VistaInicio({ datos, claveM, mesNum, onUpdateDatos }) {
     if (!d.meses[claveM]) d.meses[claveM] = estadoMesVacio();
     d.meses[claveM][campo] = v;
   });
-  const setReservaImp = (v) => onUpdateDatos(d => { d.reservaImp = v; });
   const setReservaImpCuenta = (id) => onUpdateDatos(d => { d.reservaImpCuenta = id; });
   const setUsarExtras = (v) => onUpdateDatos(d => { d.usarExtras = v; });
 
@@ -960,37 +972,35 @@ function VistaInicio({ datos, claveM, mesNum, onUpdateDatos }) {
           }}>{datos.usarExtras ? "SÍ" : "NO"}</button>
         </div>
 
+        {/* Cuenta vinculada (decide la reserva efectiva) */}
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
           padding:"6px 0", borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
-          <span style={{ fontFamily:"'Syne',sans-serif", fontSize:11, color:"#CBD5E8" }}>Reserva impuestos</span>
-          <InputMoneda valor={datos.reservaImp} onChange={setReservaImp} compact ancho={55}/>
-        </div>
-
-        {/* Cuenta vinculada a la reserva de impuestos */}
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"6px 0" }}>
           <span style={{ fontFamily:"'Syne',sans-serif", fontSize:11, color:"#CBD5E8" }}>Cuenta de la reserva</span>
           <SelectorCuenta value={datos.reservaImpCuenta} cuentas={datos.cuentas}
             onChange={setReservaImpCuenta}/>
         </div>
 
-        {cuentaReservaImp && (
-          <div style={{
-            marginTop:6, padding:"6px 10px", borderRadius:6,
-            background: saldoReservaImp >= datos.reservaImp ? "rgba(38,208,124,0.06)" : "rgba(255,140,66,0.08)",
-            border: `1px solid ${saldoReservaImp >= datos.reservaImp ? "#26D07C20" : "#FF8C4225"}`,
-          }}>
-            <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-              <span style={{ fontFamily:"'Syne',sans-serif", fontSize:10, color:"#8B9DBB" }}>
-                saldo en {cuentaReservaImp.nombre}
-              </span>
-              <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:11, fontWeight:600,
-                color: saldoReservaImp >= datos.reservaImp ? "#26D07C" : "#FF8C42" }}>
-                {saldoReservaImp.toLocaleString("es-ES",{minimumFractionDigits:0})}€
-                {saldoReservaImp < datos.reservaImp && ` · faltan ${(datos.reservaImp - saldoReservaImp).toFixed(0)}€`}
-              </span>
-            </div>
+        {/* Reserva impuestos = saldo de la cuenta (no editable) */}
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"6px 0" }}>
+          <div>
+            <div style={{ fontFamily:"'Syne',sans-serif", fontSize:11, color:"#CBD5E8" }}>Reserva impuestos</div>
+            {cuentaReservaImp ? (
+              <div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:"#6B7A99", marginTop:1 }}>
+                desde {cuentaReservaImp.nombre}
+              </div>
+            ) : (
+              <div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:"#FF8C42", marginTop:1 }}>
+                sin cuenta asignada
+              </div>
+            )}
           </div>
-        )}
+          <span style={{
+            fontFamily:"'JetBrains Mono',monospace", fontSize:14, fontWeight:700,
+            color: cuentaReservaImp ? "#26D07C" : "#6B7A99",
+          }}>
+            {saldoReservaImp.toLocaleString("es-ES",{minimumFractionDigits:0})}€
+          </span>
+        </div>
 
         <div style={{ marginTop:8, fontFamily:"'Syne',sans-serif", fontSize:9, color:"#6B7A99",
           padding:"6px 8px", background:"rgba(0,163,224,0.05)", borderRadius:5, lineHeight:1.4 }}>
@@ -1566,10 +1576,10 @@ function FormularioAnadirBloque({ onGuardar, onCancelar }) {
 // ═══════════════════════════════════════════════════════
 
 function FilaInversion({ inv, onUpdate, onEliminar }) {
-  const { invertido, valorActual, plusvalia, pctPlusvalia } = calcularPosicion(inv);
-  const tipo = TIPOS_ACTIVO[inv.tipo] || TIPOS_ACTIVO.etf;
+  const { invertido, valorActual, plusvalia, pctPlusvalia, soloValor } = calcularPosicion(inv);
+  const tipo = TIPOS_ACTIVO[inv.tipo] || TIPOS_ACTIVO.fondo;
   const ganando = plusvalia >= 0;
-  const [editando, setEditando] = useState(false);
+  const [editandoMeta, setEditandoMeta] = useState(false);
 
   return (
     <div style={{
@@ -1578,7 +1588,9 @@ function FilaInversion({ inv, onUpdate, onEliminar }) {
       position:"relative", overflow:"hidden",
     }}>
       <div style={{ position:"absolute", left:0, top:0, bottom:0, width:3, background: tipo.color }}/>
-      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:8 }}>
+
+      {/* Cabecera: tipo + nombre + editar/borrar */}
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:10 }}>
         <div style={{ flex:1, minWidth:0 }}>
           <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:3 }}>
             <span style={{
@@ -1586,21 +1598,36 @@ function FilaInversion({ inv, onUpdate, onEliminar }) {
               color: tipo.color, background: tipo.color+"20",
               padding:"2px 6px", borderRadius:4,
             }}>{tipo.icono} {tipo.label}</span>
-            {inv.ticker && (
+            {inv.entidad && (
               <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10,
-                color:"#6B7A99", fontWeight:600 }}>{inv.ticker}</span>
+                color:"#6B7A99", fontWeight:600 }}>{inv.entidad}</span>
             )}
           </div>
-          <div style={{ fontFamily:"'Syne',sans-serif", fontSize:13, fontWeight:600,
-            color:"#CBD5E8", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
-            {inv.nombre}
-          </div>
+          {editandoMeta ? (
+            <input value={inv.nombre} placeholder="Nombre"
+              onChange={e => onUpdate({ ...inv, nombre: e.target.value })}
+              onBlur={() => setEditandoMeta(false)}
+              autoFocus
+              style={{ width:"100%", background:"rgba(255,255,255,0.06)",
+                border:"1px solid rgba(255,255,255,0.15)", borderRadius:5,
+                padding:"3px 6px", color:"#E8EDF5", fontSize:13, outline:"none",
+                fontFamily:"'Syne',sans-serif" }}
+            />
+          ) : (
+            <div onClick={() => setEditandoMeta(true)} style={{
+              fontFamily:"'Syne',sans-serif", fontSize:13, fontWeight:600,
+              color:"#CBD5E8", overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap",
+              cursor:"pointer",
+            }}>
+              {inv.nombre}
+            </div>
+          )}
         </div>
         <div style={{ display:"flex", gap:4 }}>
-          <button onClick={() => setEditando(e => !e)} style={{
+          <button onClick={() => setEditandoMeta(m => !m)} style={{
             background:"rgba(255,255,255,0.06)", border:"none",
             color:"#6B7A99", cursor:"pointer", fontSize:11, padding:"2px 6px", borderRadius:4,
-          }}>{editando ? "✓" : "✎"}</button>
+          }}>{editandoMeta ? "✓" : "✎"}</button>
           <button onClick={onEliminar} style={{
             background:"none", border:"none", color:"#FF475760",
             cursor:"pointer", fontSize:16, padding:"0 2px",
@@ -1608,18 +1635,16 @@ function FilaInversion({ inv, onUpdate, onEliminar }) {
         </div>
       </div>
 
-      {editando ? (
-        <div style={{ display:"flex", flexDirection:"column", gap:6, marginTop:8 }}>
-          <input value={inv.nombre} placeholder="Nombre del activo"
-            onChange={e => onUpdate({ ...inv, nombre: e.target.value })}
-            style={{ background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)",
-              borderRadius:6, padding:"6px 10px", color:"#E8EDF5", fontSize:12, outline:"none",
-              fontFamily:"'Syne',sans-serif" }}/>
-          <input value={inv.ticker || ""} placeholder="Ticker"
-            onChange={e => onUpdate({ ...inv, ticker: e.target.value.toUpperCase() })}
-            style={{ background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)",
-              borderRadius:6, padding:"6px 10px", color:"#E8EDF5", fontSize:12, outline:"none",
-              fontFamily:"'JetBrains Mono',monospace" }}/>
+      {/* Selector de tipo (solo en edición) */}
+      {editandoMeta && (
+        <div style={{ marginBottom:10 }}>
+          <input value={inv.entidad || ""} placeholder="Entidad (ej. HNA, MyInvestor, Trade)"
+            onChange={e => onUpdate({ ...inv, entidad: e.target.value })}
+            style={{ width:"100%", background:"rgba(255,255,255,0.06)",
+              border:"1px solid rgba(255,255,255,0.1)", borderRadius:6,
+              padding:"6px 10px", color:"#E8EDF5", fontSize:12, outline:"none",
+              fontFamily:"'JetBrains Mono',monospace", marginBottom:6 }}
+          />
           <div style={{ display:"flex", gap:4, flexWrap:"wrap" }}>
             {Object.entries(TIPOS_ACTIVO).map(([id, t]) => (
               <button key={id} onClick={() => onUpdate({ ...inv, tipo: id })} style={{
@@ -1630,59 +1655,62 @@ function FilaInversion({ inv, onUpdate, onEliminar }) {
               }}>{t.icono} {t.label}</button>
             ))}
           </div>
-          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:6 }}>
-            <div>
-              <div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:"#6B7A99", marginBottom:2 }}>Cantidad</div>
-              <InputNumero valor={inv.cantidad} onChange={v => onUpdate({ ...inv, cantidad: v })}
-                compact ancho={50} step={0.0001}/>
+        </div>
+      )}
+
+      {/* Métricas principales */}
+      {soloValor ? (
+        // Planes/pensión: sólo posición del fondo
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+          <div>
+            <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, color:"#6B7A99", marginBottom:2 }}>
+              posición del fondo
             </div>
-            <div>
-              <div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:"#6B7A99", marginBottom:2 }}>P. medio</div>
-              <InputMoneda valor={inv.precioMedio} onChange={v => onUpdate({ ...inv, precioMedio: v })}
-                compact ancho={50}/>
-            </div>
-            <div>
-              <div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:"#6B7A99", marginBottom:2 }}>P. actual</div>
-              <InputMoneda valor={inv.precioActual} onChange={v => onUpdate({ ...inv, precioActual: v })}
-                compact ancho={50}/>
+            <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:20, fontWeight:700, color: tipo.color }}>
+              {valorActual.toLocaleString("es-ES",{minimumFractionDigits:2})}€
             </div>
           </div>
+          <InputMoneda valor={inv.valorActual} onChange={v => onUpdate({ ...inv, valorActual: v })} compact ancho={75}/>
         </div>
       ) : (
+        // Resto: invertido + valor actual + plusvalía
         <>
-          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
+          {/* Cabeceras y campos editables inline */}
+          <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:8 }}>
             <div>
-              <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:16, fontWeight:700,
-                color: ganando ? "#26D07C" : "#FF4757" }}>
-                {valorActual.toLocaleString("es-ES",{minimumFractionDigits:2})}€
+              <div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:"#6B7A99", marginBottom:3 }}>
+                Inversión inicial
               </div>
-              <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:"#6B7A99", marginTop:2 }}>
-                invertido {invertido.toLocaleString("es-ES",{minimumFractionDigits:0})}€
-              </div>
+              <InputMoneda valor={inv.invertido} onChange={v => onUpdate({ ...inv, invertido: v })} compact ancho={75}/>
             </div>
-            <div style={{ textAlign:"right" }}>
-              <div style={{
-                fontFamily:"'JetBrains Mono',monospace", fontSize:12, fontWeight:700,
-                color: ganando ? "#26D07C" : "#FF4757",
-                background: ganando ? "#26D07C15" : "#FF475715",
-                padding:"3px 8px", borderRadius:5, display:"inline-block",
-              }}>
-                {ganando ? "+" : ""}{plusvalia.toLocaleString("es-ES",{minimumFractionDigits:2})}€
+            <div>
+              <div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:"#6B7A99", marginBottom:3 }}>
+                Posición actual
               </div>
-              <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, marginTop:2,
-                color: ganando ? "#26D07C" : "#FF4757", fontWeight:600 }}>
-                {ganando ? "+" : ""}{pctPlusvalia.toFixed(2)}%
-              </div>
+              <InputMoneda valor={inv.valorActual} onChange={v => onUpdate({ ...inv, valorActual: v })} compact ancho={75}/>
             </div>
           </div>
-          <div style={{ display:"flex", justifyContent:"space-between",
-            paddingTop:6, borderTop:"1px solid rgba(255,255,255,0.04)" }}>
-            <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:"#6B7A99" }}>
-              {inv.cantidad?.toLocaleString("es-ES",{maximumFractionDigits:4}) || 0} ud × {inv.precioActual?.toLocaleString("es-ES",{minimumFractionDigits:2}) || 0}€
+
+          {/* Plusvalía */}
+          <div style={{
+            display:"flex", justifyContent:"space-between", alignItems:"center",
+            padding:"8px 10px", borderRadius:6,
+            background: ganando ? "rgba(38,208,124,0.08)" : "rgba(255,71,87,0.08)",
+            border: `1px solid ${ganando ? "#26D07C20" : "#FF475720"}`,
+          }}>
+            <span style={{ fontFamily:"'Syne',sans-serif", fontSize:11, color:"#8B9DBB" }}>
+              plusvalía
             </span>
-            <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:"#6B7A99" }}>
-              medio {inv.precioMedio?.toLocaleString("es-ES",{minimumFractionDigits:2}) || 0}€
-            </span>
+            <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+              <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:13, fontWeight:700,
+                color: ganando ? "#26D07C" : "#FF4757" }}>
+                {ganando ? "+" : ""}{plusvalia.toLocaleString("es-ES",{minimumFractionDigits:2})}€
+              </span>
+              <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:11, fontWeight:600,
+                color: ganando ? "#26D07C" : "#FF4757", opacity:0.8 }}>
+                {ganando ? "+" : ""}{pctPlusvalia.toFixed(2)}%
+              </span>
+            </div>
           </div>
         </>
       )}
@@ -1691,36 +1719,41 @@ function FilaInversion({ inv, onUpdate, onEliminar }) {
 }
 
 function FormularioAnadirInversion({ onGuardar, onCancelar }) {
-  const [nombre, setNombre]             = useState("");
-  const [ticker, setTicker]             = useState("");
-  const [tipo, setTipo]                 = useState("etf");
-  const [cantidad, setCantidad]         = useState(0);
-  const [precioMedio, setPrecioMedio]   = useState(0);
-  const [precioActual, setPrecioActual] = useState(0);
+  const [nombre, setNombre]           = useState("");
+  const [entidad, setEntidad]         = useState("");
+  const [tipo, setTipo]               = useState("fondo");
+  const [invertido, setInvertido]     = useState(0);
+  const [valorActual, setValorActual] = useState(0);
+
+  const tipoMeta = TIPOS_ACTIVO[tipo];
+  const soloValor = tipoMeta && tipoMeta.soloValor;
 
   const guardar = () => {
     if (!nombre.trim()) return;
     onGuardar({
       id: `inv-${Date.now()}`,
-      nombre: nombre.trim(), ticker: ticker.trim().toUpperCase() || null,
-      tipo, cantidad, precioMedio,
-      precioActual: precioActual || precioMedio,
+      nombre: nombre.trim(),
+      entidad: entidad.trim() || null,
+      tipo,
+      invertido: soloValor ? 0 : invertido,
+      valorActual,
     });
   };
 
   return (
     <div style={{ marginTop:8, padding:"14px", background:"rgba(255,255,255,0.03)", borderRadius:12,
       border:"1px solid rgba(255,255,255,0.08)" }}>
-      <input placeholder="Nombre" value={nombre}
+      <input placeholder="Nombre del activo o fondo" value={nombre}
         onChange={e => setNombre(e.target.value)}
         style={{ width:"100%", background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)",
           borderRadius:8, padding:"8px 10px", color:"#E8EDF5", fontSize:13, outline:"none",
           fontFamily:"'Syne',sans-serif", marginBottom:8 }}/>
-      <input placeholder="Ticker (opcional)" value={ticker}
-        onChange={e => setTicker(e.target.value)}
+      <input placeholder="Entidad (ej. HNA, MyInvestor, Trade…)" value={entidad}
+        onChange={e => setEntidad(e.target.value)}
         style={{ width:"100%", background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)",
           borderRadius:8, padding:"8px 10px", color:"#E8EDF5", fontSize:13, outline:"none",
           fontFamily:"'JetBrains Mono',monospace", marginBottom:8 }}/>
+
       <div style={{ display:"flex", gap:4, flexWrap:"wrap", marginBottom:10 }}>
         {Object.entries(TIPOS_ACTIVO).map(([id, t]) => (
           <button key={id} onClick={() => setTipo(id)} style={{
@@ -1731,20 +1764,32 @@ function FormularioAnadirInversion({ onGuardar, onCancelar }) {
           }}>{t.icono} {t.label}</button>
         ))}
       </div>
-      <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:6, marginBottom:10 }}>
-        <div>
-          <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, color:"#6B7A99", marginBottom:3 }}>Cantidad</div>
-          <InputNumero valor={cantidad} onChange={setCantidad} compact ancho={60} step={0.0001}/>
+
+      {soloValor ? (
+        // Planes/pensión: sólo posición
+        <div style={{ marginBottom:10 }}>
+          <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, color:"#6B7A99", marginBottom:3 }}>
+            Posición del fondo
+          </div>
+          <InputMoneda valor={valorActual} onChange={setValorActual} compact ancho={80}/>
         </div>
-        <div>
-          <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, color:"#6B7A99", marginBottom:3 }}>P. medio</div>
-          <InputMoneda valor={precioMedio} onChange={setPrecioMedio} compact ancho={60}/>
+      ) : (
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:10 }}>
+          <div>
+            <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, color:"#6B7A99", marginBottom:3 }}>
+              Inversión inicial
+            </div>
+            <InputMoneda valor={invertido} onChange={setInvertido} compact ancho={75}/>
+          </div>
+          <div>
+            <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, color:"#6B7A99", marginBottom:3 }}>
+              Posición actual
+            </div>
+            <InputMoneda valor={valorActual} onChange={setValorActual} compact ancho={75}/>
+          </div>
         </div>
-        <div>
-          <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, color:"#6B7A99", marginBottom:3 }}>P. actual</div>
-          <InputMoneda valor={precioActual} onChange={setPrecioActual} compact ancho={60}/>
-        </div>
-      </div>
+      )}
+
       <div style={{ display:"flex", gap:8 }}>
         <button onClick={guardar} style={{
           flex:1, background:"#26D07C", color:"#0A0E17", border:"none", borderRadius:8,

@@ -15,8 +15,6 @@ const BANCO_META = {
 };
 
 const TARIFA_KM = 0.20;
-const RATIO_EXTRAS = 3/7;
-const RESERVA_IMP_DEFAULT = 2000;
 const BASE_EMERGENCIA = 2500;
 
 const PROPOSITOS = {
@@ -118,9 +116,24 @@ const CUENTAS_DEFAULT = [
 // STORAGE Y ESTADO
 // ═══════════════════════════════════════════════════════
 
-const STORAGE_KEY = "finanzas-v7";
+const STORAGE_KEY = "finanzas-v8";
 
 function añoActual() { return new Date().getFullYear(); }
+
+// Configuración por defecto de cada banco: modo "suma" (total = suma cuentas)
+// o "reserva" (total manual, libre = total - asignaciones)
+const BANCOS_CONFIG_DEFAULT = {
+  BBVA:  { modo: "suma",    total: 0 },
+  TRADE: { modo: "reserva", total: 0 },
+  BANK:  { modo: "suma",    total: 0 },
+  MYINV: { modo: "suma",    total: 0 },
+};
+
+// Ingresos base por defecto (todos editables, eliminables, ampliables)
+const INGRESOS_BASE_DEFAULT = [
+  { id: "nomina",  nombre: "Nómina",              importe: 3500 },
+  { id: "aportFam", nombre: "Aportación familiar", importe: 650 },
+];
 
 function datosVacios() {
   return {
@@ -129,31 +142,29 @@ function datosVacios() {
     catalogoVariables: GASTOS_VARIABLES_DEFAULT.map(g => ({...g})),
     catalogoAhorro:    GASTOS_AHORRO_DEFAULT.map(g => ({...g})),
     cuentas:           CUENTAS_DEFAULT.map(c => ({...c})),
-    bancosTotales:     { BBVA:0, TRADE:0, BANK:0, MYINV:0 },
-    ingresosBase:      { nomina:3500, aportFam:650 },
-    reservaImp:        RESERVA_IMP_DEFAULT,
-    reservaImpCuenta:  null,   // id de la cuenta que reserva los impuestos
-    usarExtras:        true,
+    bancosConfig:      JSON.parse(JSON.stringify(BANCOS_CONFIG_DEFAULT)),
+    ingresosBase:      INGRESOS_BASE_DEFAULT.map(i => ({...i})),  // ahora es array
+    reservaImpCuenta:  null,
+    porcentajeExtra:   42.86,  // % de la nómina extra que se destina a anuales (default 3/7)
     inversiones:       [],
 
     // ─── Por año: gastos anuales del año en curso ───
-    anuales:           {
+    anuales: {
       año: añoActual(),
       catalogo: JSON.parse(JSON.stringify(ANUALES_DEFAULT)),
     },
 
-    // ─── Por mes: solo lo que cambia mes a mes ───
-    meses: {},  // { "2026-04": { km, extra, otros, puntuales, pagosFijos, pagosVariables, pagosAhorro } }
+    // ─── Por mes ───
+    meses: {},  // { "2026-04": { km, ingresosMes, puntuales, pagos... } }
   };
 }
 
 function estadoMesVacio() {
   return {
     km: 0,
-    extra: 0,
-    otros: 0,
-    puntuales: [],         // [{id, nombre, importe, banco, pagado}]
-    pagosFijos: {},        // { gastoId: bool }
+    ingresosMes: {},       // { fuenteId: importe } para fuentes editables del mes (paga extra, etc.)
+    puntuales: [],
+    pagosFijos: {},
     pagosVariables: {},
     pagosAhorro: {},
   };
@@ -165,7 +176,7 @@ async function cargarDatos() {
     if (!raw) return datosVacios();
     const cargado = JSON.parse(raw);
     const base = datosVacios();
-    if (!cargado.catalogoFijos || !cargado.anuales) return base;
+    if (!cargado.catalogoFijos || !cargado.anuales || !cargado.bancosConfig || !Array.isArray(cargado.ingresosBase)) return base;
     return { ...base, ...cargado, meses: cargado.meses || {} };
   } catch { return datosVacios(); }
 }
@@ -264,11 +275,11 @@ function calcularIngresoKm(datos, claveM) {
 
 function calcularIngresosMes(datos, claveM) {
   const mes = getMes(datos, claveM);
-  return (datos.ingresosBase.nomina || 0)
-       + (datos.ingresosBase.aportFam || 0)
-       + (mes.extra || 0)
-       + (mes.otros || 0)
-       + calcularIngresoKm(datos, claveM);
+  // Suma de todas las fuentes fijas (ingresosBase es ahora un array)
+  const totalBase = (datos.ingresosBase || []).reduce((a, fuente) => a + (fuente.importe || 0), 0);
+  // Suma de fuentes del mes (extras puntuales que el usuario haya añadido)
+  const totalMes = Object.values(mes.ingresosMes || {}).reduce((a, v) => a + (v || 0), 0);
+  return totalBase + totalMes + calcularIngresoKm(datos, claveM);
 }
 
 // Gastos anuales: total, pagado acumulado en TODOS los meses del año actual, pendiente
@@ -318,8 +329,10 @@ function calcularAportacionAnual(datos, mesNum) {
   const pendiente = totalAnualesPendiente(datos);
   const reserva = calcularReservaEfectiva(datos);
   const mesesRestantes = Math.max(1, 11 - mesNum);  // 0=enero…11=diciembre
-  const nomina = datos.ingresosBase.nomina || 0;
-  const extrasFactor = datos.usarExtras ? (nomina * RATIO_EXTRAS) : 0;
+  // La "extra" es la nómina extra anual: tomamos la primera fuente fija como nómina de referencia
+  const nominaRef = (datos.ingresosBase && datos.ingresosBase[0]) ? (datos.ingresosBase[0].importe || 0) : 0;
+  const pct = (datos.porcentajeExtra || 0) / 100;
+  const extrasFactor = nominaRef * pct;
   return (pendiente - reserva - extrasFactor) / mesesRestantes;
 }
 
@@ -328,8 +341,24 @@ function asignadoBanco(cuentas, banco) {
   return cuentas.filter(c => c.banco === banco).reduce((a,c) => a + (c.asignado || 0), 0);
 }
 
-function remanenteBanco(bancosTotales, cuentas, banco) {
-  return (bancosTotales[banco] || 0) - asignadoBanco(cuentas, banco);
+// Total del banco según su modo:
+// - "suma": total = suma de las cuentas
+// - "reserva": total = importe manual introducido por el usuario
+function totalBanco(bancosConfig, cuentas, banco) {
+  const cfg = bancosConfig[banco] || { modo: "suma", total: 0 };
+  if (cfg.modo === "reserva") return cfg.total || 0;
+  // modo suma: total = sumatorio de asignaciones de las cuentas
+  return cuentas.filter(c => c.banco === banco).reduce((a,c) => a + (c.asignado || 0), 0);
+}
+
+// Libre/remanente del banco:
+// - "suma": no aplica (siempre 0, no hay "libre" — el total ES la suma de cuentas)
+// - "reserva": libre = total manual − suma de asignaciones
+function libreBanco(bancosConfig, cuentas, banco) {
+  const cfg = bancosConfig[banco] || { modo: "suma", total: 0 };
+  if (cfg.modo === "suma") return 0;
+  const asignado = cuentas.filter(c => c.banco === banco).reduce((a,c) => a + (c.asignado || 0), 0);
+  return (cfg.total || 0) - asignado;
 }
 
 // Inversiones
@@ -677,15 +706,25 @@ function FormularioAnadirGasto({ tipo, onGuardar, onCancelar, colorAccion="#26D0
 // ═══════════════════════════════════════════════════════
 
 function BloqueBancos({ datos, onUpdateDatos }) {
-  const [abierto, setAbierto] = useState(false);
+  const [abierto, setAbierto] = useState(true);  // abierto por defecto, es lo principal
   const [anadiendoEn, setAnadiendoEn] = useState(null);
   const [editandoNombre, setEditandoNombre] = useState(null);
 
-  const totalLiquido = Object.values(datos.bancosTotales).reduce((a,v) => a + (v||0), 0);
-  const remanenteTotal = Object.keys(BANCO_META).reduce((a,b) =>
-    a + remanenteBanco(datos.bancosTotales, datos.cuentas, b), 0);
+  // Resumen agregado
+  const totalLiquido = Object.keys(BANCO_META).reduce((a, b) =>
+    a + totalBanco(datos.bancosConfig, datos.cuentas, b), 0);
+  const libreTotal = Object.keys(BANCO_META).reduce((a, b) =>
+    a + libreBanco(datos.bancosConfig, datos.cuentas, b), 0);
+  const totalAsignado = datos.cuentas.reduce((a, c) => a + (c.asignado || 0), 0);
 
-  const setTotalBanco = (banco, v) => onUpdateDatos(d => { d.bancosTotales[banco] = v; });
+  const setModoBanco = (banco, modo) => onUpdateDatos(d => {
+    if (!d.bancosConfig[banco]) d.bancosConfig[banco] = { modo: "suma", total: 0 };
+    d.bancosConfig[banco].modo = modo;
+  });
+  const setTotalBancoManual = (banco, v) => onUpdateDatos(d => {
+    if (!d.bancosConfig[banco]) d.bancosConfig[banco] = { modo: "reserva", total: 0 };
+    d.bancosConfig[banco].total = v;
+  });
   const actualizarCuenta = (id, cambios) => onUpdateDatos(d => {
     d.cuentas = d.cuentas.map(c => c.id === id ? { ...c, ...cambios } : c);
   });
@@ -700,53 +739,102 @@ function BloqueBancos({ datos, onUpdateDatos }) {
   return (
     <div style={{ background:"rgba(255,255,255,0.025)", borderRadius:14, marginBottom:12,
       border:"1px solid rgba(255,255,255,0.06)", overflow:"hidden" }}>
+
+      {/* Cabecera con resumen */}
       <div onClick={() => setAbierto(a => !a)}
-        style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
-          padding:"14px 16px", cursor:"pointer" }}>
-        <div>
+        style={{ padding:"14px 16px", cursor:"pointer",
+          borderBottom: abierto ? "1px solid rgba(255,255,255,0.06)" : "none" }}>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:abierto ? 10 : 0 }}>
           <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, fontWeight:700, color:"#6B7A99",
-            letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:3 }}>🏦 Bancos y cuentas</div>
-          <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:11, color:"#8B9DBB" }}>
-            total <span style={{ color:"#E8EDF5", fontWeight:700 }}>{totalLiquido.toLocaleString("es-ES",{minimumFractionDigits:0})}€</span>
-            {" · "}
-            libre <span style={{
-              color: remanenteTotal >= 0 ? "#26D07C" : "#FF4757", fontWeight:700,
-            }}>{remanenteTotal.toLocaleString("es-ES",{minimumFractionDigits:0})}€</span>
+            letterSpacing:"0.1em", textTransform:"uppercase" }}>🏦 Bancos y cuentas</div>
+          <span style={{ color:"#6B7A99", fontSize:14 }}>{abierto ? "▲" : "▼"}</span>
+        </div>
+
+        {/* Resumen siempre visible */}
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8 }}>
+          <div style={{ textAlign:"center", background:"rgba(0,163,224,0.08)", borderRadius:8, padding:"8px 4px" }}>
+            <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:14, fontWeight:700, color:"#00A3E0" }}>
+              {totalLiquido.toLocaleString("es-ES",{minimumFractionDigits:0})}€
+            </div>
+            <div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:"#6B7A99", marginTop:2 }}>Total líquido</div>
+          </div>
+          <div style={{ textAlign:"center", background:"rgba(176,111,232,0.08)", borderRadius:8, padding:"8px 4px" }}>
+            <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:14, fontWeight:700, color:"#B06FE8" }}>
+              {totalAsignado.toLocaleString("es-ES",{minimumFractionDigits:0})}€
+            </div>
+            <div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:"#6B7A99", marginTop:2 }}>Asignado</div>
+          </div>
+          <div style={{ textAlign:"center",
+            background: libreTotal >= 0 ? "rgba(38,208,124,0.08)" : "rgba(255,71,87,0.08)",
+            borderRadius:8, padding:"8px 4px" }}>
+            <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:14, fontWeight:700,
+              color: libreTotal >= 0 ? "#26D07C" : "#FF4757" }}>
+              {libreTotal >= 0 ? "+" : ""}{libreTotal.toLocaleString("es-ES",{minimumFractionDigits:0})}€
+            </div>
+            <div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:"#6B7A99", marginTop:2 }}>Libre</div>
           </div>
         </div>
-        <span style={{ color:"#6B7A99", fontSize:14 }}>{abierto ? "▲" : "▼"}</span>
       </div>
 
       {abierto && (
-        <div style={{ padding:"0 14px 14px" }}>
+        <div style={{ padding:"14px" }}>
           {Object.entries(BANCO_META).map(([bancoId, meta]) => {
-            const total = datos.bancosTotales[bancoId] || 0;
-            const asignado = asignadoBanco(datos.cuentas, bancoId);
-            const remanente = total - asignado;
+            const cfg = datos.bancosConfig[bancoId] || { modo:"suma", total:0 };
+            const total = totalBanco(datos.bancosConfig, datos.cuentas, bancoId);
+            const libre = libreBanco(datos.bancosConfig, datos.cuentas, bancoId);
+            const asignado = datos.cuentas.filter(c => c.banco === bancoId)
+              .reduce((a,c) => a + (c.asignado||0), 0);
             const cuentasBanco = datos.cuentas.filter(c => c.banco === bancoId);
+            const esSuma = cfg.modo === "suma";
 
             return (
               <div key={bancoId} style={{ marginBottom:14,
                 background:"rgba(255,255,255,0.02)", borderRadius:12,
                 border:`1px solid ${meta.color}20`, padding:"10px 12px" }}>
 
-                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
+                {/* Header del banco */}
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
                   <div style={{ display:"flex", alignItems:"center", gap:8 }}>
                     <div style={{
                       width:24, height:24, borderRadius:6, background: meta.color + "25",
                       display:"flex", alignItems:"center", justifyContent:"center",
                       fontFamily:"'Syne',sans-serif", fontSize:12, fontWeight:800, color: meta.color,
                     }}>{meta.icono}</div>
-                    <span style={{ fontFamily:"'Syne',sans-serif", fontSize:13, fontWeight:700, color:"#CBD5E8" }}>
-                      {meta.label}
-                    </span>
+                    <div>
+                      <div style={{ fontFamily:"'Syne',sans-serif", fontSize:13, fontWeight:700, color:"#CBD5E8" }}>
+                        {meta.label}
+                      </div>
+                      <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:"#6B7A99", marginTop:1 }}>
+                        {esSuma ? "🧮 suma de cuentas" : "🎯 total manual + reservas"}
+                      </div>
+                    </div>
                   </div>
-                  <div style={{ display:"flex", alignItems:"center", gap:6 }}>
-                    <span style={{ fontFamily:"'Syne',sans-serif", fontSize:10, color:"#6B7A99" }}>total</span>
-                    <InputMoneda valor={total} onChange={v => setTotalBanco(bancoId, v)} compact ancho={75}/>
-                  </div>
+                  {/* Toggle modo: suma / reserva */}
+                  <button onClick={() => setModoBanco(bancoId, esSuma ? "reserva" : "suma")} style={{
+                    padding:"3px 8px", borderRadius:5, border:"none", cursor:"pointer", fontSize:9,
+                    fontFamily:"'JetBrains Mono',monospace", fontWeight:600,
+                    background: "rgba(255,255,255,0.06)", color:"#8B9DBB",
+                  }}>{esSuma ? "→ reserva" : "→ suma"}</button>
                 </div>
 
+                {/* Total del banco: editable si reserva, display si suma */}
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
+                  marginBottom:10, padding:"6px 8px", borderRadius:6,
+                  background: meta.color + "10" }}>
+                  <span style={{ fontFamily:"'Syne',sans-serif", fontSize:11, color:"#8B9DBB" }}>
+                    Total {esSuma ? "(auto)" : "(introduce tú)"}
+                  </span>
+                  {esSuma ? (
+                    <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:14, fontWeight:700,
+                      color: meta.color }}>
+                      {total.toLocaleString("es-ES",{minimumFractionDigits:0})}€
+                    </span>
+                  ) : (
+                    <InputMoneda valor={cfg.total || 0} onChange={v => setTotalBancoManual(bancoId, v)} compact ancho={75}/>
+                  )}
+                </div>
+
+                {/* Lista de cuentas */}
                 {cuentasBanco.length === 0 && (
                   <div style={{ padding:"8px", textAlign:"center", fontFamily:"'Syne',sans-serif",
                     fontSize:11, color:"#6B7A99", fontStyle:"italic" }}>
@@ -788,30 +876,33 @@ function BloqueBancos({ datos, onUpdateDatos }) {
                   );
                 })}
 
-                <div style={{
-                  marginTop:8, padding:"8px 10px", borderRadius:8,
-                  background: remanente >= 0 ? "rgba(38,208,124,0.06)" : "rgba(255,71,87,0.08)",
-                  border: `1px solid ${remanente >= 0 ? "#26D07C25" : "#FF475730"}`,
-                }}>
-                  <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                    <span style={{ fontFamily:"'Syne',sans-serif", fontSize:11, color:"#8B9DBB" }}>
-                      asignado <span style={{ color:"#CBD5E8", fontFamily:"'JetBrains Mono',monospace" }}>
-                        {asignado.toLocaleString("es-ES",{minimumFractionDigits:0})}€
+                {/* Solo en modo reserva: indicador de libre */}
+                {!esSuma && cuentasBanco.length > 0 && (
+                  <div style={{
+                    marginTop:8, padding:"8px 10px", borderRadius:8,
+                    background: libre >= 0 ? "rgba(38,208,124,0.06)" : "rgba(255,71,87,0.08)",
+                    border: `1px solid ${libre >= 0 ? "#26D07C25" : "#FF475730"}`,
+                  }}>
+                    <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
+                      <span style={{ fontFamily:"'Syne',sans-serif", fontSize:11, color:"#8B9DBB" }}>
+                        reservado <span style={{ color:"#CBD5E8", fontFamily:"'JetBrains Mono',monospace" }}>
+                          {asignado.toLocaleString("es-ES",{minimumFractionDigits:0})}€
+                        </span>
                       </span>
-                    </span>
-                    <span style={{
-                      fontFamily:"'JetBrains Mono',monospace", fontSize:13, fontWeight:700,
-                      color: remanente >= 0 ? "#26D07C" : "#FF4757",
-                    }}>
-                      🔓 {remanente >= 0 ? "+" : ""}{remanente.toLocaleString("es-ES",{minimumFractionDigits:0})}€ libre
-                    </span>
-                  </div>
-                  {remanente < 0 && (
-                    <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, color:"#FF4757", marginTop:4 }}>
-                      ⚠ Has asignado más de lo que tienes en el banco
+                      <span style={{
+                        fontFamily:"'JetBrains Mono',monospace", fontSize:13, fontWeight:700,
+                        color: libre >= 0 ? "#26D07C" : "#FF4757",
+                      }}>
+                        🔓 {libre >= 0 ? "+" : ""}{libre.toLocaleString("es-ES",{minimumFractionDigits:0})}€ libre
+                      </span>
                     </div>
-                  )}
-                </div>
+                    {libre < 0 && (
+                      <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, color:"#FF4757", marginTop:4 }}>
+                        ⚠ Has reservado más de lo que tienes en el banco
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {anadiendoEn === bancoId ? (
                   <FormularioAnadirCuenta
@@ -886,19 +977,35 @@ function VistaInicio({ datos, claveM, mesNum, onUpdateDatos }) {
   const aportacion = calcularAportacionAnual(datos, mesNum);
   const pendienteAnual = totalAnualesPendiente(datos);
 
+  const [anadiendoFuente, setAnadiendoFuente] = useState(false);
+
   const mes = getMes(datos, claveM);
 
-  // Cuenta vinculada a la reserva de impuestos
   const cuentaReservaImp = datos.cuentas.find(c => c.id === datos.reservaImpCuenta);
   const saldoReservaImp = cuentaReservaImp ? cuentaReservaImp.asignado : 0;
+  const pct = datos.porcentajeExtra || 0;
 
-  const setIngresoBase = (campo, v) => onUpdateDatos(d => { d.ingresosBase[campo] = v; });
-  const setMesField = (campo, v) => onUpdateDatos(d => {
+  // Setters
+  const setIngresoBaseCampo = (id, campo, valor) => onUpdateDatos(d => {
+    d.ingresosBase = d.ingresosBase.map(f => f.id === id ? { ...f, [campo]: valor } : f);
+  });
+  const eliminarIngreso = (id) => onUpdateDatos(d => {
+    d.ingresosBase = d.ingresosBase.filter(f => f.id !== id);
+  });
+  const añadirIngreso = (nombre, importe) => {
+    onUpdateDatos(d => {
+      d.ingresosBase.push({ id: `ing-${Date.now()}`, nombre, importe });
+    });
+    setAnadiendoFuente(false);
+  };
+  const setKm = (v) => onUpdateDatos(d => {
     if (!d.meses[claveM]) d.meses[claveM] = estadoMesVacio();
-    d.meses[claveM][campo] = v;
+    d.meses[claveM].km = v;
   });
   const setReservaImpCuenta = (id) => onUpdateDatos(d => { d.reservaImpCuenta = id; });
-  const setUsarExtras = (v) => onUpdateDatos(d => { d.usarExtras = v; });
+  const setPorcentajeExtra = (v) => onUpdateDatos(d => {
+    d.porcentajeExtra = Math.max(0, Math.min(100, v));
+  });
 
   return (
     <div className="slide-in">
@@ -909,31 +1016,48 @@ function VistaInicio({ datos, claveM, mesNum, onUpdateDatos }) {
       {/* 2. INGRESOS DEL MES */}
       <div style={{ background:"rgba(255,255,255,0.025)", borderRadius:14, padding:"14px 16px", marginBottom:12,
         border:"1px solid rgba(255,255,255,0.06)" }}>
-        <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, fontWeight:700, color:"#6B7A99",
-          letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:12 }}>Ingresos del mes</div>
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
+          <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, fontWeight:700, color:"#6B7A99",
+            letterSpacing:"0.1em", textTransform:"uppercase" }}>Ingresos del mes</div>
+          <Num v={totalIngresos} decimals={0} color="#26D07C" size={14}/>
+        </div>
 
-        {[
-          { key:"nomina",   label:"Nómina",              valor:datos.ingresosBase.nomina,   onChange:v => setIngresoBase("nomina", v) },
-          { key:"aportFam", label:"Aportación familiar", valor:datos.ingresosBase.aportFam, onChange:v => setIngresoBase("aportFam", v) },
-          { key:"extra",    label:"Extra del mes",       valor:mes.extra,                   onChange:v => setMesField("extra", v) },
-          { key:"otros",    label:"Otros",               valor:mes.otros,                   onChange:v => setMesField("otros", v) },
-        ].map(({ key, label, valor, onChange }) => (
-          <div key={key} style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
-            padding:"7px 0", borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
-            <span style={{ fontFamily:"'Syne',sans-serif", fontSize:13, color:"#CBD5E8" }}>{label}</span>
-            <InputMoneda valor={valor} onChange={onChange} compact />
-          </div>
+        {/* Fuentes fijas (editables, borrables) */}
+        {(datos.ingresosBase || []).map(fuente => (
+          <FilaIngreso key={fuente.id} fuente={fuente}
+            onNombre={n => setIngresoBaseCampo(fuente.id, "nombre", n)}
+            onImporte={v => setIngresoBaseCampo(fuente.id, "importe", v)}
+            onEliminar={() => eliminarIngreso(fuente.id)}
+          />
         ))}
 
-        <div style={{ padding:"9px 0", borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
+        {/* Añadir nueva fuente */}
+        {anadiendoFuente ? (
+          <FormularioAnadirIngreso
+            onGuardar={añadirIngreso}
+            onCancelar={() => setAnadiendoFuente(false)}/>
+        ) : (
+          <button onClick={() => setAnadiendoFuente(true)} style={{
+            width:"100%", padding:"6px", borderRadius:6, border:"none", cursor:"pointer",
+            background:"rgba(255,255,255,0.03)", color:"#6B7A99",
+            fontFamily:"'Syne',sans-serif", fontSize:11, fontWeight:600, marginTop:4,
+          }}>+ Añadir fuente de ingreso</button>
+        )}
+
+        {/* Km (no se hereda) */}
+        <div style={{ padding:"9px 0", marginTop:4, borderTop:"1px solid rgba(255,255,255,0.04)" }}>
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
             <div>
-              <div style={{ fontFamily:"'Syne',sans-serif", fontSize:13, color:"#CBD5E8" }}>Km coche trabajo</div>
+              <div style={{ fontFamily:"'Syne',sans-serif", fontSize:13, color:"#CBD5E8" }}>
+                Km coche trabajo
+                <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:8, color:"#FF8C42",
+                  background:"rgba(255,140,66,0.12)", padding:"1px 5px", borderRadius:3, marginLeft:5 }}>SOLO MES</span>
+              </div>
               <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:"#6B7A99", marginTop:2 }}>
                 {TARIFA_KM.toFixed(2).replace(".",",")}€/km · <span style={{ color:"#26D07C" }}>+{ingresoKm.toLocaleString("es-ES",{minimumFractionDigits:2})}€</span>
               </div>
             </div>
-            <InputNumero valor={mes.km} onChange={v => setMesField("km", v)} sufijo="km" compact />
+            <InputNumero valor={mes.km} onChange={setKm} sufijo="km" compact />
           </div>
         </div>
 
@@ -961,18 +1085,19 @@ function VistaInicio({ datos, claveM, mesNum, onUpdateDatos }) {
           </div>
         </div>
 
+        {/* % del extra a destinar */}
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
           padding:"6px 0", borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
-          <span style={{ fontFamily:"'Syne',sans-serif", fontSize:11, color:"#CBD5E8" }}>Usar ingresos extra</span>
-          <button onClick={() => setUsarExtras(!datos.usarExtras)} style={{
-            padding:"3px 10px", borderRadius:16, border:"none", cursor:"pointer", fontSize:10,
-            fontFamily:"'JetBrains Mono',monospace", fontWeight:600,
-            background: datos.usarExtras ? "#26D07C25" : "rgba(255,255,255,0.06)",
-            color: datos.usarExtras ? "#26D07C" : "#6B7A99",
-          }}>{datos.usarExtras ? "SÍ" : "NO"}</button>
+          <div>
+            <div style={{ fontFamily:"'Syne',sans-serif", fontSize:11, color:"#CBD5E8" }}>% del extra a destinar</div>
+            <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:"#6B7A99", marginTop:1 }}>
+              del sueldo extra anual
+            </div>
+          </div>
+          <InputNumero valor={pct} onChange={setPorcentajeExtra} sufijo="%" compact ancho={45} step={0.1}/>
         </div>
 
-        {/* Cuenta vinculada (decide la reserva efectiva) */}
+        {/* Cuenta vinculada */}
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
           padding:"6px 0", borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
           <span style={{ fontFamily:"'Syne',sans-serif", fontSize:11, color:"#CBD5E8" }}>Cuenta de la reserva</span>
@@ -980,7 +1105,7 @@ function VistaInicio({ datos, claveM, mesNum, onUpdateDatos }) {
             onChange={setReservaImpCuenta}/>
         </div>
 
-        {/* Reserva impuestos = saldo de la cuenta (no editable) */}
+        {/* Reserva impuestos = saldo de la cuenta */}
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"6px 0" }}>
           <div>
             <div style={{ fontFamily:"'Syne',sans-serif", fontSize:11, color:"#CBD5E8" }}>Reserva impuestos</div>
@@ -1004,8 +1129,71 @@ function VistaInicio({ datos, claveM, mesNum, onUpdateDatos }) {
 
         <div style={{ marginTop:8, fontFamily:"'Syne',sans-serif", fontSize:9, color:"#6B7A99",
           padding:"6px 8px", background:"rgba(0,163,224,0.05)", borderRadius:5, lineHeight:1.4 }}>
-          📐 (pendiente − reserva imp.{datos.usarExtras ? " − nómina×3/7" : ""}) ÷ {11-mesNum} meses
+          📐 (pendiente − reserva imp.{pct > 0 ? ` − ${pct.toFixed(2)}% del extra` : ""}) ÷ {11-mesNum} meses
         </div>
+      </div>
+    </div>
+  );
+}
+
+// Fila editable de una fuente de ingreso fija
+function FilaIngreso({ fuente, onNombre, onImporte, onEliminar }) {
+  const [editando, setEditando] = useState(false);
+  return (
+    <div style={{ display:"flex", alignItems:"center", gap:6, padding:"7px 0",
+      borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
+      {editando ? (
+        <input value={fuente.nombre}
+          onChange={e => onNombre(e.target.value)}
+          onBlur={() => setEditando(false)}
+          autoFocus
+          style={{ flex:1, background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.15)",
+            borderRadius:5, padding:"3px 6px", color:"#E8EDF5", fontSize:13, outline:"none",
+            fontFamily:"'Syne',sans-serif", minWidth:0 }}
+        />
+      ) : (
+        <span onClick={() => setEditando(true)} style={{
+          flex:1, fontFamily:"'Syne',sans-serif", fontSize:13, color:"#CBD5E8",
+          cursor:"pointer", minWidth:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap",
+        }}>
+          {fuente.nombre}
+        </span>
+      )}
+      <InputMoneda valor={fuente.importe} onChange={onImporte} compact />
+      <button onClick={onEliminar} style={{ background:"none", border:"none",
+        cursor:"pointer", color:"#FF475760", fontSize:14, padding:"0 2px" }}>×</button>
+    </div>
+  );
+}
+
+function FormularioAnadirIngreso({ onGuardar, onCancelar }) {
+  const [nombre, setNombre]   = useState("");
+  const [importe, setImporte] = useState(0);
+
+  const guardar = () => {
+    if (!nombre.trim()) return;
+    onGuardar(nombre.trim(), importe);
+  };
+
+  return (
+    <div style={{ marginTop:6, padding:"8px", background:"rgba(255,255,255,0.03)", borderRadius:8,
+      border:"1px solid rgba(255,255,255,0.08)" }}>
+      <input placeholder="Nombre (ej. Alquiler habitación)" value={nombre}
+        onChange={e => setNombre(e.target.value)}
+        style={{ width:"100%", background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)",
+          borderRadius:6, padding:"6px 10px", color:"#E8EDF5", fontSize:12, outline:"none",
+          fontFamily:"'Syne',sans-serif", marginBottom:6 }}
+      />
+      <div style={{ display:"flex", gap:6 }}>
+        <InputMoneda valor={importe} onChange={setImporte} compact ancho={70}/>
+        <button onClick={guardar} style={{
+          flex:1, background:"#26D07C", color:"#0A0E17", border:"none", borderRadius:6,
+          fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:12, cursor:"pointer",
+        }}>Añadir</button>
+        <button onClick={onCancelar} style={{
+          padding:"0 10px", background:"rgba(255,255,255,0.06)", color:"#6B7A99",
+          border:"none", borderRadius:6, cursor:"pointer", fontSize:12,
+        }}>✕</button>
       </div>
     </div>
   );
@@ -1935,7 +2123,7 @@ function VistaAnalisis({ datos, claveM, mesNum }) {
   const tasaAhorro = totalIngresos > 0 ? (ahorro / totalIngresos) * 100 : 0;
 
   const cartera = calcularTotalCartera(datos.inversiones || []);
-  const liquidez = Object.values(datos.bancosTotales).reduce((a,v) => a + (v||0), 0);
+  const liquidez = Object.keys(BANCO_META).reduce((a, b) => a + totalBanco(datos.bancosConfig, datos.cuentas, b), 0);
   const patrimonio = liquidez + cartera.valorActual;
 
   const saldoEmergencia = datos.cuentas

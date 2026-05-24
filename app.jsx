@@ -17,6 +17,64 @@ const BANCO_META = {
 const TARIFA_KM = 0.20;
 const BASE_EMERGENCIA = 2500;
 
+// Cuentas compartidas: tu participación siempre 50%
+const PARTICIPACION_COMPARTIDA = 0.5;
+
+// Teorías del ahorro: cada una define categorías con sus porcentajes objetivo
+// Las categorías se mapean a las clasificaciones de gastos: necesidad, deseo, ahorro, deuda, educacion, libertad, dar
+const TEORIAS_AHORRO = {
+  "50_30_20": {
+    nombre: "50 / 30 / 20",
+    autor: "Elizabeth Warren",
+    descripcion: "La clásica: 50% necesidades, 30% deseos, 20% ahorro.",
+    categorias: [
+      { id:"necesidad", label:"Necesidades", pct:50, color:"#00A3E0", incluye:["necesidad"] },
+      { id:"deseo",     label:"Deseos",      pct:30, color:"#FF6B35", incluye:["deseo"] },
+      { id:"ahorro",    label:"Ahorro",      pct:20, color:"#26D07C", incluye:["ahorro","deuda"] },
+    ],
+  },
+  "70_20_10": {
+    nombre: "70 / 20 / 10",
+    autor: "Pragmática",
+    descripcion: "70% gastos vitales, 20% ahorro, 10% deuda o donación.",
+    categorias: [
+      { id:"gastos",  label:"Gastos",  pct:70, color:"#00A3E0", incluye:["necesidad","deseo"] },
+      { id:"ahorro",  label:"Ahorro",  pct:20, color:"#26D07C", incluye:["ahorro"] },
+      { id:"deuda",   label:"Deuda/Dar", pct:10, color:"#FF6B35", incluye:["deuda","dar"] },
+    ],
+  },
+  "jars": {
+    nombre: "6 Botes (JARS)",
+    autor: "T. Harv Eker",
+    descripcion: "Divide cada euro en 6 cuentas con propósitos distintos.",
+    categorias: [
+      { id:"necesidad",  label:"Necesidades",       pct:55, color:"#00A3E0", incluye:["necesidad"] },
+      { id:"ocio",       label:"Ocio/Placer",       pct:10, color:"#FF6B35", incluye:["deseo"] },
+      { id:"ahorro",     label:"Ahorro l/p",        pct:10, color:"#26D07C", incluye:["ahorro"] },
+      { id:"educacion",  label:"Educación",         pct:10, color:"#E8A838", incluye:["educacion"] },
+      { id:"libertad",   label:"Libertad financiera", pct:10, color:"#B06FE8", incluye:["libertad"] },
+      { id:"dar",        label:"Dar / Donar",       pct:5,  color:"#8B9DBB", incluye:["dar"] },
+    ],
+  },
+  "80_20": {
+    nombre: "80 / 20",
+    autor: "Pareto / Ramit Sethi",
+    descripcion: "El máximo: 80% para vivir, 20% para ahorrar e invertir.",
+    categorias: [
+      { id:"gastos",  label:"Gastos",  pct:80, color:"#00A3E0", incluye:["necesidad","deseo","deuda"] },
+      { id:"ahorro",  label:"Ahorro",  pct:20, color:"#26D07C", incluye:["ahorro"] },
+    ],
+  },
+};
+
+// Clasificación por defecto según el tipo de gasto (catalogo de origen)
+const CLASIF_DEFAULT_POR_TIPO = {
+  fijos: "necesidad",
+  variables: "deseo",
+  ahorro: "ahorro",
+  puntuales: "deseo",
+};
+
 const PROPOSITOS = {
   operativa:  { label: "Operativa",       icono: "💳" },
   emergencia: { label: "Emergencia",      icono: "🛟" },
@@ -341,24 +399,43 @@ function asignadoBanco(cuentas, banco) {
   return cuentas.filter(c => c.banco === banco).reduce((a,c) => a + (c.asignado || 0), 0);
 }
 
-// Total del banco según su modo:
-// - "suma": total = suma de las cuentas
-// - "reserva": total = importe manual introducido por el usuario
+// Total del banco según su modo. Cuentas compartidas NO suman al total del banco.
 function totalBanco(bancosConfig, cuentas, banco) {
   const cfg = bancosConfig[banco] || { modo: "suma", total: 0 };
   if (cfg.modo === "reserva") return cfg.total || 0;
-  // modo suma: total = sumatorio de asignaciones de las cuentas
-  return cuentas.filter(c => c.banco === banco).reduce((a,c) => a + (c.asignado || 0), 0);
+  // modo suma: total = sumatorio de asignaciones de las cuentas PROPIAS (no compartidas)
+  return cuentas.filter(c => c.banco === banco && !c.compartida)
+    .reduce((a,c) => a + (c.asignado || 0), 0);
 }
 
-// Libre/remanente del banco:
-// - "suma": no aplica (siempre 0, no hay "libre" — el total ES la suma de cuentas)
-// - "reserva": libre = total manual − suma de asignaciones
+// Libre del banco. Las compartidas tampoco cuentan aquí (van por separado).
 function libreBanco(bancosConfig, cuentas, banco) {
   const cfg = bancosConfig[banco] || { modo: "suma", total: 0 };
   if (cfg.modo === "suma") return 0;
-  const asignado = cuentas.filter(c => c.banco === banco).reduce((a,c) => a + (c.asignado || 0), 0);
+  const asignado = cuentas.filter(c => c.banco === banco && !c.compartida)
+    .reduce((a,c) => a + (c.asignado || 0), 0);
   return (cfg.total || 0) - asignado;
+}
+
+// Aportación tuya en cuentas compartidas (50% de cada saldo)
+function patrimonioCompartido(cuentas) {
+  return cuentas
+    .filter(c => c.compartida)
+    .reduce((a, c) => a + ((c.asignado || 0) * PARTICIPACION_COMPARTIDA), 0);
+}
+
+// Saldo total compartido (100%, para mostrar el dinero en juego)
+function saldoCompartidoTotal(cuentas) {
+  return cuentas
+    .filter(c => c.compartida)
+    .reduce((a, c) => a + (c.asignado || 0), 0);
+}
+
+// Devuelve la clasificación (necesidad/deseo/ahorro/etc) de un gasto.
+// Si el gasto tiene `clasificacion` explícita la usa; si no, usa el default según el tipo.
+function clasificacionGasto(gasto, tipoOrigen) {
+  if (gasto && gasto.clasificacion) return gasto.clasificacion;
+  return CLASIF_DEFAULT_POR_TIPO[tipoOrigen] || "deseo";
 }
 
 // Inversiones
@@ -715,7 +792,12 @@ function BloqueBancos({ datos, onUpdateDatos }) {
     a + totalBanco(datos.bancosConfig, datos.cuentas, b), 0);
   const libreTotal = Object.keys(BANCO_META).reduce((a, b) =>
     a + libreBanco(datos.bancosConfig, datos.cuentas, b), 0);
-  const totalAsignado = datos.cuentas.reduce((a, c) => a + (c.asignado || 0), 0);
+  // Asignado: suma de cuentas propias (no compartidas)
+  const totalAsignado = datos.cuentas.filter(c => !c.compartida)
+    .reduce((a, c) => a + (c.asignado || 0), 0);
+  // Compartido: 50% de la suma de saldos compartidos
+  const totalCompartido = patrimonioCompartido(datos.cuentas);
+  const saldoCompartido = saldoCompartidoTotal(datos.cuentas);
 
   const setModoBanco = (banco, modo) => onUpdateDatos(d => {
     if (!d.bancosConfig[banco]) d.bancosConfig[banco] = { modo: "suma", total: 0 };
@@ -751,27 +833,35 @@ function BloqueBancos({ datos, onUpdateDatos }) {
         </div>
 
         {/* Resumen siempre visible */}
-        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8 }}>
+        <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr 1fr", gap:6 }}>
           <div style={{ textAlign:"center", background:"rgba(0,163,224,0.08)", borderRadius:8, padding:"8px 4px" }}>
-            <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:14, fontWeight:700, color:"#00A3E0" }}>
+            <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:12, fontWeight:700, color:"#00A3E0" }}>
               {totalLiquido.toLocaleString("es-ES",{minimumFractionDigits:0})}€
             </div>
-            <div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:"#6B7A99", marginTop:2 }}>Total líquido</div>
+            <div style={{ fontFamily:"'Syne',sans-serif", fontSize:8, color:"#6B7A99", marginTop:2 }}>Líquido</div>
           </div>
           <div style={{ textAlign:"center", background:"rgba(176,111,232,0.08)", borderRadius:8, padding:"8px 4px" }}>
-            <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:14, fontWeight:700, color:"#B06FE8" }}>
+            <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:12, fontWeight:700, color:"#B06FE8" }}>
+              {totalCompartido.toLocaleString("es-ES",{minimumFractionDigits:0})}€
+            </div>
+            <div style={{ fontFamily:"'Syne',sans-serif", fontSize:8, color:"#6B7A99", marginTop:2 }}>
+              🤝 50% ({saldoCompartido.toLocaleString("es-ES",{minimumFractionDigits:0})}€)
+            </div>
+          </div>
+          <div style={{ textAlign:"center", background:"rgba(255,107,53,0.08)", borderRadius:8, padding:"8px 4px" }}>
+            <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:12, fontWeight:700, color:"#FF6B35" }}>
               {totalAsignado.toLocaleString("es-ES",{minimumFractionDigits:0})}€
             </div>
-            <div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:"#6B7A99", marginTop:2 }}>Asignado</div>
+            <div style={{ fontFamily:"'Syne',sans-serif", fontSize:8, color:"#6B7A99", marginTop:2 }}>Asignado</div>
           </div>
           <div style={{ textAlign:"center",
             background: libreTotal >= 0 ? "rgba(38,208,124,0.08)" : "rgba(255,71,87,0.08)",
             borderRadius:8, padding:"8px 4px" }}>
-            <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:14, fontWeight:700,
+            <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:12, fontWeight:700,
               color: libreTotal >= 0 ? "#26D07C" : "#FF4757" }}>
               {libreTotal >= 0 ? "+" : ""}{libreTotal.toLocaleString("es-ES",{minimumFractionDigits:0})}€
             </div>
-            <div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:"#6B7A99", marginTop:2 }}>Libre</div>
+            <div style={{ fontFamily:"'Syne',sans-serif", fontSize:8, color:"#6B7A99", marginTop:2 }}>Libre</div>
           </div>
         </div>
       </div>
@@ -844,10 +934,12 @@ function BloqueBancos({ datos, onUpdateDatos }) {
                 {cuentasBanco.map(c => {
                   const prop = PROPOSITOS[c.proposito] || PROPOSITOS.otros;
                   const enEdicion = editandoNombre === c.id;
+                  const esCompartida = !!c.compartida;
                   return (
                     <div key={c.id} style={{
                       display:"flex", alignItems:"center", gap:6, padding:"6px 0",
                       borderBottom:"1px solid rgba(255,255,255,0.04)",
+                      background: esCompartida ? "rgba(176,111,232,0.04)" : "transparent",
                     }}>
                       <span style={{ fontSize:12, width:18, textAlign:"center" }}>{prop.icono}</span>
                       {enEdicion ? (
@@ -864,10 +956,19 @@ function BloqueBancos({ datos, onUpdateDatos }) {
                           flex:1, fontFamily:"'Syne',sans-serif", fontSize:12, color:"#CBD5E8",
                           cursor:"pointer", minWidth:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap",
                         }}>
+                          {esCompartida && <span style={{ marginRight:4 }}>🤝</span>}
                           {c.nombre}
-                          <span style={{ fontSize:9, color:"#6B7A99", marginLeft:5 }}>{prop.label}</span>
+                          <span style={{ fontSize:9, color:"#6B7A99", marginLeft:5 }}>
+                            {prop.label}{esCompartida ? " · 50%" : ""}
+                          </span>
                         </span>
                       )}
+                      {/* Botón pequeño para alternar compartida */}
+                      <button onClick={() => actualizarCuenta(c.id, { compartida: !esCompartida })} title={esCompartida ? "Quitar compartida" : "Marcar compartida"} style={{
+                        fontSize:11, padding:"2px 5px", borderRadius:4, border:"none", cursor:"pointer",
+                        background: esCompartida ? "rgba(176,111,232,0.2)" : "rgba(255,255,255,0.05)",
+                        color: esCompartida ? "#B06FE8" : "#6B7A99",
+                      }}>🤝</button>
                       <SelectorProposito value={c.proposito} onChange={p => actualizarCuenta(c.id, { proposito: p })}/>
                       <InputMoneda valor={c.asignado} onChange={v => actualizarCuenta(c.id, { asignado: v })} compact ancho={55}/>
                       <button onClick={() => eliminarCuenta(c.id)} style={{ background:"none", border:"none",
@@ -927,10 +1028,11 @@ function FormularioAnadirCuenta({ onGuardar, onCancelar, colorAccion="#26D07C" }
   const [nombre, setNombre]       = useState("");
   const [proposito, setProposito] = useState("operativa");
   const [asignado, setAsignado]   = useState(0);
+  const [compartida, setCompartida] = useState(false);
 
   const guardar = () => {
     if (!nombre.trim()) return;
-    onGuardar({ nombre: nombre.trim(), proposito, asignado });
+    onGuardar({ nombre: nombre.trim(), proposito, asignado, compartida });
   };
 
   return (
@@ -952,6 +1054,26 @@ function FormularioAnadirCuenta({ onGuardar, onCancelar, colorAccion="#26D07C" }
           }}>{p.icono} {p.label}</button>
         ))}
       </div>
+
+      {/* Toggle compartida */}
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
+        padding:"6px 0", marginBottom:8 }}>
+        <div>
+          <div style={{ fontFamily:"'Syne',sans-serif", fontSize:11, color:"#CBD5E8" }}>
+            🤝 Cuenta compartida
+          </div>
+          <div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:"#6B7A99", marginTop:1 }}>
+            no suma al banco · cuenta el 50% en patrimonio
+          </div>
+        </div>
+        <button onClick={() => setCompartida(c => !c)} style={{
+          padding:"3px 10px", borderRadius:16, border:"none", cursor:"pointer", fontSize:10,
+          fontFamily:"'JetBrains Mono',monospace", fontWeight:600,
+          background: compartida ? "rgba(176,111,232,0.2)" : "rgba(255,255,255,0.06)",
+          color: compartida ? "#B06FE8" : "#6B7A99",
+        }}>{compartida ? "SÍ" : "NO"}</button>
+      </div>
+
       <div style={{ display:"flex", gap:6 }}>
         <InputMoneda valor={asignado} onChange={setAsignado} compact ancho={70}/>
         <button onClick={guardar} style={{
@@ -2115,7 +2237,7 @@ function VistaInversiones({ datos, onUpdateDatos }) {
 // VISTA ANÁLISIS
 // ═══════════════════════════════════════════════════════
 
-function VistaAnalisis({ datos, claveM, mesNum }) {
+function VistaAnalisis({ datos, claveM, mesNum, onUpdateDatos }) {
   const totalIngresos = calcularIngresosMes(datos, claveM);
   const { fijos, vars, ahorro, puntuales, total: totalGastos } = calcularGastoMensualTotal(datos, claveM);
   const aportacion = calcularAportacionAnual(datos, mesNum);
@@ -2123,11 +2245,13 @@ function VistaAnalisis({ datos, claveM, mesNum }) {
   const tasaAhorro = totalIngresos > 0 ? (ahorro / totalIngresos) * 100 : 0;
 
   const cartera = calcularTotalCartera(datos.inversiones || []);
+  // Patrimonio: líquido propio + 50% compartido + inversiones
   const liquidez = Object.keys(BANCO_META).reduce((a, b) => a + totalBanco(datos.bancosConfig, datos.cuentas, b), 0);
-  const patrimonio = liquidez + cartera.valorActual;
+  const liquidezCompartida = patrimonioCompartido(datos.cuentas);
+  const patrimonio = liquidez + liquidezCompartida + cartera.valorActual;
 
   const saldoEmergencia = datos.cuentas
-    .filter(c => c.proposito === "emergencia")
+    .filter(c => c.proposito === "emergencia" && !c.compartida)
     .reduce((a,c) => a + (c.asignado||0), 0);
 
   // Distribución de gastos
@@ -2140,6 +2264,31 @@ function VistaAnalisis({ datos, claveM, mesNum }) {
     ...gastosPuntualesDeMes(datos, claveM),
   ].forEach(g => {
     if (totalGastosBanco[g.banco] !== undefined) totalGastosBanco[g.banco] += g.importe || 0;
+  });
+
+  // ─── Clasificación de gastos para teorías del ahorro ───
+  // Acumula los gastos por clasificación (necesidad/deseo/ahorro/etc.)
+  const porClasificacion = {};
+  const todosLosGastos = [];
+  gastosFijosDeMes(datos, claveM).forEach(g => {
+    const c = clasificacionGasto(g, "fijos");
+    porClasificacion[c] = (porClasificacion[c] || 0) + (g.importe || 0);
+    todosLosGastos.push({ ...g, tipoOrigen: "fijos", clasif: c });
+  });
+  gastosVariablesDeMes(datos, claveM).forEach(g => {
+    const c = clasificacionGasto(g, "variables");
+    porClasificacion[c] = (porClasificacion[c] || 0) + (g.importe || 0);
+    todosLosGastos.push({ ...g, tipoOrigen: "variables", clasif: c });
+  });
+  gastosAhorroDeMes(datos, claveM).forEach(g => {
+    const c = clasificacionGasto(g, "ahorro");
+    porClasificacion[c] = (porClasificacion[c] || 0) + (g.importe || 0);
+    todosLosGastos.push({ ...g, tipoOrigen: "ahorro", clasif: c });
+  });
+  gastosPuntualesDeMes(datos, claveM).forEach(g => {
+    const c = clasificacionGasto(g, "puntuales");
+    porClasificacion[c] = (porClasificacion[c] || 0) + (g.importe || 0);
+    todosLosGastos.push({ ...g, tipoOrigen: "puntuales", clasif: c });
   });
 
   return (
@@ -2157,13 +2306,21 @@ function VistaAnalisis({ datos, claveM, mesNum }) {
         </div>
         <div style={{ display:"flex", gap:6, marginTop:10 }}>
           <div style={{ flex: liquidez || 1, height:8, background:"#00A3E0", borderRadius:4 }}/>
-          <div style={{ flex: cartera.valorActual || 1, height:8, background:"#B06FE8", borderRadius:4 }}/>
+          {liquidezCompartida > 0 && (
+            <div style={{ flex: liquidezCompartida, height:8, background:"#B06FE8", borderRadius:4, opacity:0.7 }}/>
+          )}
+          <div style={{ flex: cartera.valorActual || 1, height:8, background:"#E8A838", borderRadius:4 }}/>
         </div>
-        <div style={{ display:"flex", justifyContent:"space-between", marginTop:6 }}>
-          <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:11, color:"#00A3E0" }}>
+        <div style={{ display:"flex", justifyContent:"space-between", marginTop:6, flexWrap:"wrap", gap:6 }}>
+          <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:"#00A3E0" }}>
             Líquido {liquidez.toLocaleString("es-ES",{minimumFractionDigits:0})}€
           </span>
-          <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:11, color:"#B06FE8" }}>
+          {liquidezCompartida > 0 && (
+            <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:"#B06FE8" }}>
+              🤝 {liquidezCompartida.toLocaleString("es-ES",{minimumFractionDigits:0})}€
+            </span>
+          )}
+          <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:"#E8A838" }}>
             Inversión {cartera.valorActual.toLocaleString("es-ES",{minimumFractionDigits:0})}€
           </span>
         </div>
@@ -2189,7 +2346,21 @@ function VistaAnalisis({ datos, claveM, mesNum }) {
         ))}
       </div>
 
-      {/* Distribución de gastos */}
+      {/* TEORÍAS DEL AHORRO */}
+      <BloqueTeoriasAhorro
+        gastos={todosLosGastos}
+        totalIngresos={totalIngresos}
+        onReclasificar={(tipoOrigen, gastoId, nuevaClasif) => onUpdateDatos(d => {
+          const lista = tipoOrigen === "puntuales"
+            ? (d.meses[claveM] && d.meses[claveM].puntuales) || []
+            : d[`catalogo${tipoOrigen.charAt(0).toUpperCase()}${tipoOrigen.slice(1)}`];
+          if (!lista) return;
+          const idx = lista.findIndex(g => g.id === gastoId);
+          if (idx >= 0) lista[idx].clasificacion = nuevaClasif;
+        })}
+      />
+
+      {/* Distribución de gastos (por tipo) */}
       <div style={{ background:"rgba(255,255,255,0.025)", borderRadius:14, padding:"14px 16px",
         border:"1px solid rgba(255,255,255,0.06)", marginBottom:12 }}>
         <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, fontWeight:700, color:"#6B7A99",
@@ -2241,6 +2412,182 @@ function VistaAnalisis({ datos, claveM, mesNum }) {
           );
         })}
       </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════
+// BLOQUE TEORÍAS DEL AHORRO
+// ═══════════════════════════════════════════════════════
+
+const CLASIFICACIONES_DISPONIBLES = [
+  { id:"necesidad", label:"Necesidad", color:"#00A3E0" },
+  { id:"deseo",     label:"Deseo",     color:"#FF6B35" },
+  { id:"ahorro",    label:"Ahorro",    color:"#26D07C" },
+  { id:"deuda",     label:"Deuda",     color:"#FF4757" },
+  { id:"educacion", label:"Educación", color:"#E8A838" },
+  { id:"libertad",  label:"Libertad",  color:"#B06FE8" },
+  { id:"dar",       label:"Dar",       color:"#8B9DBB" },
+];
+
+function BloqueTeoriasAhorro({ gastos, totalIngresos, onReclasificar }) {
+  const [teoriaSel, setTeoriaSel] = useState("50_30_20");
+  const [mostrarDetalle, setMostrarDetalle] = useState(false);
+  const teoria = TEORIAS_AHORRO[teoriaSel];
+
+  // Total real por cada categoría de la teoría
+  const totalGastos = gastos.reduce((a,g) => a + (g.importe || 0), 0);
+  // Base de comparación: usamos los ingresos (no los gastos) porque las teorías hablan
+  // de % sobre ingresos
+  const base = totalIngresos > 0 ? totalIngresos : totalGastos;
+
+  const totalesCategoria = teoria.categorias.map(cat => {
+    const real = gastos
+      .filter(g => cat.incluye.includes(g.clasif))
+      .reduce((a,g) => a + (g.importe || 0), 0);
+    const pctReal = base > 0 ? (real / base) * 100 : 0;
+    const objetivoEur = base * (cat.pct / 100);
+    return { ...cat, real, pctReal, objetivoEur };
+  });
+
+  return (
+    <div style={{ background:"rgba(255,255,255,0.025)", borderRadius:14,
+      border:"1px solid rgba(255,255,255,0.06)", marginBottom:12, overflow:"hidden" }}>
+
+      {/* Cabecera */}
+      <div style={{ padding:"14px 16px" }}>
+        <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, fontWeight:700, color:"#6B7A99",
+          letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:8 }}>
+          📐 Teoría del ahorro
+        </div>
+
+        {/* Selector de teoría */}
+        <div style={{ display:"flex", gap:4, flexWrap:"wrap", marginBottom:10 }}>
+          {Object.entries(TEORIAS_AHORRO).map(([id, t]) => (
+            <button key={id} onClick={() => setTeoriaSel(id)} style={{
+              padding:"4px 10px", borderRadius:6, border:"none", cursor:"pointer", fontSize:11,
+              fontFamily:"'Syne',sans-serif", fontWeight:600,
+              background: teoriaSel === id ? "rgba(38,208,124,0.2)" : "rgba(255,255,255,0.05)",
+              color: teoriaSel === id ? "#26D07C" : "#6B7A99",
+            }}>{t.nombre}</button>
+          ))}
+        </div>
+
+        {/* Descripción */}
+        <div style={{ fontFamily:"'Syne',sans-serif", fontSize:11, color:"#8B9DBB",
+          marginBottom:12, lineHeight:1.5, fontStyle:"italic" }}>
+          {teoria.descripcion}
+          <span style={{ fontSize:9, color:"#6B7A99", marginLeft:5 }}>— {teoria.autor}</span>
+        </div>
+
+        {/* Categorías con barras */}
+        {totalesCategoria.map(cat => {
+          const dentro = Math.abs(cat.pctReal - cat.pct) <= 5;
+          const excede = cat.pctReal > cat.pct + 5;
+          return (
+            <div key={cat.id} style={{ marginBottom:12 }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:4 }}>
+                <div>
+                  <span style={{ fontFamily:"'Syne',sans-serif", fontSize:12, fontWeight:600, color:"#CBD5E8" }}>
+                    {cat.label}
+                  </span>
+                  <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9,
+                    color:"#6B7A99", marginLeft:6 }}>
+                    meta {cat.pct}%
+                  </span>
+                </div>
+                <div style={{ textAlign:"right" }}>
+                  <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:13, fontWeight:700,
+                    color: excede ? "#FF4757" : dentro ? "#26D07C" : "#FF8C42" }}>
+                    {cat.pctReal.toFixed(1)}%
+                  </span>
+                </div>
+              </div>
+              <BarraProgreso valor={cat.pctReal} maximo={100} color={excede ? "#FF4757" : cat.color} altura={6}/>
+              <div style={{ display:"flex", justifyContent:"space-between", marginTop:3 }}>
+                <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:"#6B7A99" }}>
+                  real {cat.real.toLocaleString("es-ES",{minimumFractionDigits:0})}€
+                </span>
+                <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:"#6B7A99" }}>
+                  objetivo {cat.objetivoEur.toLocaleString("es-ES",{minimumFractionDigits:0})}€
+                </span>
+              </div>
+            </div>
+          );
+        })}
+
+        {/* Toggle para ver/editar la clasificación de cada gasto */}
+        <button onClick={() => setMostrarDetalle(d => !d)} style={{
+          width:"100%", marginTop:6, padding:"8px", borderRadius:8, border:"none", cursor:"pointer",
+          background:"rgba(255,255,255,0.04)", color:"#8B9DBB",
+          fontFamily:"'Syne',sans-serif", fontSize:11, fontWeight:600,
+        }}>
+          {mostrarDetalle ? "▲ Ocultar clasificación de gastos" : "▼ Ver / re-clasificar gastos"}
+        </button>
+
+        {/* Detalle: cada gasto con su clasificación editable */}
+        {mostrarDetalle && (
+          <div style={{ marginTop:10, padding:"10px", background:"rgba(255,255,255,0.02)", borderRadius:8 }}>
+            <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, color:"#6B7A99", marginBottom:8, lineHeight:1.4 }}>
+              Por defecto: fijos = necesidad, variables = deseo, ahorro = ahorro. Puedes re-clasificar gastos individualmente (ej. el gimnasio como deseo en lugar de necesidad).
+            </div>
+            {gastos.map(g => (
+              <div key={`${g.tipoOrigen}-${g.id}`} style={{
+                display:"flex", alignItems:"center", gap:6, padding:"5px 0",
+                borderBottom:"1px solid rgba(255,255,255,0.04)",
+              }}>
+                <span style={{
+                  fontFamily:"'Syne',sans-serif", fontSize:11, color:"#CBD5E8", flex:1, minWidth:0,
+                  overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap",
+                }}>{g.nombre}</span>
+                <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:"#6B7A99" }}>
+                  {(g.importe||0).toLocaleString("es-ES",{minimumFractionDigits:0})}€
+                </span>
+                <SelectorClasificacion value={g.clasif}
+                  onChange={c => onReclasificar(g.tipoOrigen, g.id, c)}/>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function SelectorClasificacion({ value, onChange }) {
+  const [abierto, setAbierto] = useState(false);
+  const actual = CLASIFICACIONES_DISPONIBLES.find(c => c.id === value) || CLASIFICACIONES_DISPONIBLES[0];
+
+  return (
+    <div style={{ position:"relative" }}>
+      <button onClick={(e) => { e.stopPropagation(); setAbierto(a => !a); }} style={{
+        fontFamily:"'Syne',sans-serif", fontSize:9, fontWeight:600,
+        color: actual.color, background: actual.color + "20",
+        padding:"2px 6px", borderRadius:4, border:"none", cursor:"pointer",
+        display:"flex", alignItems:"center", gap:3,
+      }}>
+        {actual.label} <span style={{ opacity:0.5, fontSize:7 }}>▾</span>
+      </button>
+      {abierto && (
+        <>
+          <div onClick={() => setAbierto(false)} style={{ position:"fixed", inset:0, zIndex:50 }}/>
+          <div style={{
+            position:"absolute", top:"calc(100% + 4px)", right:0, zIndex:51,
+            background:"#0F1521", border:"1px solid rgba(255,255,255,0.1)",
+            borderRadius:8, padding:4, boxShadow:"0 8px 24px rgba(0,0,0,0.4)", minWidth:120,
+          }}>
+            {CLASIFICACIONES_DISPONIBLES.map(c => (
+              <button key={c.id} onClick={() => { onChange(c.id); setAbierto(false); }} style={{
+                display:"block", width:"100%", padding:"5px 10px", borderRadius:5,
+                border:"none", cursor:"pointer",
+                background: c.id === value ? c.color + "15" : "transparent",
+                fontFamily:"'Syne',sans-serif", fontSize:11, color: c.color,
+                textAlign:"left", fontWeight:600,
+              }}>{c.label}</button>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -2450,7 +2797,7 @@ function App() {
         {vista === "gastos"      && <VistaGastos      datos={datos} claveM={claveM} onUpdateDatos={onUpdateDatos}/>}
         {vista === "anuales"     && <VistaAnuales     datos={datos} claveM={claveM} onUpdateDatos={onUpdateDatos}/>}
         {vista === "inversiones" && <VistaInversiones datos={datos} onUpdateDatos={onUpdateDatos}/>}
-        {vista === "analisis"    && <VistaAnalisis    datos={datos} claveM={claveM} mesNum={nav.mes}/>}
+        {vista === "analisis"    && <VistaAnalisis    datos={datos} claveM={claveM} mesNum={nav.mes} onUpdateDatos={onUpdateDatos}/>}
       </div>
     </div>
   );

@@ -278,6 +278,56 @@ function importarBackup(file, onDone) {
 function claveMes(m, y) { return `${y}-${String(m+1).padStart(2,"0")}`; }
 
 // ═══════════════════════════════════════════════════════
+// CIERRE / REAPERTURA DE MES
+// ═══════════════════════════════════════════════════════
+
+// Estado actual: ¿está el mes cerrado?
+function mesEstaCerrado(datos, claveM) {
+  const mes = datos.meses[claveM];
+  return !!(mes && mes.cerrado);
+}
+
+// Crear snapshot del estado actual del mes: congela todos los catálogos,
+// ingresos base, bancos, cuentas, anuales (y sus pagados), inversiones, todo.
+function crearSnapshotMes(datos) {
+  return {
+    catalogoFijos:     JSON.parse(JSON.stringify(datos.catalogoFijos)),
+    catalogoVariables: JSON.parse(JSON.stringify(datos.catalogoVariables)),
+    catalogoAhorro:    JSON.parse(JSON.stringify(datos.catalogoAhorro)),
+    cuentas:           JSON.parse(JSON.stringify(datos.cuentas)),
+    bancosConfig:      JSON.parse(JSON.stringify(datos.bancosConfig)),
+    ingresosBase:      JSON.parse(JSON.stringify(datos.ingresosBase)),
+    reservaImpCuenta:  datos.reservaImpCuenta,
+    porcentajeExtra:   datos.porcentajeExtra,
+    anuales:           JSON.parse(JSON.stringify(datos.anuales)),
+    inversiones:       JSON.parse(JSON.stringify(datos.inversiones || [])),
+  };
+}
+
+// Devuelve el "subdataset" con el que opera el mes:
+// - si está cerrado, devuelve un mix entre los datos globales (estructura del mes en sí)
+//   y el snapshot guardado (catálogos congelados, anuales congelados, etc.)
+// - si está abierto, devuelve datos tal cual
+function datosEfectivosMes(datos, claveM) {
+  const mes = datos.meses[claveM];
+  if (!mes || !mes.cerrado || !mes.snapshot) return datos;
+  // Mezclamos: del snapshot vienen catálogos/cuentas/etc.; del propio mes vienen pagos/puntuales/km
+  return {
+    ...datos,
+    catalogoFijos:     mes.snapshot.catalogoFijos,
+    catalogoVariables: mes.snapshot.catalogoVariables,
+    catalogoAhorro:    mes.snapshot.catalogoAhorro,
+    cuentas:           mes.snapshot.cuentas,
+    bancosConfig:      mes.snapshot.bancosConfig,
+    ingresosBase:      mes.snapshot.ingresosBase,
+    reservaImpCuenta:  mes.snapshot.reservaImpCuenta,
+    porcentajeExtra:   mes.snapshot.porcentajeExtra,
+    anuales:           mes.snapshot.anuales,
+    inversiones:       mes.snapshot.inversiones,
+  };
+}
+
+// ═══════════════════════════════════════════════════════
 // CÁLCULOS
 // ═══════════════════════════════════════════════════════
 
@@ -285,25 +335,27 @@ function getMes(datos, claveM) {
   return datos.meses[claveM] || estadoMesVacio();
 }
 
-// Lista de gastos efectivos de un mes (con pagado merged):
-// los catálogos son globales, pero el pagado/no-pagado se lee del mes
+// Lista de gastos efectivos de un mes. Si el mes está cerrado, usa el snapshot.
 function gastosFijosDeMes(datos, claveM) {
+  const d = datosEfectivosMes(datos, claveM);
   const mes = getMes(datos, claveM);
-  return datos.catalogoFijos
+  return d.catalogoFijos
     .filter(g => g.importe > 0)
-    .map(g => ({ ...g, pagado: mes.pagosFijos[g.id] || false }));
+    .map(g => ({ ...g, pagado: (mes.pagosFijos && mes.pagosFijos[g.id]) || false }));
 }
 function gastosVariablesDeMes(datos, claveM) {
+  const d = datosEfectivosMes(datos, claveM);
   const mes = getMes(datos, claveM);
-  return datos.catalogoVariables
+  return d.catalogoVariables
     .filter(g => g.importe > 0)
-    .map(g => ({ ...g, pagado: mes.pagosVariables[g.id] || false }));
+    .map(g => ({ ...g, pagado: (mes.pagosVariables && mes.pagosVariables[g.id]) || false }));
 }
 function gastosAhorroDeMes(datos, claveM) {
+  const d = datosEfectivosMes(datos, claveM);
   const mes = getMes(datos, claveM);
-  return datos.catalogoAhorro
+  return d.catalogoAhorro
     .filter(g => g.importe > 0)
-    .map(g => ({ ...g, pagado: mes.pagosAhorro[g.id] || false }));
+    .map(g => ({ ...g, pagado: (mes.pagosAhorro && mes.pagosAhorro[g.id]) || false }));
 }
 
 function gastosPuntualesDeMes(datos, claveM) {
@@ -332,9 +384,10 @@ function calcularIngresoKm(datos, claveM) {
 }
 
 function calcularIngresosMes(datos, claveM) {
+  const d = datosEfectivosMes(datos, claveM);
   const mes = getMes(datos, claveM);
   // Suma de todas las fuentes fijas (ingresosBase es ahora un array)
-  const totalBase = (datos.ingresosBase || []).reduce((a, fuente) => a + (fuente.importe || 0), 0);
+  const totalBase = (d.ingresosBase || []).reduce((a, fuente) => a + (fuente.importe || 0), 0);
   // Suma de fuentes del mes (extras puntuales que el usuario haya añadido)
   const totalMes = Object.values(mes.ingresosMes || {}).reduce((a, v) => a + (v || 0), 0);
   return totalBase + totalMes + calcularIngresoKm(datos, claveM);
@@ -383,13 +436,14 @@ function calcularReservaEfectiva(datos) {
 }
 
 // Fórmula del Excel para la aportación mensual a gastos anuales
-function calcularAportacionAnual(datos, mesNum) {
-  const pendiente = totalAnualesPendiente(datos);
-  const reserva = calcularReservaEfectiva(datos);
+function calcularAportacionAnual(datos, mesNum, claveM) {
+  // Si el mes está cerrado, usamos su snapshot (anuales, ingresos, reserva todos congelados)
+  const d = claveM ? datosEfectivosMes(datos, claveM) : datos;
+  const pendiente = totalAnualesPendiente(d);
+  const reserva = calcularReservaEfectiva(d);
   const mesesRestantes = Math.max(1, 11 - mesNum);  // 0=enero…11=diciembre
-  // La "extra" es la nómina extra anual: tomamos la primera fuente fija como nómina de referencia
-  const nominaRef = (datos.ingresosBase && datos.ingresosBase[0]) ? (datos.ingresosBase[0].importe || 0) : 0;
-  const pct = (datos.porcentajeExtra || 0) / 100;
+  const nominaRef = (d.ingresosBase && d.ingresosBase[0]) ? (d.ingresosBase[0].importe || 0) : 0;
+  const pct = (d.porcentajeExtra || 0) / 100;
   const extrasFactor = nominaRef * pct;
   return (pendiente - reserva - extrasFactor) / mesesRestantes;
 }
@@ -1094,20 +1148,23 @@ function FormularioAnadirCuenta({ onGuardar, onCancelar, colorAccion="#26D07C" }
 // ═══════════════════════════════════════════════════════
 
 function VistaInicio({ datos, claveM, mesNum, onUpdateDatos }) {
+  // Datos efectivos del mes (si cerrado, usa snapshot)
+  const dEf = datosEfectivosMes(datos, claveM);
+
   const totalIngresos = calcularIngresosMes(datos, claveM);
   const ingresoKm = calcularIngresoKm(datos, claveM);
-  const aportacion = calcularAportacionAnual(datos, mesNum);
-  const pendienteAnual = totalAnualesPendiente(datos);
+  const aportacion = calcularAportacionAnual(datos, mesNum, claveM);
+  const pendienteAnual = totalAnualesPendiente(dEf);
 
   const [anadiendoFuente, setAnadiendoFuente] = useState(false);
 
   const mes = getMes(datos, claveM);
 
-  const cuentaReservaImp = datos.cuentas.find(c => c.id === datos.reservaImpCuenta);
+  const cuentaReservaImp = dEf.cuentas.find(c => c.id === dEf.reservaImpCuenta);
   const saldoReservaImp = cuentaReservaImp ? cuentaReservaImp.asignado : 0;
-  const pct = datos.porcentajeExtra || 0;
+  const pct = dEf.porcentajeExtra || 0;
 
-  // Setters
+  // Setters (no se llaman si el mes está cerrado, gracias al pointer-events:none de App)
   const setIngresoBaseCampo = (id, campo, valor) => onUpdateDatos(d => {
     d.ingresosBase = d.ingresosBase.map(f => f.id === id ? { ...f, [campo]: valor } : f);
   });
@@ -1133,7 +1190,7 @@ function VistaInicio({ datos, claveM, mesNum, onUpdateDatos }) {
     <div className="slide-in">
 
       {/* 1. BANCOS (primer bloque, info principal) */}
-      <BloqueBancos datos={datos} onUpdateDatos={onUpdateDatos}/>
+      <BloqueBancos datos={dEf} onUpdateDatos={onUpdateDatos}/>
 
       {/* 2. INGRESOS DEL MES */}
       <div style={{ background:"rgba(255,255,255,0.025)", borderRadius:14, padding:"14px 16px", marginBottom:12,
@@ -1145,7 +1202,7 @@ function VistaInicio({ datos, claveM, mesNum, onUpdateDatos }) {
         </div>
 
         {/* Fuentes fijas (editables, borrables) */}
-        {(datos.ingresosBase || []).map(fuente => (
+        {(dEf.ingresosBase || []).map(fuente => (
           <FilaIngreso key={fuente.id} fuente={fuente}
             onNombre={n => setIngresoBaseCampo(fuente.id, "nombre", n)}
             onImporte={v => setIngresoBaseCampo(fuente.id, "importe", v)}
@@ -1536,11 +1593,14 @@ function VistaAnuales({ datos, claveM, onUpdateDatos }) {
   const [anadiendoConceptoEn, setAnadiendoConceptoEn] = useState(null);  // categoria id
   const [anadiendoBloque, setAnadiendoBloque] = useState(false);
 
-  const totalAño = totalAnualesYear(datos);
-  const totalPagado = totalAnualesPagado(datos);
+  // Datos efectivos: si el mes está cerrado, usa el snapshot
+  const dEf = datosEfectivosMes(datos, claveM);
+
+  const totalAño = totalAnualesYear(dEf);
+  const totalPagado = totalAnualesPagado(dEf);
   const totalPendiente = totalAño - totalPagado;
 
-  const añoCatalogo = datos.anuales.año;
+  const añoCatalogo = dEf.anuales.año;
   const añoAhora = añoActual();
 
   const setConceptoImporte = (categoria, conceptoId, valor) => onUpdateDatos(d => {
@@ -1682,9 +1742,9 @@ function VistaAnuales({ datos, claveM, onUpdateDatos }) {
       </div>
 
       {/* Bloques */}
-      {Object.entries(datos.anuales.catalogo).map(([cat, info]) => {
+      {Object.entries(dEf.anuales.catalogo).map(([cat, info]) => {
         const total = totalCategoriaAnual(info);
-        const pagado = pagadoCategoriaAnual(datos, cat);
+        const pagado = pagadoCategoriaAnual(dEf, cat);
         const pendiente = total - pagado;
 
         return (
@@ -2238,19 +2298,22 @@ function VistaInversiones({ datos, onUpdateDatos }) {
 // ═══════════════════════════════════════════════════════
 
 function VistaAnalisis({ datos, claveM, mesNum, onUpdateDatos }) {
+  // Datos efectivos (snapshot si el mes está cerrado)
+  const dEf = datosEfectivosMes(datos, claveM);
+
   const totalIngresos = calcularIngresosMes(datos, claveM);
   const { fijos, vars, ahorro, puntuales, total: totalGastos } = calcularGastoMensualTotal(datos, claveM);
-  const aportacion = calcularAportacionAnual(datos, mesNum);
+  const aportacion = calcularAportacionAnual(datos, mesNum, claveM);
   const margen = totalIngresos - totalGastos;
   const tasaAhorro = totalIngresos > 0 ? (ahorro / totalIngresos) * 100 : 0;
 
-  const cartera = calcularTotalCartera(datos.inversiones || []);
+  const cartera = calcularTotalCartera(dEf.inversiones || []);
   // Patrimonio: líquido propio + 50% compartido + inversiones
-  const liquidez = Object.keys(BANCO_META).reduce((a, b) => a + totalBanco(datos.bancosConfig, datos.cuentas, b), 0);
-  const liquidezCompartida = patrimonioCompartido(datos.cuentas);
+  const liquidez = Object.keys(BANCO_META).reduce((a, b) => a + totalBanco(dEf.bancosConfig, dEf.cuentas, b), 0);
+  const liquidezCompartida = patrimonioCompartido(dEf.cuentas);
   const patrimonio = liquidez + liquidezCompartida + cartera.valorActual;
 
-  const saldoEmergencia = datos.cuentas
+  const saldoEmergencia = dEf.cuentas
     .filter(c => c.proposito === "emergencia" && !c.compartida)
     .reduce((a,c) => a + (c.asignado||0), 0);
 
@@ -2731,6 +2794,26 @@ function App() {
     setNav({ mes: d.getMonth(), año: d.getFullYear() });
   };
 
+  // Cerrar / reabrir mes
+  const cerrarMes = () => {
+    if (!confirm("¿Cerrar este mes? Todos los valores quedarán congelados (gastos, ingresos, bancos, anuales…). Podrás reabrirlo después.")) return;
+    onUpdateDatos(d => {
+      if (!d.meses[claveM]) d.meses[claveM] = estadoMesVacio();
+      d.meses[claveM].cerrado = true;
+      d.meses[claveM].snapshot = crearSnapshotMes(d);
+    });
+  };
+  const reabrirMes = () => {
+    if (!confirm("¿Reabrir este mes? Volverá a leer los datos globales actuales (los importes/saldos/etc. pueden ser distintos a los que tenías cuando lo cerraste).")) return;
+    onUpdateDatos(d => {
+      if (d.meses[claveM]) {
+        d.meses[claveM].cerrado = false;
+        delete d.meses[claveM].snapshot;
+      }
+    });
+  };
+  const cerrado = datos ? mesEstaCerrado(datos, claveM) : false;
+
   if (!datos) return (
     <div style={{ background:"#0A0E17", minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center" }}>
       <div className="pulse" style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:13, color:"#26D07C" }}>
@@ -2761,12 +2844,22 @@ function App() {
           <button onClick={()=>irMes(-1)} style={{ background:"rgba(255,255,255,0.06)", border:"none",
             color:"#6B7A99", cursor:"pointer", fontSize:16, width:32, height:32, borderRadius:8,
             display:"flex", alignItems:"center", justifyContent:"center" }}>‹</button>
-          <div style={{ textAlign:"center" }}>
-            <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:"#6B7A99",
-              letterSpacing:"0.12em", textTransform:"uppercase" }}>control mensual</div>
-            <div style={{ fontFamily:"'Syne',sans-serif", fontSize:20, fontWeight:800, letterSpacing:"-0.02em" }}>
-              {MESES[nav.mes]} <span style={{ color:"#6B7A99", fontWeight:400, fontSize:16 }}>{nav.año}</span>
+          <div style={{ textAlign:"center", display:"flex", alignItems:"center", gap:8 }}>
+            <div>
+              <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:"#6B7A99",
+                letterSpacing:"0.12em", textTransform:"uppercase" }}>control mensual</div>
+              <div style={{ fontFamily:"'Syne',sans-serif", fontSize:20, fontWeight:800, letterSpacing:"-0.02em" }}>
+                {MESES[nav.mes]} <span style={{ color:"#6B7A99", fontWeight:400, fontSize:16 }}>{nav.año}</span>
+              </div>
             </div>
+            {/* Candado: indicador clicable de mes cerrado/abierto */}
+            <button onClick={cerrado ? reabrirMes : cerrarMes} title={cerrado ? "Reabrir mes" : "Cerrar mes"} style={{
+              background: cerrado ? "rgba(255,140,66,0.18)" : "rgba(255,255,255,0.06)",
+              border: cerrado ? "1px solid #FF8C4250" : "1px solid transparent",
+              color: cerrado ? "#FF8C42" : "#6B7A99",
+              cursor:"pointer", fontSize:16, width:34, height:34, borderRadius:8,
+              display:"flex", alignItems:"center", justifyContent:"center",
+            }}>{cerrado ? "🔒" : "🔓"}</button>
           </div>
           <div style={{ display:"flex", alignItems:"center", gap:6 }}>
             <button onClick={()=>irMes(1)} style={{ background:"rgba(255,255,255,0.06)", border:"none",
@@ -2792,7 +2885,32 @@ function App() {
         </div>
       </div>
 
-      <div style={{ padding:"16px 16px 0" }}>
+      {/* Banner de mes cerrado */}
+      {cerrado && (
+        <div style={{
+          background:"linear-gradient(90deg, rgba(255,140,66,0.15), rgba(255,140,66,0.06))",
+          border:"1px solid rgba(255,140,66,0.3)", borderRadius:10,
+          margin:"12px 16px 0", padding:"10px 14px",
+          display:"flex", alignItems:"center", gap:10,
+        }}>
+          <span style={{ fontSize:18 }}>🔒</span>
+          <div style={{ flex:1 }}>
+            <div style={{ fontFamily:"'Syne',sans-serif", fontSize:12, fontWeight:700, color:"#FF8C42" }}>
+              Mes cerrado · sólo lectura
+            </div>
+            <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, color:"#8B9DBB", marginTop:2 }}>
+              Pulsa el candado de arriba para reabrir y editar
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Contenido de la vista (capa pointer-events:none si está cerrado) */}
+      <div style={{
+        padding:"16px 16px 0",
+        pointerEvents: cerrado ? "none" : "auto",
+        opacity: cerrado ? 0.85 : 1,
+      }}>
         {vista === "inicio"      && <VistaInicio      datos={datos} claveM={claveM} mesNum={nav.mes} onUpdateDatos={onUpdateDatos}/>}
         {vista === "gastos"      && <VistaGastos      datos={datos} claveM={claveM} onUpdateDatos={onUpdateDatos}/>}
         {vista === "anuales"     && <VistaAnuales     datos={datos} claveM={claveM} onUpdateDatos={onUpdateDatos}/>}

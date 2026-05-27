@@ -2192,9 +2192,11 @@ function FormularioAnadirInversion({ onGuardar, onCancelar }) {
   );
 }
 
-function VistaInversiones({ datos, onUpdateDatos }) {
+function VistaInversiones({ datos, claveM, onUpdateDatos }) {
   const [anadiendo, setAnadiendo] = useState(false);
-  const inversiones = datos.inversiones || [];
+  // Datos efectivos: si el mes tiene snapshot, las inversiones vienen de ahí
+  const dEf = claveM ? datosEfectivosMes(datos, claveM) : datos;
+  const inversiones = dEf.inversiones || [];
   const total = calcularTotalCartera(inversiones);
   const ganando = total.plusvalia >= 0;
   const pctTotal = total.invertido > 0 ? (total.plusvalia / total.invertido) * 100 : 0;
@@ -2996,7 +2998,7 @@ function App() {
         {vista === "inicio"      && <VistaInicio      datos={datos} claveM={claveM} mesNum={nav.mes} onUpdateDatos={onUpdateDatosMes}/>}
         {vista === "gastos"      && <VistaGastos      datos={datos} claveM={claveM} onUpdateDatos={onUpdateDatosMes}/>}
         {vista === "anuales"     && <VistaAnuales     datos={datos} claveM={claveM} onUpdateDatos={onUpdateDatosMes}/>}
-        {vista === "inversiones" && <VistaInversiones datos={datos} onUpdateDatos={onUpdateDatosMes}/>}
+        {vista === "inversiones" && <VistaInversiones datos={datos} claveM={claveM} onUpdateDatos={onUpdateDatosMes}/>}
         {vista === "analisis"    && <VistaAnalisis    datos={datos} claveM={claveM} mesNum={nav.mes} onUpdateDatos={onUpdateDatosMes}/>}
       </div>
     </div>

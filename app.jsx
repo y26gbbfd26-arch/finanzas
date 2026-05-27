@@ -174,7 +174,7 @@ const CUENTAS_DEFAULT = [
 // STORAGE Y ESTADO
 // ═══════════════════════════════════════════════════════
 
-const STORAGE_KEY = "finanzas-v8";
+const STORAGE_KEY = "finanzas-v9";
 
 function añoActual() { return new Date().getFullYear(); }
 
@@ -281,14 +281,23 @@ function claveMes(m, y) { return `${y}-${String(m+1).padStart(2,"0")}`; }
 // CIERRE / REAPERTURA DE MES
 // ═══════════════════════════════════════════════════════
 
-// Estado actual: ¿está el mes cerrado?
+// Un mes está "cerrado/congelado" si tiene snapshot guardado.
+// Esto puede ser por cierre manual del usuario (con candado) o por auto-congelación
+// al editar un mes posterior.
 function mesEstaCerrado(datos, claveM) {
+  const mes = datos.meses[claveM];
+  return !!(mes && mes.snapshot);
+}
+
+// Cierre manual: el usuario indica explícitamente que este mes queda cerrado.
+// Solo afecta a la UI (sólo lectura), no a la propagación.
+function mesCerradoManual(datos, claveM) {
   const mes = datos.meses[claveM];
   return !!(mes && mes.cerrado);
 }
 
 // Crear snapshot del estado actual del mes: congela todos los catálogos,
-// ingresos base, bancos, cuentas, anuales (y sus pagados), inversiones, todo.
+// ingresos base, bancos, cuentas, anuales (y sus pagados), inversiones.
 function crearSnapshotMes(datos) {
   return {
     catalogoFijos:     JSON.parse(JSON.stringify(datos.catalogoFijos)),
@@ -304,14 +313,11 @@ function crearSnapshotMes(datos) {
   };
 }
 
-// Devuelve el "subdataset" con el que opera el mes:
-// - si está cerrado, devuelve un mix entre los datos globales (estructura del mes en sí)
-//   y el snapshot guardado (catálogos congelados, anuales congelados, etc.)
-// - si está abierto, devuelve datos tal cual
+// Devuelve los datos efectivos de un mes: si el mes tiene snapshot, mezcla los catálogos
+// del snapshot con los datos del mes en sí (km, pagados, puntuales). Si no, devuelve datos tal cual.
 function datosEfectivosMes(datos, claveM) {
   const mes = datos.meses[claveM];
-  if (!mes || !mes.cerrado || !mes.snapshot) return datos;
-  // Mezclamos: del snapshot vienen catálogos/cuentas/etc.; del propio mes vienen pagos/puntuales/km
+  if (!mes || !mes.snapshot) return datos;
   return {
     ...datos,
     catalogoFijos:     mes.snapshot.catalogoFijos,
@@ -325,6 +331,18 @@ function datosEfectivosMes(datos, claveM) {
     anuales:           mes.snapshot.anuales,
     inversiones:       mes.snapshot.inversiones,
   };
+}
+
+// AUTO-CONGELACIÓN: antes de aplicar un cambio en un mes, congela todos los meses
+// ANTERIORES que aún no estén congelados, para que el cambio no les afecte retroactivamente.
+// Las claves de mes tienen formato "YYYY-MM" que ordena alfabéticamente igual que cronológicamente.
+function congelarMesesAnteriores(d, claveActual) {
+  // Recorremos todas las claves de meses ya creadas
+  Object.keys(d.meses).forEach(k => {
+    if (k < claveActual && !d.meses[k].snapshot) {
+      d.meses[k].snapshot = crearSnapshotMes(d);
+    }
+  });
 }
 
 // ═══════════════════════════════════════════════════════
@@ -2789,30 +2807,94 @@ function App() {
     });
   }, []);
 
+  // Wrapper específico para cambios desde una vista de mes M:
+  // - ANTES de aplicar el cambio, congela todos los meses anteriores a M
+  //   que aún no tuvieran snapshot. Así los cambios solo afectan a M y futuros.
+  // - Si el mes M ya tiene snapshot (por auto-congelación previa), aplica
+  //   los cambios sobre ese snapshot (para no afectar a meses posteriores que
+  //   también puedan tener su propio snapshot).
+  // - Si M no tiene snapshot (es el "presente" o un futuro sin congelar),
+  //   los cambios van a los catálogos globales y se propagan al futuro.
+  const onUpdateDatosMes = useCallback((fn) => {
+    setDatos(d => {
+      const copia = JSON.parse(JSON.stringify(d || datosVacios()));
+      const claveActual = claveMes(nav.mes, nav.año);
+      // Primero: congelar meses anteriores que no tuvieran snapshot
+      congelarMesesAnteriores(copia, claveActual);
+      // Si este mes ya tiene snapshot, redirigimos el cambio al snapshot
+      const mes = copia.meses[claveActual];
+      if (mes && mes.snapshot) {
+        // Construimos un "objeto puente" que para los catálogos apunta al snapshot
+        // pero para todo lo demás (meses, etc.) apunta al objeto raíz.
+        const puente = {
+          // Estos campos los va a leer y escribir la función fn, redirigidos al snapshot:
+          catalogoFijos:     mes.snapshot.catalogoFijos,
+          catalogoVariables: mes.snapshot.catalogoVariables,
+          catalogoAhorro:    mes.snapshot.catalogoAhorro,
+          cuentas:           mes.snapshot.cuentas,
+          bancosConfig:      mes.snapshot.bancosConfig,
+          ingresosBase:      mes.snapshot.ingresosBase,
+          reservaImpCuenta:  mes.snapshot.reservaImpCuenta,
+          porcentajeExtra:   mes.snapshot.porcentajeExtra,
+          anuales:           mes.snapshot.anuales,
+          inversiones:       mes.snapshot.inversiones,
+          // Estos siguen siendo los de la raíz (para pagos, puntuales, km del mes):
+          meses:             copia.meses,
+        };
+        fn(puente);
+        // Volcamos las modificaciones del puente al snapshot
+        mes.snapshot.catalogoFijos     = puente.catalogoFijos;
+        mes.snapshot.catalogoVariables = puente.catalogoVariables;
+        mes.snapshot.catalogoAhorro    = puente.catalogoAhorro;
+        mes.snapshot.cuentas           = puente.cuentas;
+        mes.snapshot.bancosConfig      = puente.bancosConfig;
+        mes.snapshot.ingresosBase      = puente.ingresosBase;
+        mes.snapshot.reservaImpCuenta  = puente.reservaImpCuenta;
+        mes.snapshot.porcentajeExtra   = puente.porcentajeExtra;
+        mes.snapshot.anuales           = puente.anuales;
+        mes.snapshot.inversiones       = puente.inversiones;
+      } else {
+        // Sin snapshot: cambios al catálogo global (propagan a futuros)
+        fn(copia);
+      }
+      return copia;
+    });
+  }, [nav.mes, nav.año]);
+
   const irMes = (delta) => {
     const d = new Date(nav.año, nav.mes + delta);
     setNav({ mes: d.getMonth(), año: d.getFullYear() });
   };
 
-  // Cerrar / reabrir mes
+  // Cerrar / reabrir mes manualmente (sólo afecta a la UI: bloquea edición).
+  // La auto-congelación ya hace que el pasado sea seguro; este candado es por si
+  // el usuario quiere asegurar también el mes actual contra cambios accidentales.
   const cerrarMes = () => {
-    if (!confirm("¿Cerrar este mes? Todos los valores quedarán congelados (gastos, ingresos, bancos, anuales…). Podrás reabrirlo después.")) return;
+    if (!confirm("¿Cerrar este mes? Quedará en sólo-lectura hasta que lo reabras. (Los meses anteriores ya están protegidos automáticamente al editar futuros.)")) return;
     onUpdateDatos(d => {
       if (!d.meses[claveM]) d.meses[claveM] = estadoMesVacio();
       d.meses[claveM].cerrado = true;
-      d.meses[claveM].snapshot = crearSnapshotMes(d);
-    });
-  };
-  const reabrirMes = () => {
-    if (!confirm("¿Reabrir este mes? Volverá a leer los datos globales actuales (los importes/saldos/etc. pueden ser distintos a los que tenías cuando lo cerraste).")) return;
-    onUpdateDatos(d => {
-      if (d.meses[claveM]) {
-        d.meses[claveM].cerrado = false;
-        delete d.meses[claveM].snapshot;
+      // Si no tenía snapshot, lo creamos también para asegurar valores fijos
+      if (!d.meses[claveM].snapshot) {
+        d.meses[claveM].snapshot = crearSnapshotMes(d);
       }
     });
   };
-  const cerrado = datos ? mesEstaCerrado(datos, claveM) : false;
+  const reabrirMes = () => {
+    if (!confirm("¿Reabrir este mes? Podrás editarlo de nuevo. El snapshot del mes se conservará intacto.")) return;
+    onUpdateDatos(d => {
+      if (d.meses[claveM]) {
+        d.meses[claveM].cerrado = false;
+        // OJO: NO borramos el snapshot. Si el mes ya tenía snapshot (porque editaste
+        // futuros), ese snapshot DEBE conservarse para que los cálculos sigan siendo
+        // los de ese momento. Reabrir significa solo "permitir edición visual".
+      }
+    });
+  };
+  // El UI lock se activa con el flag manual `cerrado`
+  const cerrado = datos ? mesCerradoManual(datos, claveM) : false;
+  // ¿Tiene snapshot por auto-congelación? Para mostrar un indicador discreto
+  const tieneSnapshot = datos ? mesEstaCerrado(datos, claveM) : false;
 
   if (!datos) return (
     <div style={{ background:"#0A0E17", minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center" }}>
@@ -2911,11 +2993,11 @@ function App() {
         pointerEvents: cerrado ? "none" : "auto",
         opacity: cerrado ? 0.85 : 1,
       }}>
-        {vista === "inicio"      && <VistaInicio      datos={datos} claveM={claveM} mesNum={nav.mes} onUpdateDatos={onUpdateDatos}/>}
-        {vista === "gastos"      && <VistaGastos      datos={datos} claveM={claveM} onUpdateDatos={onUpdateDatos}/>}
-        {vista === "anuales"     && <VistaAnuales     datos={datos} claveM={claveM} onUpdateDatos={onUpdateDatos}/>}
-        {vista === "inversiones" && <VistaInversiones datos={datos} onUpdateDatos={onUpdateDatos}/>}
-        {vista === "analisis"    && <VistaAnalisis    datos={datos} claveM={claveM} mesNum={nav.mes} onUpdateDatos={onUpdateDatos}/>}
+        {vista === "inicio"      && <VistaInicio      datos={datos} claveM={claveM} mesNum={nav.mes} onUpdateDatos={onUpdateDatosMes}/>}
+        {vista === "gastos"      && <VistaGastos      datos={datos} claveM={claveM} onUpdateDatos={onUpdateDatosMes}/>}
+        {vista === "anuales"     && <VistaAnuales     datos={datos} claveM={claveM} onUpdateDatos={onUpdateDatosMes}/>}
+        {vista === "inversiones" && <VistaInversiones datos={datos} onUpdateDatos={onUpdateDatosMes}/>}
+        {vista === "analisis"    && <VistaAnalisis    datos={datos} claveM={claveM} mesNum={nav.mes} onUpdateDatos={onUpdateDatosMes}/>}
       </div>
     </div>
   );

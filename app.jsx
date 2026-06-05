@@ -2814,61 +2814,69 @@ function App() {
   // Reglas:
   // 1. Antes de aplicar, congela los meses ANTERIORES a M sin snapshot
   //    (para que no les afecte el cambio retroactivamente).
-  // 2. Aplica el cambio al catálogo global. Esto cubre el "presente" y
-  //    los futuros sin snapshot, que leen del global.
-  // 3. Si M ya tiene snapshot, replica el mismo cambio dentro de ese snapshot.
-  // 4. Para meses POSTERIORES a M que tengan snapshot, también replica el cambio
-  //    en su snapshot — EXCEPTO si están marcados como `cerrado: true`
-  //    (cierre manual con candado), en cuyo caso se respetan.
+  // 2. Aplica el cambio al catálogo global Y a `copia.meses` (donde viven
+  //    pagos/puntuales/km del mes). Esto cubre el "presente" y futuros sin snapshot.
+  // 3. Para meses POSTERIORES a M que tengan snapshot, replica SOLO los cambios
+  //    de catálogos/bancos/etc. en su snapshot — NO las modificaciones en meses[]
+  //    (que son propias del mes M y no se deben aplicar dos veces).
+  //    Excepción: si el mes está cerrado manualmente (`cerrado: true`), se respeta.
   const onUpdateDatosMes = useCallback((fn) => {
     setDatos(d => {
       const copia = JSON.parse(JSON.stringify(d || datosVacios()));
       const claveActual = claveMes(nav.mes, nav.año);
 
-      // Helper: aplica fn sobre un "objeto puente" que mapea ciertos campos al
-      // contenedor que se pase (snapshot o copia), y vuelca de vuelta.
-      const aplicarSobre = (contenedor) => {
-        const puente = {
-          catalogoFijos:     contenedor.catalogoFijos,
-          catalogoVariables: contenedor.catalogoVariables,
-          catalogoAhorro:    contenedor.catalogoAhorro,
-          cuentas:           contenedor.cuentas,
-          bancosConfig:      contenedor.bancosConfig,
-          ingresosBase:      contenedor.ingresosBase,
-          reservaImpCuenta:  contenedor.reservaImpCuenta,
-          porcentajeExtra:   contenedor.porcentajeExtra,
-          anuales:           contenedor.anuales,
-          inversiones:       contenedor.inversiones,
-          // meses siempre apunta a la raíz (para puntuales/pagos/km del mes)
-          meses:             copia.meses,
-        };
-        fn(puente);
-        contenedor.catalogoFijos     = puente.catalogoFijos;
-        contenedor.catalogoVariables = puente.catalogoVariables;
-        contenedor.catalogoAhorro    = puente.catalogoAhorro;
-        contenedor.cuentas           = puente.cuentas;
-        contenedor.bancosConfig      = puente.bancosConfig;
-        contenedor.ingresosBase      = puente.ingresosBase;
-        contenedor.reservaImpCuenta  = puente.reservaImpCuenta;
-        contenedor.porcentajeExtra   = puente.porcentajeExtra;
-        contenedor.anuales           = puente.anuales;
-        contenedor.inversiones       = puente.inversiones;
-      };
-
-      // 1. Congelar meses anteriores sin snapshot (con el estado ACTUAL del global)
+      // 1. Congelar meses anteriores sin snapshot (con el estado actual del global)
       congelarMesesAnteriores(copia, claveActual);
 
-      // 2. Aplicar el cambio al catálogo global (presente + futuros sin snapshot lo verán)
-      aplicarSobre(copia);
+      // 2. Aplicar el cambio sobre la copia completa (global + meses[]).
+      //    Esto cubre el caso normal: si M no tiene snapshot, los cambios al
+      //    catálogo van al global; si los hay sobre meses[M], van a su sitio.
+      fn(copia);
 
-      // 3. y 4. Replicar el cambio en snapshots de M y meses posteriores,
-      //         siempre que no estén cerrados manualmente.
+      // 3. Si M tiene snapshot, replicar los cambios del catálogo en él.
+      //    Y también en los snapshots de meses POSTERIORES a M no cerrados.
+      //    En esta fase NO tocamos meses[] (pasamos un objeto separado y descartamos).
+      const replicarEnSnapshot = (snapshot) => {
+        const mesesDummy = {};  // un meses vacío para descartar escrituras
+        const puente = {
+          catalogoFijos:     snapshot.catalogoFijos,
+          catalogoVariables: snapshot.catalogoVariables,
+          catalogoAhorro:    snapshot.catalogoAhorro,
+          cuentas:           snapshot.cuentas,
+          bancosConfig:      snapshot.bancosConfig,
+          ingresosBase:      snapshot.ingresosBase,
+          reservaImpCuenta:  snapshot.reservaImpCuenta,
+          porcentajeExtra:   snapshot.porcentajeExtra,
+          anuales:           snapshot.anuales,
+          inversiones:       snapshot.inversiones,
+          meses:             mesesDummy,  // ← clave: escrituras en meses se descartan
+        };
+        fn(puente);
+        snapshot.catalogoFijos     = puente.catalogoFijos;
+        snapshot.catalogoVariables = puente.catalogoVariables;
+        snapshot.catalogoAhorro    = puente.catalogoAhorro;
+        snapshot.cuentas           = puente.cuentas;
+        snapshot.bancosConfig      = puente.bancosConfig;
+        snapshot.ingresosBase      = puente.ingresosBase;
+        snapshot.reservaImpCuenta  = puente.reservaImpCuenta;
+        snapshot.porcentajeExtra   = puente.porcentajeExtra;
+        snapshot.anuales           = puente.anuales;
+        snapshot.inversiones       = puente.inversiones;
+      };
+
+      // Replicar en snapshot del mes actual (si lo tiene)
+      const mesActual = copia.meses[claveActual];
+      if (mesActual && mesActual.snapshot && !mesActual.cerrado) {
+        replicarEnSnapshot(mesActual.snapshot);
+      }
+
+      // Replicar en snapshots de meses posteriores no cerrados
       Object.keys(copia.meses).forEach(k => {
+        if (k <= claveActual) return;  // anteriores e igual al actual ya tratados
         const mes = copia.meses[k];
         if (!mes || !mes.snapshot) return;
-        if (k < claveActual) return;       // anterior: no tocar
-        if (mes.cerrado) return;           // cerrado manualmente: respetar
-        aplicarSobre(mes.snapshot);
+        if (mes.cerrado) return;  // cierre manual: respetar
+        replicarEnSnapshot(mes.snapshot);
       });
 
       return copia;

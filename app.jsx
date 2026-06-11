@@ -205,6 +205,7 @@ function datosVacios() {
     reservaImpCuenta:  null,
     porcentajeExtra:   42.86,  // % de la nómina extra que se destina a anuales (default 3/7)
     inversiones:       [],
+    objetivos:         [],  // [{id, nombre, importe, fechaLimite:"YYYY-MM", cuentaId, ahorradoManual, creadoEn}]
 
     // ─── Por año: gastos anuales del año en curso ───
     anuales: {
@@ -310,6 +311,7 @@ function crearSnapshotMes(datos) {
     porcentajeExtra:   datos.porcentajeExtra,
     anuales:           JSON.parse(JSON.stringify(datos.anuales)),
     inversiones:       JSON.parse(JSON.stringify(datos.inversiones || [])),
+    objetivos:         JSON.parse(JSON.stringify(datos.objetivos || [])),
   };
 }
 
@@ -330,6 +332,7 @@ function datosEfectivosMes(datos, claveM) {
     porcentajeExtra:   mes.snapshot.porcentajeExtra,
     anuales:           mes.snapshot.anuales,
     inversiones:       mes.snapshot.inversiones,
+    objetivos:         mes.snapshot.objetivos || datos.objetivos || [],
   };
 }
 
@@ -467,10 +470,6 @@ function calcularAportacionAnual(datos, mesNum, claveM) {
 }
 
 // Bancos
-function asignadoBanco(cuentas, banco) {
-  return cuentas.filter(c => c.banco === banco).reduce((a,c) => a + (c.asignado || 0), 0);
-}
-
 // Total del banco según su modo. Cuentas compartidas NO suman al total del banco.
 function totalBanco(bancosConfig, cuentas, banco) {
   const cfg = bancosConfig[banco] || { modo: "suma", total: 0 };
@@ -508,6 +507,50 @@ function saldoCompartidoTotal(cuentas) {
 function clasificacionGasto(gasto, tipoOrigen) {
   if (gasto && gasto.clasificacion) return gasto.clasificacion;
   return CLASIF_DEFAULT_POR_TIPO[tipoOrigen] || "deseo";
+}
+
+// ═══════════════════════════════════════════════════════
+// OBJETIVOS DE AHORRO
+// ═══════════════════════════════════════════════════════
+
+// Meses entre dos claves "YYYY-MM" (b - a). Puede ser negativo si b < a.
+function mesesEntre(claveA, claveB) {
+  const [ya, ma] = claveA.split("-").map(Number);
+  const [yb, mb] = claveB.split("-").map(Number);
+  return (yb - ya) * 12 + (mb - ma);
+}
+
+// Evalúa el estado de un objetivo en el mes claveM.
+// ahorrado: saldo de la cuenta vinculada o el campo manual.
+function evaluarObjetivo(objetivo, cuentas, claveM) {
+  const cuenta = objetivo.cuentaId ? cuentas.find(c => c.id === objetivo.cuentaId) : null;
+  const bruto = cuenta ? (cuenta.asignado || 0) : (objetivo.ahorradoManual || 0);
+  // Si la cuenta es compartida, cuenta solo tu 50%
+  const ahorrado = (cuenta && cuenta.compartida) ? bruto * PARTICIPACION_COMPARTIDA : bruto;
+
+  const importe = objetivo.importe || 0;
+  const restante = Math.max(0, importe - ahorrado);
+  const pctAhorrado = importe > 0 ? Math.min(100, (ahorrado / importe) * 100) : 0;
+
+  const mesesRestantes = mesesEntre(claveM, objetivo.fechaLimite);
+  const completado = ahorrado >= importe && importe > 0;
+  const vencido = !completado && mesesRestantes < 0;
+
+  // Cuota mensual necesaria desde ahora hasta el límite
+  const cuotaMensual = (completado || vencido) ? 0 : restante / Math.max(1, mesesRestantes);
+
+  // Ritmo: comparar % tiempo transcurrido vs % ahorrado (si hay creadoEn)
+  let ritmo = null;  // "adelantado" | "alDia" | "atrasado"
+  if (!completado && !vencido && objetivo.creadoEn) {
+    const mesesTotales = Math.max(1, mesesEntre(objetivo.creadoEn, objetivo.fechaLimite));
+    const transcurridos = Math.max(0, mesesEntre(objetivo.creadoEn, claveM));
+    const pctTiempo = (transcurridos / mesesTotales) * 100;
+    if (pctAhorrado >= pctTiempo + 5) ritmo = "adelantado";
+    else if (pctAhorrado >= pctTiempo - 5) ritmo = "alDia";
+    else ritmo = "atrasado";
+  }
+
+  return { cuenta, ahorrado, restante, pctAhorrado, mesesRestantes, completado, vencido, cuotaMensual, ritmo };
 }
 
 // Inversiones
@@ -884,8 +927,9 @@ function BloqueBancos({ datos, onUpdateDatos }) {
   });
   const eliminarCuenta = (id) => onUpdateDatos(d => { d.cuentas = d.cuentas.filter(c => c.id !== id); });
   const añadirCuenta = (banco, data) => {
+    const nuevoId = `cuenta-${Date.now()}`;  // id único generado fuera del fn
     onUpdateDatos(d => {
-      d.cuentas.push({ ...data, banco, id: `cuenta-${Date.now()}` });
+      d.cuentas.push({ ...data, banco, id: nuevoId });
     });
     setAnadiendoEn(null);
   };
@@ -1190,8 +1234,9 @@ function VistaInicio({ datos, claveM, mesNum, onUpdateDatos }) {
     d.ingresosBase = d.ingresosBase.filter(f => f.id !== id);
   });
   const añadirIngreso = (nombre, importe) => {
+    const nuevoId = `ing-${Date.now()}`;  // id único generado fuera del fn
     onUpdateDatos(d => {
-      d.ingresosBase.push({ id: `ing-${Date.now()}`, nombre, importe });
+      d.ingresosBase.push({ id: nuevoId, nombre, importe });
     });
     setAnadiendoFuente(false);
   };
@@ -1433,8 +1478,9 @@ function VistaGastos({ datos, claveM, onUpdateDatos }) {
 
   // Añadir al catálogo
   const añadirAlCatalogo = (catalogo, data) => {
+    const nuevoId = `${catalogo}-${Date.now()}`;  // id generado UNA vez (el wrapper aplica fn varias veces)
     onUpdateDatos(d => {
-      d[catalogo].push({ ...data, id: `${catalogo}-${Date.now()}` });
+      d[catalogo].push({ ...data, id: nuevoId });
     });
     setAnadiendo(null);
   };
@@ -1452,9 +1498,10 @@ function VistaGastos({ datos, claveM, onUpdateDatos }) {
     if (d.meses[claveM]) d.meses[claveM].puntuales.splice(idx, 1);
   });
   const añadirPuntual = (data) => {
+    const nuevoId = `punt-${Date.now()}`;
     onUpdateDatos(d => {
       if (!d.meses[claveM]) d.meses[claveM] = estadoMesVacio();
-      d.meses[claveM].puntuales.push({ ...data, id: `punt-${Date.now()}`, pagado:false });
+      d.meses[claveM].puntuales.push({ ...data, id: nuevoId, pagado:false });
     });
     setAnadiendo(null);
   };
@@ -1690,9 +1737,10 @@ function VistaAnuales({ datos, claveM, onUpdateDatos }) {
   });
 
   const añadirConcepto = (categoria, data) => {
+    const nuevoId = `concepto-${Date.now()}`;  // id único generado fuera del fn
     onUpdateDatos(d => {
       d.anuales.catalogo[categoria].conceptos.push({
-        ...data, id: `concepto-${Date.now()}`, pagado: 0, cerrado: false,
+        ...data, id: nuevoId, pagado: 0, cerrado: false,
       });
     });
     setAnadiendoConceptoEn(null);
@@ -2429,6 +2477,14 @@ function VistaAnalisis({ datos, claveM, mesNum, onUpdateDatos }) {
         ))}
       </div>
 
+      {/* OBJETIVOS DE AHORRO */}
+      <BloqueObjetivos
+        objetivos={dEf.objetivos || []}
+        cuentas={dEf.cuentas}
+        claveM={claveM}
+        onUpdateDatos={onUpdateDatos}
+      />
+
       {/* TEORÍAS DEL AHORRO */}
       <BloqueTeoriasAhorro
         gastos={todosLosGastos}
@@ -2494,6 +2550,224 @@ function VistaAnalisis({ datos, claveM, mesNum, onUpdateDatos }) {
             </div>
           );
         })}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════
+// BLOQUE OBJETIVOS DE AHORRO
+// ═══════════════════════════════════════════════════════
+
+function BloqueObjetivos({ objetivos, cuentas, claveM, onUpdateDatos }) {
+  const [anadiendo, setAnadiendo] = useState(false);
+
+  const añadirObjetivo = (data) => {
+    const nuevoId = `obj-${Date.now()}`;
+    onUpdateDatos(d => {
+      if (!d.objetivos) d.objetivos = [];
+      d.objetivos.push({ ...data, id: nuevoId, creadoEn: claveM });
+    });
+    setAnadiendo(false);
+  };
+  const eliminarObjetivo = (id) => onUpdateDatos(d => {
+    d.objetivos = (d.objetivos || []).filter(o => o.id !== id);
+  });
+  const actualizarObjetivo = (id, cambios) => onUpdateDatos(d => {
+    d.objetivos = (d.objetivos || []).map(o => o.id === id ? { ...o, ...cambios } : o);
+  });
+
+  return (
+    <div style={{ background:"rgba(255,255,255,0.025)", borderRadius:14,
+      border:"1px solid rgba(255,255,255,0.06)", marginBottom:12, padding:"14px 16px" }}>
+      <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, fontWeight:700, color:"#6B7A99",
+        letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:12 }}>
+        🎯 Objetivos de ahorro
+      </div>
+
+      {objetivos.length === 0 && !anadiendo && (
+        <div style={{ padding:"14px", textAlign:"center", fontFamily:"'Syne',sans-serif",
+          fontSize:12, color:"#6B7A99", fontStyle:"italic",
+          background:"rgba(255,255,255,0.02)", borderRadius:10,
+          border:"1px dashed rgba(255,255,255,0.06)", marginBottom:8 }}>
+          Define un objetivo (viaje, coche, entrada de casa…) y te diré cuánto apartar al mes.
+        </div>
+      )}
+
+      {objetivos.map(obj => (
+        <FilaObjetivo key={obj.id} objetivo={obj} cuentas={cuentas} claveM={claveM}
+          onActualizar={cambios => actualizarObjetivo(obj.id, cambios)}
+          onEliminar={() => {
+            if (confirm(`¿Eliminar el objetivo "${obj.nombre}"?`)) eliminarObjetivo(obj.id);
+          }}
+        />
+      ))}
+
+      {anadiendo ? (
+        <FormularioAnadirObjetivo cuentas={cuentas} claveM={claveM}
+          onGuardar={añadirObjetivo} onCancelar={() => setAnadiendo(false)}/>
+      ) : (
+        <BotonAnadir onClick={() => setAnadiendo(true)} label="Añadir objetivo" color="#26D07C"/>
+      )}
+    </div>
+  );
+}
+
+function FilaObjetivo({ objetivo, cuentas, claveM, onActualizar, onEliminar }) {
+  const ev = evaluarObjetivo(objetivo, cuentas, claveM);
+  const [yLim, mLim] = objetivo.fechaLimite.split("-").map(Number);
+  const fechaLabel = `${MESES[mLim-1]} ${yLim}`;
+
+  // Color y etiqueta del estado
+  let estadoColor = "#26D07C", estadoLabel = "🟢 En ritmo";
+  if (ev.completado)       { estadoColor = "#26D07C"; estadoLabel = "✅ Completado"; }
+  else if (ev.vencido)     { estadoColor = "#FF4757"; estadoLabel = "🔴 Plazo vencido"; }
+  else if (ev.ritmo === "adelantado") { estadoColor = "#26D07C"; estadoLabel = "🚀 Adelantado"; }
+  else if (ev.ritmo === "atrasado")   { estadoColor = "#FF8C42"; estadoLabel = "🟠 Atrasado"; }
+  else if (ev.ritmo === "alDia")      { estadoColor = "#00A3E0"; estadoLabel = "🟢 Al día"; }
+
+  return (
+    <div style={{ background:"rgba(255,255,255,0.02)", borderRadius:12, padding:"12px 14px",
+      border:`1px solid ${estadoColor}25`, marginBottom:10 }}>
+
+      {/* Cabecera: nombre + fecha + eliminar */}
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:8 }}>
+        <div style={{ flex:1, minWidth:0 }}>
+          <div style={{ fontFamily:"'Syne',sans-serif", fontSize:13, fontWeight:700, color:"#CBD5E8" }}>
+            {objetivo.nombre}
+          </div>
+          <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:"#6B7A99", marginTop:2 }}>
+            límite {fechaLabel}
+            {!ev.completado && !ev.vencido && ` · ${ev.mesesRestantes} ${ev.mesesRestantes === 1 ? "mes" : "meses"}`}
+            {ev.cuenta && ` · 🔗 ${ev.cuenta.nombre}`}
+          </div>
+        </div>
+        <button onClick={onEliminar} style={{ background:"none", border:"none",
+          cursor:"pointer", color:"#FF475760", fontSize:15, padding:"0 2px" }}>×</button>
+      </div>
+
+      {/* Barra de progreso */}
+      <BarraProgreso valor={ev.ahorrado} maximo={objetivo.importe || 1} color={estadoColor} altura={7}/>
+      <div style={{ display:"flex", justifyContent:"space-between", marginTop:4, marginBottom:8 }}>
+        <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:estadoColor }}>
+          {ev.ahorrado.toLocaleString("es-ES",{minimumFractionDigits:0})}€ · {ev.pctAhorrado.toFixed(0)}%
+        </span>
+        <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:"#6B7A99" }}>
+          de {(objetivo.importe||0).toLocaleString("es-ES",{minimumFractionDigits:0})}€
+        </span>
+      </div>
+
+      {/* Estado + cuota mensual */}
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
+        padding:"8px 10px", borderRadius:8, background: estadoColor + "10" }}>
+        <span style={{ fontFamily:"'Syne',sans-serif", fontSize:11, fontWeight:600, color:estadoColor }}>
+          {estadoLabel}
+        </span>
+        {!ev.completado && !ev.vencido && (
+          <div style={{ textAlign:"right" }}>
+            <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:13, fontWeight:700, color:"#E8EDF5" }}>
+              {ev.cuotaMensual.toLocaleString("es-ES",{minimumFractionDigits:0})}€<span style={{ fontSize:9, color:"#6B7A99" }}>/mes</span>
+            </div>
+            <div style={{ fontFamily:"'Syne',sans-serif", fontSize:8, color:"#6B7A99" }}>
+              para llegar a tiempo
+            </div>
+          </div>
+        )}
+        {ev.vencido && (
+          <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:11, color:"#FF4757" }}>
+            faltan {ev.restante.toLocaleString("es-ES",{minimumFractionDigits:0})}€
+          </span>
+        )}
+      </div>
+
+      {/* Ahorrado manual editable (solo si no hay cuenta vinculada) */}
+      {!ev.cuenta && !ev.completado && (
+        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginTop:8 }}>
+          <span style={{ fontFamily:"'Syne',sans-serif", fontSize:11, color:"#8B9DBB" }}>
+            Ahorrado hasta ahora
+          </span>
+          <InputMoneda valor={objetivo.ahorradoManual || 0}
+            onChange={v => onActualizar({ ahorradoManual: v })} compact ancho={65}/>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function FormularioAnadirObjetivo({ cuentas, claveM, onGuardar, onCancelar }) {
+  const [nombre, setNombre]   = useState("");
+  const [importe, setImporte] = useState(0);
+  const [añoActualNum, mesActualNum] = claveM.split("-").map(Number);
+  const [mesLim, setMesLim]   = useState(mesActualNum);
+  const [añoLim, setAñoLim]   = useState(añoActualNum + 1);
+  const [cuentaId, setCuentaId] = useState(null);
+
+  const guardar = () => {
+    if (!nombre.trim() || importe <= 0) return;
+    const fechaLimite = `${añoLim}-${String(mesLim).padStart(2,"0")}`;
+    if (fechaLimite <= claveM) {
+      alert("La fecha límite debe ser posterior al mes actual");
+      return;
+    }
+    onGuardar({
+      nombre: nombre.trim(), importe, fechaLimite,
+      cuentaId: cuentaId || null, ahorradoManual: 0,
+    });
+  };
+
+  return (
+    <div style={{ marginTop:8, padding:"12px", background:"rgba(255,255,255,0.03)", borderRadius:10,
+      border:"1px solid rgba(255,255,255,0.08)" }}>
+      <input placeholder="Nombre (ej. Viaje a Japón)" value={nombre}
+        onChange={e => setNombre(e.target.value)}
+        style={{ width:"100%", background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)",
+          borderRadius:8, padding:"8px 10px", color:"#E8EDF5", fontSize:13, outline:"none",
+          fontFamily:"'Syne',sans-serif", marginBottom:8 }}
+      />
+
+      <div style={{ display:"flex", gap:8, marginBottom:8, alignItems:"center" }}>
+        <div>
+          <div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:"#6B7A99", marginBottom:3 }}>Importe</div>
+          <InputMoneda valor={importe} onChange={setImporte} compact ancho={65}/>
+        </div>
+        <div style={{ flex:1 }}>
+          <div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:"#6B7A99", marginBottom:3 }}>Fecha límite</div>
+          <div style={{ display:"flex", gap:4 }}>
+            <select value={mesLim} onChange={e => setMesLim(Number(e.target.value))}
+              style={{ flex:1, background:"#0F1521", border:"1px solid rgba(255,255,255,0.1)",
+                borderRadius:8, padding:"5px 6px", color:"#E8EDF5", fontSize:11, outline:"none",
+                fontFamily:"'Syne',sans-serif" }}>
+              {MESES.map((m, i) => <option key={i} value={i+1}>{m}</option>)}
+            </select>
+            <input type="number" min={añoActualNum} max={añoActualNum+30} value={añoLim}
+              onChange={e => setAñoLim(Number(e.target.value) || añoActualNum+1)}
+              style={{ width:60, background:"rgba(255,255,255,0.06)", border:"1px solid rgba(255,255,255,0.1)",
+                borderRadius:8, padding:"5px 6px", color:"#E8EDF5", fontSize:11, outline:"none",
+                fontFamily:"'JetBrains Mono',monospace", textAlign:"center" }}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
+        <div>
+          <div style={{ fontFamily:"'Syne',sans-serif", fontSize:11, color:"#CBD5E8" }}>Cuenta vinculada</div>
+          <div style={{ fontFamily:"'Syne',sans-serif", fontSize:8, color:"#6B7A99", marginTop:1 }}>
+            el saldo de la cuenta será tu progreso · opcional
+          </div>
+        </div>
+        <SelectorCuenta value={cuentaId} cuentas={cuentas} onChange={setCuentaId}/>
+      </div>
+
+      <div style={{ display:"flex", gap:8 }}>
+        <button onClick={guardar} style={{
+          flex:1, background:"#26D07C", color:"#0A0E17", border:"none", borderRadius:8,
+          fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:13, cursor:"pointer", padding:"8px",
+        }}>Crear objetivo</button>
+        <button onClick={onCancelar} style={{
+          padding:"0 14px", background:"rgba(255,255,255,0.06)", color:"#6B7A99",
+          border:"none", borderRadius:8, cursor:"pointer", fontSize:13,
+        }}>✕</button>
       </div>
     </div>
   );
@@ -2849,6 +3123,7 @@ function App() {
           porcentajeExtra:   snapshot.porcentajeExtra,
           anuales:           snapshot.anuales,
           inversiones:       snapshot.inversiones,
+          objetivos:         snapshot.objetivos || [],
           meses:             mesesDummy,  // ← clave: escrituras en meses se descartan
         };
         fn(puente);
@@ -2862,6 +3137,7 @@ function App() {
         snapshot.porcentajeExtra   = puente.porcentajeExtra;
         snapshot.anuales           = puente.anuales;
         snapshot.inversiones       = puente.inversiones;
+        snapshot.objetivos         = puente.objetivos;
       };
 
       // Replicar en snapshot del mes actual (si lo tiene)

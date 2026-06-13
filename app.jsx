@@ -1161,7 +1161,7 @@ function FilaGastoCatalogo({ gasto, onPagado, onImporte, onBanco, onEliminar }) 
   return (
     <div style={{
       display:"flex", alignItems:"center", gap:8, padding:"9px 0",
-      borderBottom:"1px solid rgba(255,255,255,0.04)",
+      borderBottom:`1px solid ${V("--border")}`,
       background: esAuto ? "rgba(38,208,124,0.04)" : "transparent",
     }}>
       <button onClick={onPagado} style={{
@@ -1293,15 +1293,14 @@ function BloqueBancos({ datos, onUpdateDatos }) {
 
   return (
     <div style={{ background:V("--surface"), borderRadius:14, marginBottom:12,
-      border:"1px solid rgba(255,255,255,0.06)", overflow:"hidden" }}>
+      border:`1px solid ${V("--border")}`, overflow:"hidden" }}>
 
       {/* Cabecera con resumen */}
       <div onClick={() => setAbierto(a => !a)}
         style={{ padding:"14px 16px", cursor:"pointer",
           borderBottom: abierto ? "1px solid rgba(255,255,255,0.06)" : "none" }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:abierto ? 10 : 0 }}>
-          <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, fontWeight:700, color:V("--text-dim"),
-            letterSpacing:"0.1em", textTransform:"uppercase" }}>🏦 Bancos y cuentas</div>
+          <div style={{ fontFamily:SERIF, fontSize:15, fontWeight:600, color:V("--text-mid"), letterSpacing:"0" }}>🏦 Bancos y cuentas</div>
           <span style={{ color:V("--text-dim"), fontSize:14 }}>{abierto ? "▲" : "▼"}</span>
         </div>
 
@@ -1411,7 +1410,7 @@ function BloqueBancos({ datos, onUpdateDatos }) {
                   return (
                     <div key={c.id} style={{
                       display:"flex", alignItems:"center", gap:6, padding:"6px 0",
-                      borderBottom:"1px solid rgba(255,255,255,0.04)",
+                      borderBottom:`1px solid ${V("--border")}`,
                       background: esCompartida ? "rgba(176,111,232,0.04)" : "transparent",
                     }}>
                       <span style={{ fontSize:12, width:18, textAlign:"center" }}>{prop.icono}</span>
@@ -1624,11 +1623,10 @@ function VistaInicio({ datos, claveM, mesNum, onUpdateDatos }) {
     <div className="slide-in">
 
       {/* 1. INGRESOS DEL MES */}
-      <div style={{ background:V("--surface"), borderRadius:14, padding:"14px 16px", marginBottom:12,
-        border:"1px solid rgba(255,255,255,0.06)" }}>
+      <div style={{ background:V("--surface"), borderRadius:18, padding:"16px 18px", marginBottom:12,
+        border:`1px solid ${V("--border")}` }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
-          <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, fontWeight:700, color:V("--text-dim"),
-            letterSpacing:"0.1em", textTransform:"uppercase" }}>Ingresos del mes</div>
+          <div style={{ fontFamily:SERIF, fontSize:15, fontWeight:600, color:V("--text-mid"), letterSpacing:"0" }}>Ingresos del mes</div>
           <Num v={totalIngresos} decimals={0} color={V("--accent")} size={14}/>
         </div>
 
@@ -1709,7 +1707,7 @@ function FilaIngreso({ fuente, onNombre, onImporte, onEliminar, soloMes=false })
   const [editando, setEditando] = useState(false);
   return (
     <div style={{ display:"flex", alignItems:"center", gap:6, padding:"7px 0",
-      borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
+      borderBottom:`1px solid ${V("--border")}` }}>
       {editando ? (
         <input value={fuente.nombre}
           onChange={e => onNombre(e.target.value)}
@@ -1835,7 +1833,7 @@ function BloqueAportacionAnual({ datos, claveM, mesNum, onUpdateDatos }) {
 
           {/* % del extra a destinar */}
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
-            padding:"6px 0", borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
+            padding:"6px 0", borderBottom:`1px solid ${V("--border")}` }}>
             <div>
               <div style={{ fontFamily:"'Syne',sans-serif", fontSize:11, color:V("--text-mid") }}>% del extra a destinar</div>
               <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:V("--text-dim"), marginTop:1 }}>
@@ -1847,7 +1845,7 @@ function BloqueAportacionAnual({ datos, claveM, mesNum, onUpdateDatos }) {
 
           {/* Cuenta vinculada */}
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
-            padding:"6px 0", borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
+            padding:"6px 0", borderBottom:`1px solid ${V("--border")}` }}>
             <span style={{ fontFamily:"'Syne',sans-serif", fontSize:11, color:V("--text-mid") }}>Cuenta de la reserva</span>
             <SelectorCuenta value={dEf.reservaImpCuenta} cuentas={dEf.cuentas}
               onChange={setReservaImpCuenta}/>
@@ -1968,7 +1966,7 @@ function VistaGastos({ datos, claveM, mesNum, onUpdateDatos }) {
 
   const Section = ({ id, titulo, icono, total, children }) => (
     <div style={{ background:V("--surface"), borderRadius:14, marginBottom:10,
-      border:"1px solid rgba(255,255,255,0.06)", overflow:"hidden" }}>
+      border:`1px solid ${V("--border")}`, overflow:"hidden" }}>
       <div onClick={() => setSeccionAbierta(s => ({...s,[id]:!s[id]}))}
         style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
           padding:"12px 14px", cursor:"pointer" }}>
@@ -1993,7 +1991,7 @@ function VistaGastos({ datos, claveM, mesNum, onUpdateDatos }) {
       {/* Sub-pestañas Mensuales / Anuales */}
       <div style={{ display:"flex", gap:6, marginBottom:14,
         background:V("--surface"), borderRadius:12, padding:4,
-        border:"1px solid rgba(255,255,255,0.06)" }}>
+        border:`1px solid ${V("--border")}` }}>
         {[
           { id:"mensuales", icono:"📋", label:"Mensuales" },
           { id:"anuales",   icono:"📆", label:"Anuales" },
@@ -2013,8 +2011,8 @@ function VistaGastos({ datos, claveM, mesNum, onUpdateDatos }) {
 
       {subGasto === "mensuales" && <div>
       {/* Resumen */}
-      <div style={{ background:V("--surface"), borderRadius:14, padding:"14px 16px",
-        border:"1px solid rgba(255,255,255,0.06)", marginBottom:14 }}>
+      <div style={{ background:V("--surface"), borderRadius:18, padding:"16px 18px",
+        border:`1px solid ${V("--border")}`, marginBottom:14 }}>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8, marginBottom:12 }}>
           {[
             { label:"Gastos", v:tGastos,    color:"#E8A838" },
@@ -2289,11 +2287,10 @@ function VistaAnuales({ datos, claveM, onUpdateDatos }) {
   return (
     <div className="slide-in">
       {/* Resumen */}
-      <div style={{ background:V("--surface"), borderRadius:14, padding:"14px 16px",
-        border:"1px solid rgba(255,255,255,0.06)", marginBottom:14 }}>
+      <div style={{ background:V("--surface"), borderRadius:18, padding:"16px 18px",
+        border:`1px solid ${V("--border")}`, marginBottom:14 }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
-          <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, fontWeight:700, color:V("--text-dim"),
-            letterSpacing:"0.1em", textTransform:"uppercase" }}>
+          <div style={{ fontFamily:SERIF, fontSize:15, fontWeight:600, color:V("--text-mid"), letterSpacing:"0" }}>
             Gastos anuales {añoCatalogo}
           </div>
           {añoCatalogo < añoAhora && (
@@ -2329,7 +2326,7 @@ function VistaAnuales({ datos, claveM, onUpdateDatos }) {
 
         return (
           <div key={cat} style={{ background:V("--surface"), borderRadius:14,
-            border:"1px solid rgba(255,255,255,0.06)", marginBottom:10, overflow:"hidden" }}>
+            border:`1px solid ${V("--border")}`, marginBottom:10, overflow:"hidden" }}>
             <div style={{ padding:"12px 14px" }}>
               {/* Cabecera */}
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
@@ -2817,10 +2814,9 @@ function VistaInversiones({ datos, claveM, onUpdateDatos }) {
       </div>
 
       {inversiones.length > 0 && (
-        <div style={{ background:V("--surface"), borderRadius:14, padding:"14px 16px",
-          border:"1px solid rgba(255,255,255,0.06)", marginBottom:14 }}>
-          <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, fontWeight:700, color:V("--text-dim"),
-            letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:12 }}>Distribución por tipo</div>
+        <div style={{ background:V("--surface"), borderRadius:18, padding:"16px 18px",
+          border:`1px solid ${V("--border")}`, marginBottom:14 }}>
+          <div style={{ fontFamily:SERIF, fontSize:15, fontWeight:600, color:V("--text-mid"), letterSpacing:"0", marginBottom:12 }}>Distribución por tipo</div>
           {Object.entries(porTipo)
             .filter(([_, v]) => v.valorActual > 0)
             .sort((a,b) => b[1].valorActual - a[1].valorActual)
@@ -2844,8 +2840,7 @@ function VistaInversiones({ datos, claveM, onUpdateDatos }) {
         </div>
       )}
 
-      <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, fontWeight:700, color:V("--text-dim"),
-        letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:10 }}>
+      <div style={{ fontFamily:SERIF, fontSize:15, fontWeight:600, color:V("--text-mid"), letterSpacing:"0", marginBottom:10 }}>
         Posiciones ({inversiones.length})
       </div>
 
@@ -2960,14 +2955,13 @@ function VistaPatrimonio({ datos, claveM, onUpdateDatos }) {
       </div>
 
       {/* INMUEBLES */}
-      <div style={{ background:V("--surface"), borderRadius:14, padding:"14px 16px",
-        border:"1px solid rgba(255,255,255,0.06)", marginBottom:12 }}>
-        <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, fontWeight:700, color:V("--text-dim"),
-          letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:10 }}>🏡 Inmuebles</div>
+      <div style={{ background:V("--surface"), borderRadius:18, padding:"16px 18px",
+        border:`1px solid ${V("--border")}`, marginBottom:12 }}>
+        <div style={{ fontFamily:SERIF, fontSize:15, fontWeight:600, color:V("--text-mid"), letterSpacing:"0", marginBottom:10 }}>🏡 Inmuebles</div>
         {(dEf.inmuebles || []).map(inm => {
           const valorHoy = valorInmuebleEnMes(inm, claveM);
           return (
-            <div key={inm.id} style={{ padding:"8px 0", borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
+            <div key={inm.id} style={{ padding:"8px 0", borderBottom:`1px solid ${V("--border")}` }}>
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:4 }}>
                 <span style={{ fontFamily:"'Syne',sans-serif", fontSize:13, fontWeight:600, color:V("--text-mid"), flex:1 }}>
                   {inm.nombre}
@@ -2993,10 +2987,9 @@ function VistaPatrimonio({ datos, claveM, onUpdateDatos }) {
       </div>
 
       {/* DEUDAS */}
-      <div style={{ background:V("--surface"), borderRadius:14, padding:"14px 16px",
-        border:"1px solid rgba(255,255,255,0.06)", marginBottom:12 }}>
-        <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, fontWeight:700, color:V("--text-dim"),
-          letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:10 }}>💳 Deudas</div>
+      <div style={{ background:V("--surface"), borderRadius:18, padding:"16px 18px",
+        border:`1px solid ${V("--border")}`, marginBottom:12 }}>
+        <div style={{ fontFamily:SERIF, fontSize:15, fontWeight:600, color:V("--text-mid"), letterSpacing:"0", marginBottom:10 }}>💳 Deudas</div>
         {(dEf.deudas || []).map(deuda => (
           <FilaDeuda key={deuda.id} deuda={deuda} claveM={claveM}
             onActualizar={cambios => actualizarDeuda(deuda.id, cambios)}
@@ -3119,7 +3112,7 @@ function FilaDeuda({ deuda, claveM, onActualizar, onEliminar }) {
   const fmtTiempo = (t) => t.anios > 0 ? `${t.anios}a ${t.meses}m` : `${t.meses}m`;
 
   return (
-    <div style={{ padding:"10px 0", borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
+    <div style={{ padding:"10px 0", borderBottom:`1px solid ${V("--border")}` }}>
       {/* Cabecera: nombre + saldo + cuota */}
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:6 }}>
         <div onClick={() => setAbierto(o => !o)} style={{ flex:1, cursor:"pointer", minWidth:0 }}>
@@ -3200,7 +3193,7 @@ function VistaCartera({ datos, claveM, onUpdateDatos }) {
       {/* Sub-pestañas */}
       <div style={{ display:"flex", gap:6, marginBottom:14,
         background:V("--surface"), borderRadius:12, padding:4,
-        border:"1px solid rgba(255,255,255,0.06)" }}>
+        border:`1px solid ${V("--border")}` }}>
         {[
           { id:"bancos", icono:"🏦", label:"Bancos" },
           { id:"inversiones", icono:"📈", label:"Inversiones" },
@@ -3352,7 +3345,7 @@ function VistaAnalisis({ datos, claveM, mesNum, onUpdateDatos }) {
       {/* Sub-pestañas Resumen / Teorías / Objetivos */}
       <div style={{ display:"flex", gap:6, marginBottom:14,
         background:V("--surface"), borderRadius:12, padding:4,
-        border:"1px solid rgba(255,255,255,0.06)" }}>
+        border:`1px solid ${V("--border")}` }}>
         {[
           { id:"resumen",   icono:"📊", label:"Resumen" },
           { id:"teorias",   icono:"📐", label:"Teorías" },
@@ -3445,38 +3438,23 @@ function VistaAnalisis({ datos, claveM, mesNum, onUpdateDatos }) {
       </div>
 
       {/* Distribución de gastos (por tipo) */}
-      <div style={{ background:V("--surface"), borderRadius:14, padding:"14px 16px",
-        border:"1px solid rgba(255,255,255,0.06)", marginBottom:12 }}>
-        <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, fontWeight:700, color:V("--text-dim"),
-          letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:12 }}>
+      <div style={{ background:V("--surface"), borderRadius:18, padding:"16px 18px",
+        border:`1px solid ${V("--border")}`, marginBottom:12 }}>
+        <div style={{ fontFamily:SERIF, fontSize:15, fontWeight:600, color:V("--text-mid"), letterSpacing:"0", marginBottom:14 }}>
           Distribución de gastos
         </div>
-        {[
-          { label:"Fijos",     v:fijos,     color:V("--accent") },
-          { label:"Variables", v:vars,      color:"#00A3E0" },
-          { label:"Ahorro",    v:ahorro,    color:"#E8A838" },
-          { label:"Puntuales", v:puntuales, color:"#FF6B35" },
-        ].filter(b => b.v > 0).map(({ label, v, color }) => {
-          const pct = totalGastos > 0 ? (v/totalGastos)*100 : 0;
-          return (
-            <div key={label} style={{ marginBottom:10 }}>
-              <div style={{ display:"flex", justifyContent:"space-between", marginBottom:4 }}>
-                <span style={{ fontFamily:"'Syne',sans-serif", fontSize:12, color:V("--text-mid") }}>{label}</span>
-                <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:12, color }}>
-                  {v.toLocaleString("es-ES",{minimumFractionDigits:0})}€ · {pct.toFixed(0)}%
-                </span>
-              </div>
-              <BarraProgreso valor={v} maximo={totalGastos||1} color={color} altura={5}/>
-            </div>
-          );
-        })}
+        <DonutChart segmentos={[
+          { label:"Fijos",     valor:fijos,     color:V("--accent") },
+          { label:"Variables", valor:vars,      color:"#5AA9E6" },
+          { label:"Ahorro",    valor:ahorro,    color:"#E8C468" },
+          { label:"Puntuales", valor:puntuales, color:"#E8836A" },
+        ]}/>
       </div>
 
       {/* Flujo por banco */}
-      <div style={{ background:V("--surface"), borderRadius:14, padding:"14px 16px",
-        border:"1px solid rgba(255,255,255,0.06)" }}>
-        <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, fontWeight:700, color:V("--text-dim"),
-          letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:12 }}>
+      <div style={{ background:V("--surface"), borderRadius:18, padding:"16px 18px",
+        border:`1px solid ${V("--border")}` }}>
+        <div style={{ fontFamily:SERIF, fontSize:15, fontWeight:600, color:V("--text-mid"), letterSpacing:"0", marginBottom:12 }}>
           Flujo de gastos por banco
         </div>
         {Object.entries(BANCO_META).map(([banco, meta]) => {
@@ -3543,6 +3521,61 @@ function patrimonioDeMes(datos, clave) {
   return liquidez + compartido + inversion + inmuebles - deudas;  // patrimonio NETO
 }
 
+// Donut chart con leyenda. segmentos: [{label, valor, color}]
+function DonutChart({ segmentos, tamano = 130 }) {
+  const total = segmentos.reduce((a, s) => a + s.valor, 0);
+  const visibles = segmentos.filter(s => s.valor > 0);
+  if (total <= 0) return null;
+
+  const r = tamano / 2;
+  const grosor = tamano * 0.22;
+  const rInterno = r - grosor;
+  const cx = r, cy = r;
+
+  // Construir arcos SVG
+  let anguloAcum = -90;  // empezar arriba
+  const arcos = visibles.map(s => {
+    const frac = s.valor / total;
+    const angIni = anguloAcum;
+    const angFin = anguloAcum + frac * 360;
+    anguloAcum = angFin;
+    const rad = (a) => (a * Math.PI) / 180;
+    const x1 = cx + r * Math.cos(rad(angIni)), y1 = cy + r * Math.sin(rad(angIni));
+    const x2 = cx + r * Math.cos(rad(angFin)), y2 = cy + r * Math.sin(rad(angFin));
+    const xi2 = cx + rInterno * Math.cos(rad(angFin)), yi2 = cy + rInterno * Math.sin(rad(angFin));
+    const xi1 = cx + rInterno * Math.cos(rad(angIni)), yi1 = cy + rInterno * Math.sin(rad(angIni));
+    const largo = frac > 0.5 ? 1 : 0;
+    const d = `M ${x1} ${y1} A ${r} ${r} 0 ${largo} 1 ${x2} ${y2} L ${xi2} ${yi2} A ${rInterno} ${rInterno} 0 ${largo} 0 ${xi1} ${yi1} Z`;
+    return { d, color: s.color };
+  });
+
+  return (
+    <div style={{ display:"flex", alignItems:"center", gap:18 }}>
+      <svg width={tamano} height={tamano} viewBox={`0 0 ${tamano} ${tamano}`} style={{ flexShrink:0 }}>
+        {arcos.map((a, i) => <path key={i} d={a.d} fill={a.color}/>)}
+      </svg>
+      <div style={{ flex:1, minWidth:0 }}>
+        {visibles.map((s, i) => {
+          const pct = (s.valor / total) * 100;
+          return (
+            <div key={i} style={{ display:"flex", alignItems:"center", gap:8, marginBottom:7 }}>
+              <span style={{ width:9, height:9, borderRadius:"50%", background:s.color, flexShrink:0 }}/>
+              <span style={{ flex:1, fontFamily:"'Syne',sans-serif", fontSize:12, color:V("--text-mid"),
+                overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{s.label}</span>
+              <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:11, color:V("--text"), fontWeight:600 }}>
+                {s.valor.toLocaleString("es-ES",{minimumFractionDigits:0})}€
+              </span>
+              <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:V("--text-dim"), width:34, textAlign:"right" }}>
+                {pct.toFixed(0)}%
+              </span>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function GraficaPatrimonio({ datos, claveM }) {
   // Meses a pintar: todos los registrados hasta el mes visualizado (incluido)
   const claves = Array.from(new Set([...Object.keys(datos.meses), claveM]))
@@ -3558,10 +3591,9 @@ function GraficaPatrimonio({ datos, claveM }) {
 
   if (puntos.length < 2) {
     return (
-      <div style={{ background:V("--surface"), borderRadius:14, padding:"14px 16px",
-        border:"1px solid rgba(255,255,255,0.06)", marginBottom:12 }}>
-        <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, fontWeight:700, color:V("--text-dim"),
-          letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:8 }}>
+      <div style={{ background:V("--surface"), borderRadius:18, padding:"16px 18px",
+        border:`1px solid ${V("--border")}`, marginBottom:12 }}>
+        <div style={{ fontFamily:SERIF, fontSize:15, fontWeight:600, color:V("--text-mid"), letterSpacing:"0", marginBottom:8 }}>
           📈 Evolución del patrimonio
         </div>
         <div style={{ fontFamily:"'Syne',sans-serif", fontSize:11, color:V("--text-dim"),
@@ -3594,11 +3626,10 @@ function GraficaPatrimonio({ datos, claveM }) {
   const mostrarLabel = (i) => i === 0 || i === puntos.length - 1 || i % paso === 0;
 
   return (
-    <div style={{ background:V("--surface"), borderRadius:14, padding:"14px 16px",
-      border:"1px solid rgba(255,255,255,0.06)", marginBottom:12 }}>
+    <div style={{ background:V("--surface"), borderRadius:18, padding:"16px 18px",
+      border:`1px solid ${V("--border")}`, marginBottom:12 }}>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
-        <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, fontWeight:700, color:V("--text-dim"),
-          letterSpacing:"0.1em", textTransform:"uppercase" }}>
+        <div style={{ fontFamily:SERIF, fontSize:15, fontWeight:600, color:V("--text-mid"), letterSpacing:"0" }}>
           📈 Evolución del patrimonio
         </div>
         <div style={{
@@ -3678,10 +3709,9 @@ function BloqueObjetivos({ objetivos, cuentas, claveM, onUpdateDatos, autoObjeti
 
   return (
     <div style={{ background:V("--surface"), borderRadius:14,
-      border:"1px solid rgba(255,255,255,0.06)", marginBottom:12, padding:"14px 16px" }}>
+      border:`1px solid ${V("--border")}`, marginBottom:12, padding:"14px 16px" }}>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
-        <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, fontWeight:700, color:V("--text-dim"),
-          letterSpacing:"0.1em", textTransform:"uppercase" }}>
+        <div style={{ fontFamily:SERIF, fontSize:15, fontWeight:600, color:V("--text-mid"), letterSpacing:"0" }}>
           🎯 Objetivos de ahorro
         </div>
         {objetivos.length > 0 && (
@@ -3919,12 +3949,11 @@ function BloqueTeoriasAhorro({ gastos, totalIngresos, onReclasificar }) {
 
   return (
     <div style={{ background:V("--surface"), borderRadius:14,
-      border:"1px solid rgba(255,255,255,0.06)", marginBottom:12, overflow:"hidden" }}>
+      border:`1px solid ${V("--border")}`, marginBottom:12, overflow:"hidden" }}>
 
       {/* Cabecera */}
       <div style={{ padding:"14px 16px" }}>
-        <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, fontWeight:700, color:V("--text-dim"),
-          letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:8 }}>
+        <div style={{ fontFamily:SERIF, fontSize:15, fontWeight:600, color:V("--text-mid"), letterSpacing:"0", marginBottom:8 }}>
           📐 Teoría del ahorro
         </div>
 
@@ -4001,7 +4030,7 @@ function BloqueTeoriasAhorro({ gastos, totalIngresos, onReclasificar }) {
             {gastos.map(g => (
               <div key={`${g.tipoOrigen}-${g.id}`} style={{
                 display:"flex", alignItems:"center", gap:6, padding:"5px 0",
-                borderBottom:"1px solid rgba(255,255,255,0.04)",
+                borderBottom:`1px solid ${V("--border")}`,
               }}>
                 <span style={{
                   fontFamily:"'Syne',sans-serif", fontSize:11, color:V("--text-mid"), flex:1, minWidth:0,

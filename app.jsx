@@ -1288,16 +1288,10 @@ function VistaInicio({ datos, claveM, mesNum, onUpdateDatos }) {
 
   const totalIngresos = calcularIngresosMes(datos, claveM);
   const ingresoKm = calcularIngresoKm(datos, claveM);
-  const aportacion = calcularAportacionAnual(datos, mesNum, claveM);
-  const pendienteAnual = totalAnualesPendiente(dEf);
 
   const [anadiendoFuente, setAnadiendoFuente] = useState(false);
 
   const mes = getMes(datos, claveM);
-
-  const cuentaReservaImp = dEf.cuentas.find(c => c.id === dEf.reservaImpCuenta);
-  const saldoReservaImp = cuentaReservaImp ? cuentaReservaImp.asignado : 0;
-  const pct = dEf.porcentajeExtra || 0;
 
   // Setters (no se llaman si el mes está cerrado, gracias al pointer-events:none de App)
   const setIngresoBaseCampo = (id, campo, valor) => onUpdateDatos(d => {
@@ -1340,10 +1334,6 @@ function VistaInicio({ datos, claveM, mesNum, onUpdateDatos }) {
   const eliminarIngresoMes = (id) => onUpdateDatos(d => {
     asegurarIngresosMesArray(d);
     d.meses[claveM].ingresosMes = d.meses[claveM].ingresosMes.filter(f => f.id !== id);
-  });
-  const setReservaImpCuenta = (id) => onUpdateDatos(d => { d.reservaImpCuenta = id; });
-  const setPorcentajeExtra = (v) => onUpdateDatos(d => {
-    d.porcentajeExtra = Math.max(0, Math.min(100, v));
   });
 
   return (
@@ -1425,71 +1415,7 @@ function VistaInicio({ datos, claveM, mesNum, onUpdateDatos }) {
         </div>
       </div>
 
-      {/* 3. APORTACIÓN A GASTOS ANUALES (al final, más pequeña) */}
-      <div style={{ background:"rgba(255,255,255,0.02)", borderRadius:12, padding:"12px 14px",
-        border:"1px solid rgba(255,255,255,0.05)" }}>
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
-          <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, fontWeight:700, color:V("--text-dim"),
-            letterSpacing:"0.1em", textTransform:"uppercase" }}>
-            Aportación gastos anuales
-          </div>
-          <div style={{ textAlign:"right" }}>
-            <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:16, fontWeight:700, color:V("--accent") }}>
-              {Math.max(0, aportacion).toFixed(0)}€<span style={{ fontSize:10, color:V("--text-dim"), marginLeft:3 }}>/mes</span>
-            </div>
-            <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:"#FF6B35" }}>
-              pendiente {pendienteAnual.toLocaleString("es-ES",{minimumFractionDigits:0})}€
-            </div>
-          </div>
-        </div>
-
-        {/* % del extra a destinar */}
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
-          padding:"6px 0", borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
-          <div>
-            <div style={{ fontFamily:"'Syne',sans-serif", fontSize:11, color:V("--text-mid") }}>% del extra a destinar</div>
-            <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:V("--text-dim"), marginTop:1 }}>
-              del sueldo extra anual
-            </div>
-          </div>
-          <InputNumero valor={pct} onChange={setPorcentajeExtra} sufijo="%" compact ancho={45} step={0.1}/>
-        </div>
-
-        {/* Cuenta vinculada */}
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
-          padding:"6px 0", borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
-          <span style={{ fontFamily:"'Syne',sans-serif", fontSize:11, color:V("--text-mid") }}>Cuenta de la reserva</span>
-          <SelectorCuenta value={datos.reservaImpCuenta} cuentas={datos.cuentas}
-            onChange={setReservaImpCuenta}/>
-        </div>
-
-        {/* Reserva impuestos = saldo de la cuenta */}
-        <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"6px 0" }}>
-          <div>
-            <div style={{ fontFamily:"'Syne',sans-serif", fontSize:11, color:V("--text-mid") }}>Reserva impuestos</div>
-            {cuentaReservaImp ? (
-              <div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:V("--text-dim"), marginTop:1 }}>
-                desde {cuentaReservaImp.nombre}
-              </div>
-            ) : (
-              <div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:"#FF8C42", marginTop:1 }}>
-                sin cuenta asignada
-              </div>
-            )}
-          </div>
-          <span style={{
-            fontFamily:"'JetBrains Mono',monospace", fontSize:14, fontWeight:700,
-            color: cuentaReservaImp ? V("--accent") : V("--text-dim"),
-          }}>
-            {saldoReservaImp.toLocaleString("es-ES",{minimumFractionDigits:0})}€
-          </span>
-        </div>
-
-        <div style={{ marginTop:8, fontFamily:"'Syne',sans-serif", fontSize:9, color:V("--text-dim"),
-          padding:"6px 8px", background:"rgba(0,163,224,0.05)", borderRadius:5, lineHeight:1.4 }}>
-          📐 (pendiente − reserva imp.{pct > 0 ? ` − ${pct.toFixed(2)}% del extra` : ""}) ÷ {11-mesNum} meses
-        </div>
-      </div>
+      {/* Km (no se hereda) ya está arriba; cierre de la vista */}
     </div>
   );
 }
@@ -1565,7 +1491,118 @@ function FormularioAnadirIngreso({ onGuardar, onCancelar }) {
 // VISTA GASTOS MENSUALES
 // ═══════════════════════════════════════════════════════
 
-function VistaGastos({ datos, claveM, onUpdateDatos }) {
+// ═══════════════════════════════════════════════════════
+// BLOQUE APORTACIÓN ANUAL (prorrateo) — compacto desplegable
+// ═══════════════════════════════════════════════════════
+function BloqueAportacionAnual({ datos, claveM, mesNum, onUpdateDatos }) {
+  const [abierto, setAbierto] = useState(false);
+  const dEf = datosEfectivosMes(datos, claveM);
+
+  const aportacion = calcularAportacionAnual(datos, mesNum, claveM);
+  const pendienteAnual = totalAnualesPendiente(dEf);
+  const cuentaReservaImp = dEf.cuentas.find(c => c.id === dEf.reservaImpCuenta);
+  const saldoReservaImp = cuentaReservaImp ? cuentaReservaImp.asignado : 0;
+  const pct = dEf.porcentajeExtra || 0;
+
+  const setReservaImpCuenta = (id) => onUpdateDatos(d => { d.reservaImpCuenta = id; });
+  const setPorcentajeExtra = (v) => onUpdateDatos(d => {
+    d.porcentajeExtra = Math.max(0, Math.min(100, v));
+  });
+
+  return (
+    <div style={{ background:"linear-gradient(135deg, rgba(38,208,124,0.10), rgba(0,163,224,0.06))",
+      borderRadius:12, border:"1px solid rgba(38,208,124,0.25)", marginBottom:12, overflow:"hidden" }}>
+
+      {/* Barra compacta clicable */}
+      <div onClick={() => setAbierto(a => !a)}
+        style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
+          padding:"12px 14px", cursor:"pointer" }}>
+        <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+          <span style={{ fontSize:16 }}>📐</span>
+          <div>
+            <div style={{ fontFamily:"'Syne',sans-serif", fontSize:11, fontWeight:700, color:V("--text-mid") }}>
+              Apartar este mes
+            </div>
+            <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:8, color:V("--text-dim") }}>
+              para gastos anuales
+            </div>
+          </div>
+        </div>
+        <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+          <div style={{ textAlign:"right" }}>
+            <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:18, fontWeight:800, color:V("--accent") }}>
+              {Math.max(0, aportacion).toFixed(0)}€<span style={{ fontSize:10, color:V("--text-dim"), marginLeft:2 }}>/mes</span>
+            </div>
+          </div>
+          <span style={{ color:V("--text-dim"), fontSize:13 }}>{abierto ? "▲" : "▼"}</span>
+        </div>
+      </div>
+
+      {/* Detalle desplegable */}
+      {abierto && (
+        <div style={{ padding:"0 14px 12px" }}>
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
+            padding:"8px 0", borderTop:"1px solid rgba(255,255,255,0.06)" }}>
+            <span style={{ fontFamily:"'Syne',sans-serif", fontSize:11, color:V("--text-dim") }}>Pendiente este año</span>
+            <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:13, fontWeight:700, color:"#FF6B35" }}>
+              {pendienteAnual.toLocaleString("es-ES",{minimumFractionDigits:0})}€
+            </span>
+          </div>
+
+          {/* % del extra a destinar */}
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
+            padding:"6px 0", borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
+            <div>
+              <div style={{ fontFamily:"'Syne',sans-serif", fontSize:11, color:V("--text-mid") }}>% del extra a destinar</div>
+              <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:V("--text-dim"), marginTop:1 }}>
+                del sueldo extra anual
+              </div>
+            </div>
+            <InputNumero valor={pct} onChange={setPorcentajeExtra} sufijo="%" compact ancho={45} step={0.1}/>
+          </div>
+
+          {/* Cuenta vinculada */}
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
+            padding:"6px 0", borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
+            <span style={{ fontFamily:"'Syne',sans-serif", fontSize:11, color:V("--text-mid") }}>Cuenta de la reserva</span>
+            <SelectorCuenta value={dEf.reservaImpCuenta} cuentas={dEf.cuentas}
+              onChange={setReservaImpCuenta}/>
+          </div>
+
+          {/* Reserva impuestos = saldo de la cuenta */}
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"6px 0" }}>
+            <div>
+              <div style={{ fontFamily:"'Syne',sans-serif", fontSize:11, color:V("--text-mid") }}>Reserva impuestos</div>
+              {cuentaReservaImp ? (
+                <div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:V("--text-dim"), marginTop:1 }}>
+                  desde {cuentaReservaImp.nombre}
+                </div>
+              ) : (
+                <div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:"#FF8C42", marginTop:1 }}>
+                  sin cuenta asignada
+                </div>
+              )}
+            </div>
+            <span style={{
+              fontFamily:"'JetBrains Mono',monospace", fontSize:14, fontWeight:700,
+              color: cuentaReservaImp ? V("--accent") : V("--text-dim"),
+            }}>
+              {saldoReservaImp.toLocaleString("es-ES",{minimumFractionDigits:0})}€
+            </span>
+          </div>
+
+          <div style={{ marginTop:8, fontFamily:"'Syne',sans-serif", fontSize:9, color:V("--text-dim"),
+            padding:"6px 8px", background:"rgba(0,163,224,0.05)", borderRadius:5, lineHeight:1.4 }}>
+            📐 (pendiente − reserva imp.{pct > 0 ? ` − ${pct.toFixed(2)}% del extra` : ""}) ÷ {11-mesNum} meses
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function VistaGastos({ datos, claveM, mesNum, onUpdateDatos }) {
+  const [subGasto, setSubGasto] = useState("mensuales");
   const [seccionAbierta, setSeccionAbierta] = useState({ fijos:true, variables:true, ahorro:true, puntuales:true });
   const [anadiendo, setAnadiendo] = useState(null);
 
@@ -1647,6 +1684,31 @@ function VistaGastos({ datos, claveM, onUpdateDatos }) {
 
   return (
     <div className="slide-in">
+      {/* Prorrateo de gastos anuales — fijo arriba en ambas sub-pestañas */}
+      <BloqueAportacionAnual datos={datos} claveM={claveM} mesNum={mesNum} onUpdateDatos={onUpdateDatos}/>
+
+      {/* Sub-pestañas Mensuales / Anuales */}
+      <div style={{ display:"flex", gap:6, marginBottom:14,
+        background:V("--surface"), borderRadius:12, padding:4,
+        border:"1px solid rgba(255,255,255,0.06)" }}>
+        {[
+          { id:"mensuales", icono:"📋", label:"Mensuales" },
+          { id:"anuales",   icono:"📆", label:"Anuales" },
+        ].map(s => (
+          <button key={s.id} onClick={() => setSubGasto(s.id)} style={{
+            flex:1, padding:"9px 6px", borderRadius:9, border:"none", cursor:"pointer",
+            display:"flex", alignItems:"center", justifyContent:"center", gap:6,
+            background: subGasto === s.id ? V("--accent") + "20" : "transparent",
+            fontFamily:"'Syne',sans-serif", fontSize:13, fontWeight:700,
+            color: subGasto === s.id ? V("--accent") : V("--text-dim"),
+            transition:"all 0.2s",
+          }}>
+            <span style={{ fontSize:15 }}>{s.icono}</span> {s.label}
+          </button>
+        ))}
+      </div>
+
+      {subGasto === "mensuales" && <div>
       {/* Resumen */}
       <div style={{ background:V("--surface"), borderRadius:14, padding:"14px 16px",
         border:"1px solid rgba(255,255,255,0.06)", marginBottom:14 }}>
@@ -1766,15 +1828,11 @@ function VistaGastos({ datos, claveM, onUpdateDatos }) {
           <BotonAnadir onClick={() => setAnadiendo("puntuales")} label="Añadir gasto puntual" color="#FF6B35"/>
         )}
       </Section>
+      </div>}
 
-      {/* Separador visual + Gastos anuales */}
-      <div style={{ display:"flex", alignItems:"center", gap:10, margin:"18px 2px 12px" }}>
-        <div style={{ flex:1, height:1, background:"rgba(255,255,255,0.08)" }}/>
-        <span style={{ fontFamily:"'Syne',sans-serif", fontSize:11, fontWeight:700,
-          color:V("--text-dim"), letterSpacing:"0.08em", textTransform:"uppercase" }}>📆 Gastos anuales</span>
-        <div style={{ flex:1, height:1, background:"rgba(255,255,255,0.08)" }}/>
-      </div>
-      <VistaAnuales datos={datos} claveM={claveM} onUpdateDatos={onUpdateDatos}/>
+      {subGasto === "anuales" && <div>
+        <VistaAnuales datos={datos} claveM={claveM} onUpdateDatos={onUpdateDatos}/>
+      </div>}
     </div>
   );
 }
@@ -2529,6 +2587,7 @@ function VistaCartera({ datos, claveM, onUpdateDatos }) {
 }
 
 function VistaAnalisis({ datos, claveM, mesNum, onUpdateDatos }) {
+  const [subAna, setSubAna] = useState("resumen");
   // Datos efectivos (snapshot si el mes está cerrado)
   const dEf = datosEfectivosMes(datos, claveM);
 
@@ -2587,6 +2646,29 @@ function VistaAnalisis({ datos, claveM, mesNum, onUpdateDatos }) {
 
   return (
     <div className="slide-in">
+      {/* Sub-pestañas Resumen / Teorías / Objetivos */}
+      <div style={{ display:"flex", gap:6, marginBottom:14,
+        background:V("--surface"), borderRadius:12, padding:4,
+        border:"1px solid rgba(255,255,255,0.06)" }}>
+        {[
+          { id:"resumen",   icono:"📊", label:"Resumen" },
+          { id:"teorias",   icono:"📐", label:"Teorías" },
+          { id:"objetivos", icono:"🎯", label:"Objetivos" },
+        ].map(s => (
+          <button key={s.id} onClick={() => setSubAna(s.id)} style={{
+            flex:1, padding:"9px 4px", borderRadius:9, border:"none", cursor:"pointer",
+            display:"flex", alignItems:"center", justifyContent:"center", gap:5,
+            background: subAna === s.id ? V("--accent") + "20" : "transparent",
+            fontFamily:"'Syne',sans-serif", fontSize:12, fontWeight:700,
+            color: subAna === s.id ? V("--accent") : V("--text-dim"),
+            transition:"all 0.2s",
+          }}>
+            <span style={{ fontSize:14 }}>{s.icono}</span> {s.label}
+          </button>
+        ))}
+      </div>
+
+      {subAna === "resumen" && <div>
       {/* Patrimonio */}
       <div style={{ background:"linear-gradient(135deg, #00A3E020, #B06FE815)",
         border:"1px solid #00A3E030", borderRadius:18, padding:"18px 20px", marginBottom:14 }}>
@@ -2643,28 +2725,6 @@ function VistaAnalisis({ datos, claveM, mesNum, onUpdateDatos }) {
         ))}
       </div>
 
-      {/* OBJETIVOS DE AHORRO */}
-      <BloqueObjetivos
-        objetivos={dEf.objetivos || []}
-        cuentas={dEf.cuentas}
-        claveM={claveM}
-        onUpdateDatos={onUpdateDatos}
-      />
-
-      {/* TEORÍAS DEL AHORRO */}
-      <BloqueTeoriasAhorro
-        gastos={todosLosGastos}
-        totalIngresos={totalIngresos}
-        onReclasificar={(tipoOrigen, gastoId, nuevaClasif) => onUpdateDatos(d => {
-          const lista = tipoOrigen === "puntuales"
-            ? (d.meses[claveM] && d.meses[claveM].puntuales) || []
-            : d[`catalogo${tipoOrigen.charAt(0).toUpperCase()}${tipoOrigen.slice(1)}`];
-          if (!lista) return;
-          const idx = lista.findIndex(g => g.id === gastoId);
-          if (idx >= 0) lista[idx].clasificacion = nuevaClasif;
-        })}
-      />
-
       {/* Distribución de gastos (por tipo) */}
       <div style={{ background:V("--surface"), borderRadius:14, padding:"14px 16px",
         border:"1px solid rgba(255,255,255,0.06)", marginBottom:12 }}>
@@ -2717,6 +2777,31 @@ function VistaAnalisis({ datos, claveM, mesNum, onUpdateDatos }) {
           );
         })}
       </div>
+      </div>}
+
+      {subAna === "teorias" && <div>
+        <BloqueTeoriasAhorro
+          gastos={todosLosGastos}
+          totalIngresos={totalIngresos}
+          onReclasificar={(tipoOrigen, gastoId, nuevaClasif) => onUpdateDatos(d => {
+            const lista = tipoOrigen === "puntuales"
+              ? (d.meses[claveM] && d.meses[claveM].puntuales) || []
+              : d[`catalogo${tipoOrigen.charAt(0).toUpperCase()}${tipoOrigen.slice(1)}`];
+            if (!lista) return;
+            const idx = lista.findIndex(g => g.id === gastoId);
+            if (idx >= 0) lista[idx].clasificacion = nuevaClasif;
+          })}
+        />
+      </div>}
+
+      {subAna === "objetivos" && <div>
+        <BloqueObjetivos
+          objetivos={dEf.objetivos || []}
+          cuentas={dEf.cuentas}
+          claveM={claveM}
+          onUpdateDatos={onUpdateDatos}
+        />
+      </div>}
     </div>
   );
 }
@@ -3631,7 +3716,7 @@ function App() {
         opacity: cerrado ? 0.85 : 1,
       }}>
         {vista === "inicio"   && <VistaInicio   datos={datos} claveM={claveM} mesNum={nav.mes} onUpdateDatos={onUpdateDatosMes}/>}
-        {vista === "gastos"   && <VistaGastos   datos={datos} claveM={claveM} onUpdateDatos={onUpdateDatosMes}/>}
+        {vista === "gastos"   && <VistaGastos   datos={datos} claveM={claveM} mesNum={nav.mes} onUpdateDatos={onUpdateDatosMes}/>}
         {vista === "cartera"  && <VistaCartera  datos={datos} claveM={claveM} onUpdateDatos={onUpdateDatosMes}/>}
         {vista === "analisis" && <VistaAnalisis datos={datos} claveM={claveM} mesNum={nav.mes} onUpdateDatos={onUpdateDatosMes}/>}
       </div>

@@ -21,52 +21,52 @@ const TARIFA_KM = 0.20;
 // ═══════════════════════════════════════════════════════
 const TEMAS = {
   midnight: {
-    nombre: "Midnight", emoji: "🌑",
-    "--bg": "#0A0E17",
-    "--surface": "rgba(255,255,255,0.025)",
-    "--surface-2": "rgba(255,255,255,0.05)",
-    "--border": "rgba(255,255,255,0.06)",
-    "--text": "#E8EDF5",
-    "--text-mid": "#CBD5E8",
-    "--text-dim": "#6B7A99",
-    "--accent": "#26D07C",
-    "--header-glow": "rgba(38,208,124,0.06)",
+    nombre: "Bosque", emoji: "🌲",
+    "--bg": "#0A1410",
+    "--surface": "rgba(149,213,178,0.04)",
+    "--surface-2": "rgba(149,213,178,0.08)",
+    "--border": "rgba(149,213,178,0.10)",
+    "--text": "#EAF3EC",
+    "--text-mid": "#B7D4C0",
+    "--text-dim": "#6E8B7A",
+    "--accent": "#74C69D",
+    "--header-glow": "rgba(116,198,157,0.08)",
   },
   ocean: {
     nombre: "Océano", emoji: "🌊",
-    "--bg": "#081420",
-    "--surface": "rgba(80,180,255,0.04)",
-    "--surface-2": "rgba(80,180,255,0.08)",
-    "--border": "rgba(120,190,255,0.1)",
-    "--text": "#E6F1FB",
-    "--text-mid": "#B8D4EC",
-    "--text-dim": "#6B8BA8",
-    "--accent": "#1FB6E0",
-    "--header-glow": "rgba(31,182,224,0.08)",
+    "--bg": "#091622",
+    "--surface": "rgba(72,202,228,0.04)",
+    "--surface-2": "rgba(72,202,228,0.08)",
+    "--border": "rgba(72,202,228,0.10)",
+    "--text": "#E6F2FB",
+    "--text-mid": "#AFD2E8",
+    "--text-dim": "#6486A0",
+    "--accent": "#48CAE4",
+    "--header-glow": "rgba(72,202,228,0.08)",
   },
   plum: {
-    nombre: "Ciruela", emoji: "🍇",
-    "--bg": "#120B1C",
-    "--surface": "rgba(200,140,255,0.04)",
-    "--surface-2": "rgba(200,140,255,0.08)",
-    "--border": "rgba(200,140,255,0.1)",
-    "--text": "#F0E8F7",
-    "--text-mid": "#D4C2E8",
-    "--text-dim": "#8B7AA0",
-    "--accent": "#B06FE8",
-    "--header-glow": "rgba(176,111,232,0.08)",
+    nombre: "Coral", emoji: "🪸",
+    "--bg": "#1A0E15",
+    "--surface": "rgba(231,111,81,0.05)",
+    "--surface-2": "rgba(231,111,81,0.09)",
+    "--border": "rgba(231,111,81,0.12)",
+    "--text": "#F7EAE6",
+    "--text-mid": "#E0BFB5",
+    "--text-dim": "#9C7A72",
+    "--accent": "#E8765A",
+    "--header-glow": "rgba(232,118,90,0.09)",
   },
   paper: {
-    nombre: "Papel", emoji: "📄",
-    "--bg": "#F4F1EA",
-    "--surface": "rgba(0,0,0,0.03)",
-    "--surface-2": "rgba(0,0,0,0.05)",
-    "--border": "rgba(0,0,0,0.08)",
-    "--text": "#2A2620",
-    "--text-mid": "#4A453C",
-    "--text-dim": "#8A8275",
-    "--accent": "#1F9E62",
-    "--header-glow": "rgba(31,158,98,0.07)",
+    nombre: "Marfil", emoji: "📜",
+    "--bg": "#ECE7DC",
+    "--surface": "rgba(45,74,30,0.04)",
+    "--surface-2": "rgba(45,74,30,0.07)",
+    "--border": "rgba(45,74,30,0.12)",
+    "--text": "#2A2A22",
+    "--text-mid": "#4C4C40",
+    "--text-dim": "#8A8775",
+    "--accent": "#6A994E",
+    "--header-glow": "rgba(106,153,78,0.10)",
   },
 };
 
@@ -819,7 +819,7 @@ function calcularTotalCartera(inversiones) {
 // ═══════════════════════════════════════════════════════
 
 const css = `
-  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Playfair+Display:wght@500;600;700;800&display=swap');
   *, *::before, *::after { box-sizing: border-box; margin:0; padding:0; }
   body { background:var(--bg); transition: background 0.3s; }
   ::-webkit-scrollbar { width:3px; }
@@ -835,6 +835,73 @@ const css = `
 
 // Helper para leer variables CSS de tema en estilos inline
 function V(nombre) { return `var(${nombre})`; }
+
+// Fuente serif elegante para logo y cifras destacadas
+const SERIF = "'Playfair Display', serif";
+
+// Logo de barras ascendentes (icono de la marca). Color por degradado hacia el acento.
+function LogoBarras({ size = 28 }) {
+  const u = size / 28;  // factor de escala respecto al diseño base de 28px
+  const barras = [
+    { x: 0,        h: 10, op: 0.45 },
+    { x: 7.5 * u,  h: 17, op: 0.7  },
+    { x: 15 * u,   h: 26, op: 1    },
+  ];
+  return (
+    <svg width={size} height={size} viewBox={`0 0 ${21*u} ${size}`} style={{ display:"block" }}>
+      {barras.map((b, i) => (
+        <rect key={i} x={b.x} y={size - b.h * u} width={5.5 * u} height={b.h * u}
+          rx={2 * u} fill={V("--accent")} opacity={b.op}/>
+      ))}
+    </svg>
+  );
+}
+
+// Pantalla de bienvenida (se muestra la primera vez o desde ajustes)
+function PantallaBienvenida({ onEntrar }) {
+  return (
+    <div style={{
+      position:"fixed", inset:0, zIndex:1000, background:V("--bg"),
+      display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
+      padding:"40px 28px", textAlign:"center",
+      backgroundImage:`radial-gradient(circle at 50% 30%, ${V("--header-glow")}, transparent 60%)`,
+    }}>
+      <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:18 }}>
+        <LogoBarras size={40}/>
+        <span style={{ fontFamily:SERIF, fontSize:44, fontWeight:700, color:V("--text"), lineHeight:1 }}>LO</span>
+      </div>
+      <div style={{ fontFamily:"'Syne',sans-serif", fontSize:13, fontWeight:600, letterSpacing:"0.35em",
+        color:V("--text-mid"), textTransform:"uppercase", marginBottom:24 }}>Inteligente</div>
+      <div style={{ fontFamily:SERIF, fontSize:20, fontStyle:"italic", color:V("--text-mid"),
+        marginBottom:48, maxWidth:280, lineHeight:1.4 }}>
+        Tus finanzas, en su mejor versión.
+      </div>
+
+      <div style={{ display:"flex", gap:18, marginBottom:48, flexWrap:"wrap", justifyContent:"center" }}>
+        {[
+          { ic:"🌿", t:"Visual\nlimpia" },
+          { ic:"🛡️", t:"Segura y\nprivada" },
+          { ic:"📊", t:"Datos que\nte ayudan" },
+          { ic:"☺",  t:"Fácil\nde usar" },
+        ].map((f, i) => (
+          <div key={i} style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:8, width:62 }}>
+            <div style={{ width:48, height:48, borderRadius:14, background:V("--surface-2"),
+              display:"flex", alignItems:"center", justifyContent:"center", fontSize:20,
+              border:`1px solid ${V("--border")}` }}>{f.ic}</div>
+            <span style={{ fontFamily:"'Syne',sans-serif", fontSize:10, color:V("--text-dim"),
+              lineHeight:1.3, whiteSpace:"pre-line" }}>{f.t}</span>
+          </div>
+        ))}
+      </div>
+
+      <button onClick={onEntrar} style={{
+        background:V("--accent"), color:V("--bg"), border:"none", borderRadius:14,
+        padding:"14px 48px", fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:15,
+        cursor:"pointer", letterSpacing:"0.02em",
+      }}>Comenzar</button>
+    </div>
+  );
+}
 
 function Num({ v, decimals=0, color, size=14, mono=true, suffix="€" }) {
   const formatted = typeof v === "number"
@@ -2730,7 +2797,7 @@ function VistaInversiones({ datos, claveM, onUpdateDatos }) {
           color: ganando ? V("--accent") : "#FF4757", letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:6 }}>
           📈 Cartera total
         </div>
-        <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:28, fontWeight:800,
+        <div style={{ fontFamily:SERIF, fontSize:34, fontWeight:700,
           color: ganando ? V("--accent") : "#FF4757", letterSpacing:"-0.02em" }}>
           {total.valorActual.toLocaleString("es-ES",{minimumFractionDigits:2})}€
         </div>
@@ -2870,7 +2937,7 @@ function VistaPatrimonio({ datos, claveM, onUpdateDatos }) {
           letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:6 }}>
           💎 Patrimonio neto
         </div>
-        <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:28, fontWeight:800,
+        <div style={{ fontFamily:SERIF, fontSize:34, fontWeight:700,
           color:V("--text"), letterSpacing:"-0.02em" }}>
           {neto.toLocaleString("es-ES",{minimumFractionDigits:0})}€
         </div>
@@ -3315,7 +3382,7 @@ function VistaAnalisis({ datos, claveM, mesNum, onUpdateDatos }) {
           letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:6 }}>
           💎 Patrimonio neto
         </div>
-        <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:28, fontWeight:800,
+        <div style={{ fontFamily:SERIF, fontSize:34, fontWeight:700,
           color:V("--text"), letterSpacing:"-0.02em" }}>
           {patrimonio.toLocaleString("es-ES",{minimumFractionDigits:0})}€
         </div>
@@ -4154,6 +4221,13 @@ function App() {
   const [tema, setTema]   = useState(() => {
     try { return localStorage.getItem(TEMA_KEY) || "midnight"; } catch { return "midnight"; }
   });
+  const [bienvenida, setBienvenida] = useState(() => {
+    try { return !localStorage.getItem("lo-bienvenida-vista"); } catch { return false; }
+  });
+  const cerrarBienvenida = () => {
+    try { localStorage.setItem("lo-bienvenida-vista", "1"); } catch {}
+    setBienvenida(false);
+  };
 
   // Aplicar el tema al cargar y cada vez que cambie
   useEffect(() => {
@@ -4309,11 +4383,21 @@ function App() {
       fontFamily:"'Syne',sans-serif", color:V("--text"), paddingBottom:80 }}>
       <style>{css}</style>
 
+      {bienvenida && <PantallaBienvenida onEntrar={cerrarBienvenida}/>}
+
       <div style={{
-        background:"linear-gradient(180deg,rgba(38,208,124,0.06) 0%,transparent 100%)",
-        borderBottom:"1px solid rgba(255,255,255,0.06)", padding:"18px 20px 0",
+        background:`linear-gradient(180deg, ${V("--header-glow")} 0%, transparent 100%)`,
+        borderBottom:`1px solid ${V("--border")}`, padding:"14px 20px 0",
         position:"sticky", top:0, zIndex:10, backdropFilter:"blur(12px)",
       }}>
+        {/* Marca */}
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8, marginBottom:12 }}>
+          <LogoBarras size={22}/>
+          <span style={{ fontFamily:SERIF, fontSize:22, fontWeight:700, color:V("--text"), lineHeight:1 }}>LO</span>
+          <span style={{ fontFamily:"'Syne',sans-serif", fontSize:10, fontWeight:600, letterSpacing:"0.25em",
+            color:V("--text-dim"), textTransform:"uppercase", marginTop:2 }}>Inteligente</span>
+        </div>
+
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14 }}>
           <button onClick={()=>irMes(-1)} style={{ background:V("--border"), border:"none",
             color:V("--text-dim"), cursor:"pointer", fontSize:16, width:32, height:32, borderRadius:8,

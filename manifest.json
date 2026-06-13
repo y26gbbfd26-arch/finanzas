@@ -1,13 +1,13 @@
 {
-  "name": "Finanzas Personales",
-  "short_name": "Finanzas",
-  "description": "Control de gastos, ahorros e inversiones",
+  "name": "LO Inteligente",
+  "short_name": "LO",
+  "description": "Tus finanzas, en su mejor versión",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
-  "background_color": "#0A0E17",
-  "theme_color": "#0A0E17",
+  "background_color": "#0A1410",
+  "theme_color": "#0A1410",
   "lang": "es",
   "icons": [
     {

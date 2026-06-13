@@ -7,12 +7,22 @@ const { useState, useEffect, useCallback } = React;
 
 const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 
-const BANCO_META = {
-  BBVA:  { color: V("--c2"), label: "BBVA",            icono: "B" },
-  TRADE: { color: V("--accent"), label: "Trade Republic",  icono: "T" },
-  BANK:  { color: V("--c4"), label: "Bankinter",        icono: "K" },
-  MYINV: { color: V("--c3"), label: "MyInvestor",       icono: "M" },
-};
+// Metadatos de bancos: se rellenan dinámicamente desde datos.bancosConfig.
+// Cada banco lo crea el usuario; el color y el icono se derivan automáticamente.
+let BANCO_META = {};
+const PALETA_BANCOS = ["--c2", "--accent", "--c4", "--c3", "--c1"];
+function sincronizarBancoMeta(bancosConfig) {
+  BANCO_META = {};
+  Object.keys(bancosConfig || {}).forEach((id, i) => {
+    const b = bancosConfig[id] || {};
+    const nombre = b.nombre || id;
+    BANCO_META[id] = {
+      color: V(b.color || PALETA_BANCOS[i % PALETA_BANCOS.length]),
+      label: nombre,
+      icono: b.icono || nombre.charAt(0).toUpperCase(),
+    };
+  });
+}
 
 const TARIFA_KM = 0.20;
 
@@ -163,78 +173,15 @@ const TIPOS_ACTIVO = {
 // Datos iniciales (solo se cargan si no hay storage)
 // ─────────────────────────────────────────────────────
 
-const GASTOS_FIJOS_DEFAULT = [
-  { id:"hipoteca",    nombre:"Hipoteca",                importe:600,   banco:"BANK" },
-  { id:"prestamo",    nombre:"Préstamo EFE",            importe:83.33, banco:"BANK" },
-  { id:"autonomo",    nombre:"Autónomo HNA",            importe:100,   banco:"BBVA" },
-  { id:"comida",      nombre:"Comida y gastos comunes", importe:1200,  banco:"BANK" },
-  { id:"gasolina",    nombre:"Gasolina",                importe:100,   banco:"BBVA" },
-  { id:"crossfit",    nombre:"Crossfit / Gimnasio",     importe:50,    banco:"BBVA" },
-];
+const GASTOS_FIJOS_DEFAULT = [];
 
-const GASTOS_VARIABLES_DEFAULT = [
-  { id:"icloud",    nombre:"iCloud",       importe:9.99,  banco:"BBVA" },
-  { id:"cancer",    nombre:"Asoc. Cáncer", importe:5,     banco:"BBVA" },
-  { id:"dazn",      nombre:"DAZN",         importe:14.99, banco:"BBVA" },
-  { id:"applecare", nombre:"AppleCare",    importe:11.99, banco:"BBVA" },
-];
+const GASTOS_VARIABLES_DEFAULT = [];
 
-const GASTOS_AHORRO_DEFAULT = [
-  { id:"ahorro_neto", nombre:"Ahorro neto",            importe:1000, banco:"TRADE" },
-  { id:"fondo_comun", nombre:"Fondo común (pareja)",   importe:500,  banco:"BANK"  },
-  { id:"aport_anual", nombre:"Reserva gastos anuales", importe:300,  banco:"TRADE" },
-];
+const GASTOS_AHORRO_DEFAULT = [];
 
-const ANUALES_DEFAULT = {
-  "MOROS DE ELDA": {
-    icono:"🥁",
-    conceptos: [
-      { id:"cuota",   nombre:"Cuota anual", importe:600 },
-      { id:"derrama", nombre:"Derrama",     importe:700 },
-      { id:"desfile", nombre:"Desfile",     importe:350 },
-      { id:"otros",   nombre:"Otros",       importe:200 },
-    ],
-  },
-  "BODAS Y CUMPLEAÑOS": {
-    icono:"💒",
-    conceptos: [
-      { id:"fernando", nombre:"Fernando",    importe:700 },
-      { id:"pascu",    nombre:"Pascu",       importe:700 },
-      { id:"otras",    nombre:"Otras bodas", importe:300 },
-    ],
-  },
-  "IMPUESTOS": {
-    icono:"🏛",
-    conceptos: [
-      { id:"ibi",     nombre:"IBI",          importe:600 },
-      { id:"vida",    nombre:"Seg. Vida",    importe:400 },
-      { id:"hogar",   nombre:"Seg. Hogar",   importe:900 },
-      { id:"vado",    nombre:"Vado",         importe:200 },
-    ],
-  },
-  "VIAJES": {
-    icono:"✈️",
-    conceptos: [
-      { id:"festival", nombre:"Festival", importe:400 },
-    ],
-  },
-  "OTROS": {
-    icono:"📦",
-    conceptos: [
-      { id:"medicos", nombre:"Médicos",     importe:100 },
-      { id:"coche",   nombre:"Coche",       importe:1700 },
-      { id:"casa",    nombre:"Gastos casa", importe:3000 },
-    ],
-  },
-};
+const ANUALES_DEFAULT = {};
 
-const CUENTAS_DEFAULT = [
-  { id:"bbva-op",   banco:"BBVA",  nombre:"Cuenta nómina",    proposito:"operativa",  asignado:0 },
-  { id:"bank-op",   banco:"BANK",  nombre:"Cuenta hipoteca",  proposito:"operativa",  asignado:0 },
-  { id:"trade-em",  banco:"TRADE", nombre:"Fondo emergencia", proposito:"emergencia", asignado:0 },
-  { id:"trade-an",  banco:"TRADE", nombre:"Reserva anuales",  proposito:"anuales",    asignado:0 },
-  { id:"myinv-inv", banco:"MYINV", nombre:"Cartera",          proposito:"inversion",  asignado:0 },
-];
+const CUENTAS_DEFAULT = [];
 
 // ═══════════════════════════════════════════════════════
 // STORAGE Y ESTADO
@@ -247,18 +194,10 @@ function añoActual() { return new Date().getFullYear(); }
 
 // Configuración por defecto de cada banco: modo "suma" (total = suma cuentas)
 // o "reserva" (total manual, libre = total - asignaciones)
-const BANCOS_CONFIG_DEFAULT = {
-  BBVA:  { modo: "suma",    total: 0 },
-  TRADE: { modo: "reserva", total: 0 },
-  BANK:  { modo: "suma",    total: 0 },
-  MYINV: { modo: "suma",    total: 0 },
-};
+const BANCOS_CONFIG_DEFAULT = {};
 
 // Ingresos base por defecto (todos editables, eliminables, ampliables)
-const INGRESOS_BASE_DEFAULT = [
-  { id: "nomina",  nombre: "Nómina",              importe: 3500 },
-  { id: "aportFam", nombre: "Aportación familiar", importe: 650 },
-];
+const INGRESOS_BASE_DEFAULT = [{ id:"nomina", nombre:"Nómina", importe:0 }];
 
 function datosVacios() {
   return {
@@ -309,7 +248,15 @@ async function cargarDatos() {
     const cargado = JSON.parse(raw);
     const base = datosVacios();
     if (!cargado.catalogoFijos || !cargado.anuales || !cargado.bancosConfig || !Array.isArray(cargado.ingresosBase)) return base;
-    return { ...base, ...cargado, meses: cargado.meses || {} };
+    const datos = { ...base, ...cargado, meses: cargado.meses || {} };
+    // Migración: dar nombre/color/icono a bancos antiguos que no lo tengan
+    const NOMBRES_LEGACY = { BBVA:"BBVA", TRADE:"Trade Republic", BANK:"Bankinter", MYINV:"MyInvestor" };
+    Object.keys(datos.bancosConfig || {}).forEach((id, i) => {
+      const b = datos.bancosConfig[id];
+      if (!b.nombre) b.nombre = NOMBRES_LEGACY[id] || id;
+      if (!b.color) b.color = PALETA_BANCOS[i % PALETA_BANCOS.length];
+    });
+    return datos;
   } catch { return datosVacios(); }
 }
 
@@ -1280,6 +1227,31 @@ function BloqueBancos({ datos, onUpdateDatos }) {
   const [abierto, setAbierto] = useState(true);  // abierto por defecto, es lo principal
   const [anadiendoEn, setAnadiendoEn] = useState(null);
   const [editandoNombre, setEditandoNombre] = useState(null);
+  const [anadiendoBanco, setAnadiendoBanco] = useState(false);
+
+  const añadirBanco = (data) => {
+    const nuevoId = `banco-${Date.now()}`;
+    const idx = Object.keys(datos.bancosConfig || {}).length;
+    onUpdateDatos(d => {
+      if (!d.bancosConfig) d.bancosConfig = {};
+      d.bancosConfig[nuevoId] = {
+        nombre: data.nombre, modo: data.modo, total: 0,
+        color: PALETA_BANCOS[idx % PALETA_BANCOS.length],
+      };
+    });
+    setAnadiendoBanco(false);
+  };
+  const eliminarBanco = (id, nombre) => {
+    const cuentasDelBanco = datos.cuentas.filter(c => c.banco === id).length;
+    const msg = cuentasDelBanco > 0
+      ? `"${nombre}" tiene ${cuentasDelBanco} cuenta(s). Se eliminarán también. ¿Continuar?`
+      : `¿Eliminar el banco "${nombre}"?`;
+    if (!confirm(msg)) return;
+    onUpdateDatos(d => {
+      delete d.bancosConfig[id];
+      d.cuentas = d.cuentas.filter(c => c.banco !== id);
+    });
+  };
 
   // Resumen agregado
   const totalLiquido = Object.keys(BANCO_META).reduce((a, b) =>
@@ -1509,11 +1481,78 @@ function BloqueBancos({ datos, onUpdateDatos }) {
                   <BotonAnadir onClick={() => setAnadiendoEn(bancoId)}
                     label={`Añadir cuenta en ${meta.label}`} color={meta.color}/>
                 )}
+                <button onClick={() => eliminarBanco(bancoId, meta.label)} style={{
+                  marginTop:6, width:"100%", background:"none", border:`1px solid ${V("--border")}`,
+                  borderRadius:8, padding:"6px", cursor:"pointer", fontFamily:"'Inter',sans-serif",
+                  fontSize:10, color:V("--text-dim") }}>
+                  Eliminar banco
+                </button>
               </div>
             );
           })}
+
+          {/* Estado vacío + añadir banco */}
+          {Object.keys(datos.bancosConfig || {}).length === 0 && !anadiendoBanco && (
+            <div style={{ padding:"16px 8px", textAlign:"center" }}>
+              <div style={{ fontFamily:UI, fontSize:13, color:V("--text-mid"), marginBottom:4 }}>
+                Aún no tienes bancos
+              </div>
+              <div style={{ fontFamily:UI, fontSize:11, color:V("--text-dim"), lineHeight:1.4 }}>
+                Añade tu primer banco para empezar a organizar tus cuentas y saldos.
+              </div>
+            </div>
+          )}
+
+          {anadiendoBanco ? (
+            <FormularioAnadirBanco onGuardar={añadirBanco} onCancelar={() => setAnadiendoBanco(false)}/>
+          ) : (
+            <BotonAnadir onClick={() => setAnadiendoBanco(true)} label="Añadir banco" color={V("--accent")}/>
+          )}
         </div>
       )}
+    </div>
+  );
+}
+
+function FormularioAnadirBanco({ onGuardar, onCancelar }) {
+  const [nombre, setNombre] = useState("");
+  const [modo, setModo] = useState("suma");
+
+  return (
+    <div style={{ marginTop:8, padding:"12px", background:"rgba(255,255,255,0.03)", borderRadius:12,
+      border:`1px solid ${V("--border")}` }}>
+      <input placeholder="Nombre del banco (ej. BBVA)" value={nombre}
+        onChange={e => setNombre(e.target.value)} autoFocus
+        style={{ width:"100%", background:V("--surface-2"), border:`1px solid ${V("--border")}`,
+          borderRadius:10, padding:"10px 12px", color:V("--text"), fontSize:14, outline:"none",
+          fontFamily:UI, marginBottom:12 }}/>
+
+      <div style={{ fontFamily:UI, fontSize:10, fontWeight:600, color:V("--text-dim"),
+        marginBottom:6 }}>¿CÓMO QUIERES LLEVAR EL SALDO?</div>
+      <div style={{ display:"flex", gap:6, marginBottom:8 }}>
+        {[
+          { id:"suma", label:"Por cuentas", desc:"El saldo es la suma de las cuentas que le asignes" },
+          { id:"reserva", label:"Saldo total", desc:"Tú escribes el saldo total del banco a mano" },
+        ].map(m => (
+          <button key={m.id} onClick={() => setModo(m.id)} style={{
+            flex:1, padding:"10px 8px", borderRadius:10, cursor:"pointer", textAlign:"left",
+            border:`1px solid ${modo === m.id ? V("--accent") : V("--border")}`,
+            background: modo === m.id ? mix(V("--accent"), "20") : "transparent",
+          }}>
+            <div style={{ fontFamily:UI, fontSize:12, fontWeight:700,
+              color: modo === m.id ? V("--accent") : V("--text-mid") }}>{m.label}</div>
+            <div style={{ fontFamily:UI, fontSize:9, color:V("--text-dim"), marginTop:3, lineHeight:1.3 }}>{m.desc}</div>
+          </button>
+        ))}
+      </div>
+
+      <div style={{ display:"flex", gap:8 }}>
+        <button onClick={() => { if (nombre.trim()) onGuardar({ nombre: nombre.trim(), modo }); }}
+          style={{ flex:1, background:V("--accent"), color:V("--bg"), border:"none", borderRadius:999,
+            fontFamily:UI, fontWeight:800, fontSize:14, cursor:"pointer", padding:"12px" }}>Crear banco</button>
+        <button onClick={onCancelar} style={{ padding:"0 16px", background:V("--surface-2"),
+          color:V("--text-dim"), border:"none", borderRadius:999, cursor:"pointer", fontSize:14 }}>✕</button>
+      </div>
     </div>
   );
 }
@@ -4428,6 +4467,9 @@ function App() {
     { id:"cartera",  icono:"🏦", label:"Cartera" },
     { id:"analisis", icono:"📊", label:"Análisis" },
   ];
+
+  // Mantener BANCO_META en sincronía con los bancos del usuario (antes de renderizar hijos)
+  sincronizarBancoMeta(datosEfectivosMes(datos, claveM).bancosConfig);
 
   return (
     <div style={{ background:V("--bg"), minHeight:"100vh", maxWidth:480, margin:"0 auto",

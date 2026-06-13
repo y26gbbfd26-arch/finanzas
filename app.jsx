@@ -532,11 +532,18 @@ function calcularAportacionAnual(datos, mesNum, claveM) {
   const d = claveM ? datosEfectivosMes(datos, claveM) : datos;
   const pendiente = totalAnualesPendiente(d);
   const reserva = calcularReservaEfectiva(d);
-  const mesesRestantes = Math.max(1, 11 - mesNum);  // 0=enero…11=diciembre
+  // El número en pantalla del mes M es lo que se aportará en M+1.
+  // La última aportación es la de noviembre (para tener todo a primeros de diciembre).
+  // Aportaciones que quedan estando en el mes M: M+1, M+2, …, noviembre = (10 - mesNum).
+  // (mesNum: 0=enero … 11=diciembre; noviembre=10)
+  const aportacionesRestantes = 10 - mesNum;
   const nominaRef = (d.ingresosBase && d.ingresosBase[0]) ? (d.ingresosBase[0].importe || 0) : 0;
   const pct = (d.porcentajeExtra || 0) / 100;
   const extrasFactor = nominaRef * pct;
-  return (pendiente - reserva - extrasFactor) / mesesRestantes;
+  const aReparto = pendiente - reserva - extrasFactor;
+  // De noviembre en adelante ya no hay meses para repartir: devolvemos el pendiente completo
+  if (aportacionesRestantes <= 0) return Math.max(0, aReparto);
+  return aReparto / aportacionesRestantes;
 }
 
 // Bancos
@@ -697,14 +704,33 @@ function BarraProgreso({ valor, maximo, color="#00A3E0", altura=6 }) {
 }
 
 function InputMoneda({ valor, onChange, placeholder="0", compact=false, ancho }) {
+  // Estado de texto local: permite editar la cifra completa con libertad
+  // (borrar todo, seleccionar y sobrescribir) sin que React normalice en cada tecla.
+  const [txt, setTxt] = useState(String(valor || ""));
+  const [enfocado, setEnfocado] = useState(false);
+
+  // Cuando el valor externo cambia y NO estamos editando, sincronizamos el texto
+  useEffect(() => {
+    if (!enfocado) setTxt(valor ? String(valor) : "");
+  }, [valor, enfocado]);
+
+  const manejarCambio = (e) => {
+    const raw = e.target.value;
+    setTxt(raw);
+    const num = parseFloat(raw.replace(",", "."));
+    onChange(isNaN(num) ? 0 : num);
+  };
+
   return (
     <div style={{ display:"flex", alignItems:"center", gap:3,
       background:V("--surface-2"), border:"1px solid rgba(255,255,255,0.1)",
       borderRadius:8, padding: compact ? "4px 8px" : "7px 10px",
     }}>
       <span style={{ color:V("--text-dim"), fontFamily:"'JetBrains Mono',monospace", fontSize: compact?11:13 }}>€</span>
-      <input type="number" min="0" step="0.01" value={valor||""} placeholder={placeholder}
-        onChange={e => onChange(parseFloat(e.target.value)||0)}
+      <input type="text" inputMode="decimal" value={txt} placeholder={placeholder}
+        onFocus={e => { setEnfocado(true); e.target.select(); }}
+        onBlur={() => setEnfocado(false)}
+        onChange={manejarCambio}
         style={{
           background:"transparent", border:"none", outline:"none",
           width: ancho || (compact ? 65 : 85),
@@ -717,16 +743,29 @@ function InputMoneda({ valor, onChange, placeholder="0", compact=false, ancho })
 }
 
 function InputNumero({ valor, onChange, placeholder="0", sufijo="", compact=false, ancho=85, step=1 }) {
+  const [txt, setTxt] = useState(String(valor || ""));
+  const [enfocado, setEnfocado] = useState(false);
+
+  useEffect(() => {
+    if (!enfocado) setTxt(valor ? String(valor) : "");
+  }, [valor, enfocado]);
+
+  const manejarCambio = (e) => {
+    const raw = e.target.value;
+    setTxt(raw);
+    const num = parseFloat(raw.replace(",", "."));
+    onChange(isNaN(num) ? 0 : num);
+  };
+
   return (
     <div style={{ display:"flex", alignItems:"center", gap:3,
       background:V("--surface-2"), border:"1px solid rgba(255,255,255,0.1)",
       borderRadius:8, padding: compact ? "4px 8px" : "7px 10px",
     }}>
-      <input type="number" min="0" step={step} value={valor||""} placeholder={placeholder}
-        onChange={e => {
-          const v = parseFloat(e.target.value);
-          onChange(isNaN(v) ? 0 : v);
-        }}
+      <input type="text" inputMode="decimal" value={txt} placeholder={placeholder}
+        onFocus={e => { setEnfocado(true); e.target.select(); }}
+        onBlur={() => setEnfocado(false)}
+        onChange={manejarCambio}
         style={{
           background:"transparent", border:"none", outline:"none", width: ancho,
           color:V("--text"), fontFamily:"'JetBrains Mono',monospace", fontSize: compact?12:14,
@@ -1524,7 +1563,7 @@ function BloqueAportacionAnual({ datos, claveM, mesNum, onUpdateDatos }) {
               Apartar este mes
             </div>
             <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:8, color:V("--text-dim") }}>
-              para gastos anuales
+              a aportar el mes que viene
             </div>
           </div>
         </div>
@@ -1593,7 +1632,7 @@ function BloqueAportacionAnual({ datos, claveM, mesNum, onUpdateDatos }) {
 
           <div style={{ marginTop:8, fontFamily:"'Syne',sans-serif", fontSize:9, color:V("--text-dim"),
             padding:"6px 8px", background:"rgba(0,163,224,0.05)", borderRadius:5, lineHeight:1.4 }}>
-            📐 (pendiente − reserva imp.{pct > 0 ? ` − ${pct.toFixed(2)}% del extra` : ""}) ÷ {11-mesNum} meses
+            📐 (pendiente − reserva imp.{pct > 0 ? ` − ${pct.toFixed(2)}% del extra` : ""}) ÷ {Math.max(0, 10-mesNum)} aportaciones (hasta noviembre)
           </div>
         </div>
       )}

@@ -8,10 +8,10 @@ const { useState, useEffect, useCallback } = React;
 const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 
 const BANCO_META = {
-  BBVA:  { color: "#00A3E0", label: "BBVA",            icono: "B" },
-  TRADE: { color: "#26D07C", label: "Trade Republic",  icono: "T" },
-  BANK:  { color: "#FF6B35", label: "Bankinter",        icono: "K" },
-  MYINV: { color: "#B06FE8", label: "MyInvestor",       icono: "M" },
+  BBVA:  { color: V("--c2"), label: "BBVA",            icono: "B" },
+  TRADE: { color: V("--accent"), label: "Trade Republic",  icono: "T" },
+  BANK:  { color: V("--c4"), label: "Bankinter",        icono: "K" },
+  MYINV: { color: V("--c3"), label: "MyInvestor",       icono: "M" },
 };
 
 const TARIFA_KM = 0.20;
@@ -22,51 +22,51 @@ const TARIFA_KM = 0.20;
 const TEMAS = {
   midnight: {
     nombre: "Bosque", emoji: "🌲",
-    "--bg": "#0A1410",
-    "--surface": "rgba(149,213,178,0.04)",
-    "--surface-2": "rgba(149,213,178,0.08)",
+    "--bg": "#0A1410", "--bg-deep": "#050907",
+    "--surface": "rgba(149,213,178,0.04)", "--surface-2": "rgba(149,213,178,0.08)",
+    "--surface-elevated": "#102019", "--surface-soft": "#15281F",
     "--border": "rgba(149,213,178,0.10)",
-    "--text": "#EAF3EC",
-    "--text-mid": "#B7D4C0",
-    "--text-dim": "#6E8B7A",
-    "--accent": "#74C69D",
+    "--text": "#EAF3EC", "--text-mid": "#B7D4C0", "--text-dim": "#6E8B7A",
+    "--accent": "#74C69D", "--accent-light": "#95D5B2", "--accent-pale": "#D8F3DC",
     "--header-glow": "rgba(116,198,157,0.08)",
+    "--c1": "#2D6A4F", "--c2": "#52B788", "--c3": "#74C69D", "--c4": "#95D5B2",
+    "--warn": "#E8A838", "--negative": "#E8765A",
   },
   ocean: {
     nombre: "Océano", emoji: "🌊",
-    "--bg": "#091622",
-    "--surface": "rgba(72,202,228,0.04)",
-    "--surface-2": "rgba(72,202,228,0.08)",
+    "--bg": "#091622", "--bg-deep": "#040A10",
+    "--surface": "rgba(72,202,228,0.04)", "--surface-2": "rgba(72,202,228,0.08)",
+    "--surface-elevated": "#0E1F2D", "--surface-soft": "#11263340",
     "--border": "rgba(72,202,228,0.10)",
-    "--text": "#E6F2FB",
-    "--text-mid": "#AFD2E8",
-    "--text-dim": "#6486A0",
-    "--accent": "#48CAE4",
+    "--text": "#E6F2FB", "--text-mid": "#AFD2E8", "--text-dim": "#6486A0",
+    "--accent": "#48CAE4", "--accent-light": "#90E0EF", "--accent-pale": "#CAF0F8",
     "--header-glow": "rgba(72,202,228,0.08)",
+    "--c1": "#2A6F97", "--c2": "#2A9FD0", "--c3": "#48CAE4", "--c4": "#90E0EF",
+    "--warn": "#E8A838", "--negative": "#E8765A",
   },
   plum: {
     nombre: "Coral", emoji: "🪸",
-    "--bg": "#1A0E15",
-    "--surface": "rgba(231,111,81,0.05)",
-    "--surface-2": "rgba(231,111,81,0.09)",
+    "--bg": "#1A0E15", "--bg-deep": "#0E060A",
+    "--surface": "rgba(231,111,81,0.05)", "--surface-2": "rgba(231,111,81,0.09)",
+    "--surface-elevated": "#24131D", "--surface-soft": "#2E1826",
     "--border": "rgba(231,111,81,0.12)",
-    "--text": "#F7EAE6",
-    "--text-mid": "#E0BFB5",
-    "--text-dim": "#9C7A72",
-    "--accent": "#E8765A",
+    "--text": "#F7EAE6", "--text-mid": "#E0BFB5", "--text-dim": "#9C7A72",
+    "--accent": "#E8765A", "--accent-light": "#F4A582", "--accent-pale": "#F7C9B0",
     "--header-glow": "rgba(232,118,90,0.09)",
+    "--c1": "#C85A45", "--c2": "#E8765A", "--c3": "#F4A582", "--c4": "#F7C9B0",
+    "--warn": "#E0B23C", "--negative": "#D9534F",
   },
   paper: {
     nombre: "Marfil", emoji: "📜",
-    "--bg": "#ECE7DC",
-    "--surface": "rgba(45,74,30,0.04)",
-    "--surface-2": "rgba(45,74,30,0.07)",
+    "--bg": "#ECE7DC", "--bg-deep": "#E3DDCF",
+    "--surface": "rgba(45,74,30,0.04)", "--surface-2": "rgba(45,74,30,0.07)",
+    "--surface-elevated": "#F7F4EC", "--surface-soft": "#F0EBDF",
     "--border": "rgba(45,74,30,0.12)",
-    "--text": "#2A2A22",
-    "--text-mid": "#4C4C40",
-    "--text-dim": "#8A8775",
-    "--accent": "#6A994E",
+    "--text": "#1C1C1A", "--text-mid": "#4C4C40", "--text-dim": "#8A8775",
+    "--accent": "#2D5E3F", "--accent-light": "#588157", "--accent-pale": "#6A994E",
     "--header-glow": "rgba(106,153,78,0.10)",
+    "--c1": "#2D4A1E", "--c2": "#588157", "--c3": "#6A994E", "--c4": "#A7C957",
+    "--warn": "#B8860B", "--negative": "#C0573E",
   },
 };
 
@@ -94,9 +94,9 @@ const TEORIAS_AHORRO = {
     autor: "Elizabeth Warren",
     descripcion: "La clásica: 50% necesidades, 30% deseos, 20% ahorro.",
     categorias: [
-      { id:"necesidad", label:"Necesidades", pct:50, color:"#00A3E0", incluye:["necesidad"] },
-      { id:"deseo",     label:"Deseos",      pct:30, color:"#FF6B35", incluye:["deseo"] },
-      { id:"ahorro",    label:"Ahorro",      pct:20, color:"#26D07C", incluye:["ahorro","deuda"] },
+      { id:"necesidad", label:"Necesidades", pct:50, color:V("--c2"), incluye:["necesidad"] },
+      { id:"deseo",     label:"Deseos",      pct:30, color:V("--c4"), incluye:["deseo"] },
+      { id:"ahorro",    label:"Ahorro",      pct:20, color:V("--accent"), incluye:["ahorro","deuda"] },
     ],
   },
   "70_20_10": {
@@ -104,9 +104,9 @@ const TEORIAS_AHORRO = {
     autor: "Pragmática",
     descripcion: "70% gastos vitales, 20% ahorro, 10% deuda o donación.",
     categorias: [
-      { id:"gastos",  label:"Gastos",  pct:70, color:"#00A3E0", incluye:["necesidad","deseo"] },
-      { id:"ahorro",  label:"Ahorro",  pct:20, color:"#26D07C", incluye:["ahorro"] },
-      { id:"deuda",   label:"Deuda/Dar", pct:10, color:"#FF6B35", incluye:["deuda","dar"] },
+      { id:"gastos",  label:"Gastos",  pct:70, color:V("--c2"), incluye:["necesidad","deseo"] },
+      { id:"ahorro",  label:"Ahorro",  pct:20, color:V("--accent"), incluye:["ahorro"] },
+      { id:"deuda",   label:"Deuda/Dar", pct:10, color:V("--c4"), incluye:["deuda","dar"] },
     ],
   },
   "jars": {
@@ -114,12 +114,12 @@ const TEORIAS_AHORRO = {
     autor: "T. Harv Eker",
     descripcion: "Divide cada euro en 6 cuentas con propósitos distintos.",
     categorias: [
-      { id:"necesidad",  label:"Necesidades",       pct:55, color:"#00A3E0", incluye:["necesidad"] },
-      { id:"ocio",       label:"Ocio/Placer",       pct:10, color:"#FF6B35", incluye:["deseo"] },
-      { id:"ahorro",     label:"Ahorro l/p",        pct:10, color:"#26D07C", incluye:["ahorro"] },
-      { id:"educacion",  label:"Educación",         pct:10, color:"#E8A838", incluye:["educacion"] },
-      { id:"libertad",   label:"Libertad financiera", pct:10, color:"#B06FE8", incluye:["libertad"] },
-      { id:"dar",        label:"Dar / Donar",       pct:5,  color:"#8B9DBB", incluye:["dar"] },
+      { id:"necesidad",  label:"Necesidades",       pct:55, color:V("--c2"), incluye:["necesidad"] },
+      { id:"ocio",       label:"Ocio/Placer",       pct:10, color:V("--c4"), incluye:["deseo"] },
+      { id:"ahorro",     label:"Ahorro l/p",        pct:10, color:V("--accent"), incluye:["ahorro"] },
+      { id:"educacion",  label:"Educación",         pct:10, color:V("--c3"), incluye:["educacion"] },
+      { id:"libertad",   label:"Libertad financiera", pct:10, color:V("--c3"), incluye:["libertad"] },
+      { id:"dar",        label:"Dar / Donar",       pct:5,  color:V("--text-dim"), incluye:["dar"] },
     ],
   },
   "80_20": {
@@ -127,8 +127,8 @@ const TEORIAS_AHORRO = {
     autor: "Pareto / Ramit Sethi",
     descripcion: "El máximo: 80% para vivir, 20% para ahorrar e invertir.",
     categorias: [
-      { id:"gastos",  label:"Gastos",  pct:80, color:"#00A3E0", incluye:["necesidad","deseo","deuda"] },
-      { id:"ahorro",  label:"Ahorro",  pct:20, color:"#26D07C", incluye:["ahorro"] },
+      { id:"gastos",  label:"Gastos",  pct:80, color:V("--c2"), incluye:["necesidad","deseo","deuda"] },
+      { id:"ahorro",  label:"Ahorro",  pct:20, color:V("--accent"), incluye:["ahorro"] },
     ],
   },
 };
@@ -151,12 +151,12 @@ const PROPOSITOS = {
 };
 
 const TIPOS_ACTIVO = {
-  fondo:   { label:"Fondo",       color:"#FF6B35", icono:"🏦" },
-  etf:     { label:"ETF",         color:"#00A3E0", icono:"📊" },
-  accion:  { label:"Acción",      color:"#26D07C", icono:"📈" },
-  cripto:  { label:"Cripto",      color:"#E8A838", icono:"₿"  },
-  bono:    { label:"Bono",        color:"#B06FE8", icono:"📜" },
-  pension: { label:"Plan/Pensión", color:"#8B9DBB", icono:"🛡", soloValor:true },
+  fondo:   { label:"Fondo",       color:V("--c4"), icono:"🏦" },
+  etf:     { label:"ETF",         color:V("--c2"), icono:"📊" },
+  accion:  { label:"Acción",      color:V("--accent"), icono:"📈" },
+  cripto:  { label:"Cripto",      color:V("--c3"), icono:"₿"  },
+  bono:    { label:"Bono",        color:V("--c3"), icono:"📜" },
+  pension: { label:"Plan/Pensión", color:V("--text-dim"), icono:"🛡", soloValor:true },
 };
 
 // ─────────────────────────────────────────────────────
@@ -819,7 +819,7 @@ function calcularTotalCartera(inversiones) {
 // ═══════════════════════════════════════════════════════
 
 const css = `
-  @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@400;500;600&family=Playfair+Display:wght@500;600;700;800&display=swap');
+  @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
   *, *::before, *::after { box-sizing: border-box; margin:0; padding:0; }
   body { background:var(--bg); transition: background 0.3s; }
   ::-webkit-scrollbar { width:3px; }
@@ -836,69 +836,91 @@ const css = `
 // Helper para leer variables CSS de tema en estilos inline
 function V(nombre) { return `var(${nombre})`; }
 
+// Mezcla un color (var o hex) con transparencia. alpha en hex de 2 chars ("20") o número 0-255.
+function mix(color, alpha) {
+  const n = typeof alpha === "string" ? parseInt(alpha, 16) : alpha;
+  const pct = Math.max(0, Math.min(100, Math.round((n / 255) * 100)));
+  return `color-mix(in srgb, ${color} ${pct}%, transparent)`;
+}
+
 // Fuente serif elegante para logo y cifras destacadas
-const SERIF = "'Playfair Display', serif";
+const SERIF = "'DM Serif Display', Georgia, serif";
+const UI = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
 
 // Logo de barras ascendentes (icono de la marca). Color por degradado hacia el acento.
 function LogoBarras({ size = 28 }) {
-  const u = size / 28;  // factor de escala respecto al diseño base de 28px
+  const u = size / 28;
+  const gid = "logograd" + size;
+  // Barras ascendentes con degradado vertical menta (del kit): accent → accent-pale
   const barras = [
-    { x: 0,        h: 10, op: 0.45 },
-    { x: 7.5 * u,  h: 17, op: 0.7  },
-    { x: 15 * u,   h: 26, op: 1    },
+    { x: 0,       h: 11 },
+    { x: 8 * u,   h: 18 },
+    { x: 16 * u,  h: 27 },
   ];
   return (
-    <svg width={size} height={size} viewBox={`0 0 ${21*u} ${size}`} style={{ display:"block" }}>
+    <svg width={21*u} height={size} viewBox={`0 0 ${21*u} ${size}`} style={{ display:"block" }}>
+      <defs>
+        <linearGradient id={gid} x1="0" y1={size} x2="0" y2="0" gradientUnits="userSpaceOnUse">
+          <stop stopColor={V("--accent")}/>
+          <stop offset="1" stopColor={V("--accent-pale")}/>
+        </linearGradient>
+      </defs>
       {barras.map((b, i) => (
-        <rect key={i} x={b.x} y={size - b.h * u} width={5.5 * u} height={b.h * u}
-          rx={2 * u} fill={V("--accent")} opacity={b.op}/>
+        <rect key={i} x={b.x} y={size - b.h * u} width={5 * u} height={b.h * u}
+          rx={2.5 * u} fill={`url(#${gid})`}/>
       ))}
     </svg>
   );
 }
 
-// Pantalla de bienvenida (se muestra la primera vez o desde ajustes)
+// Marca tipográfica "economízalo." — economíza en Inter, lo en serif, punto en acento
+function MarcaLO({ serifSize = 24, sansSize = 18, conIso = true, isoSize = 22 }) {
+  return (
+    <div style={{ display:"flex", alignItems:"center", gap:10 }}>
+      {conIso && <LogoBarras size={isoSize}/>}
+      <span style={{ display:"inline-flex", alignItems:"baseline" }}>
+        <span style={{ fontFamily:UI, fontSize:sansSize, fontWeight:500, color:V("--text"),
+          letterSpacing:"-0.02em" }}>economíza</span>
+        <span style={{ fontFamily:SERIF, fontSize:serifSize, fontWeight:700, color:V("--accent-pale"),
+          letterSpacing:"-0.01em", marginLeft:1 }}>lo</span>
+        <span style={{ fontFamily:SERIF, fontSize:serifSize, color:V("--accent") }}>.</span>
+      </span>
+    </div>
+  );
+}
+
+// Pantalla de bienvenida (se muestra la primera vez)
 function PantallaBienvenida({ onEntrar }) {
   return (
     <div style={{
       position:"fixed", inset:0, zIndex:1000, background:V("--bg"),
       display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center",
       padding:"40px 28px", textAlign:"center",
-      backgroundImage:`radial-gradient(circle at 50% 30%, ${V("--header-glow")}, transparent 60%)`,
+      backgroundImage:`radial-gradient(circle at 50% 28%, ${V("--header-glow")}, transparent 62%)`,
     }}>
-      <div style={{ display:"flex", alignItems:"center", gap:12, marginBottom:18 }}>
-        <LogoBarras size={40}/>
-        <span style={{ fontFamily:SERIF, fontSize:44, fontWeight:700, color:V("--text"), lineHeight:1 }}>LO</span>
+      {/* Logo grande: barras + lo. */}
+      <div style={{ display:"flex", alignItems:"flex-end", gap:14, marginBottom:14 }}>
+        <LogoBarras size={52}/>
+        <span style={{ display:"inline-flex", alignItems:"baseline" }}>
+          <span style={{ fontFamily:SERIF, fontSize:64, fontWeight:700, color:V("--text"), lineHeight:0.9 }}>lo</span>
+          <span style={{ fontFamily:SERIF, fontSize:64, color:V("--accent") }}>.</span>
+        </span>
       </div>
-      <div style={{ fontFamily:"'Syne',sans-serif", fontSize:13, fontWeight:600, letterSpacing:"0.35em",
-        color:V("--text-mid"), textTransform:"uppercase", marginBottom:24 }}>Inteligente</div>
-      <div style={{ fontFamily:SERIF, fontSize:20, fontStyle:"italic", color:V("--text-mid"),
-        marginBottom:48, maxWidth:280, lineHeight:1.4 }}>
-        Tus finanzas, en su mejor versión.
+      <div style={{ fontFamily:SERIF, fontSize:30, color:V("--accent"), marginBottom:18 }}>
+        economízalo<span style={{ color:V("--accent") }}>.</span>
       </div>
-
-      <div style={{ display:"flex", gap:18, marginBottom:48, flexWrap:"wrap", justifyContent:"center" }}>
-        {[
-          { ic:"🌿", t:"Visual\nlimpia" },
-          { ic:"🛡️", t:"Segura y\nprivada" },
-          { ic:"📊", t:"Datos que\nte ayudan" },
-          { ic:"☺",  t:"Fácil\nde usar" },
-        ].map((f, i) => (
-          <div key={i} style={{ display:"flex", flexDirection:"column", alignItems:"center", gap:8, width:62 }}>
-            <div style={{ width:48, height:48, borderRadius:14, background:V("--surface-2"),
-              display:"flex", alignItems:"center", justifyContent:"center", fontSize:20,
-              border:`1px solid ${V("--border")}` }}>{f.ic}</div>
-            <span style={{ fontFamily:"'Syne',sans-serif", fontSize:10, color:V("--text-dim"),
-              lineHeight:1.3, whiteSpace:"pre-line" }}>{f.t}</span>
-          </div>
-        ))}
+      <div style={{ fontFamily:UI, fontSize:16, color:V("--text-mid"),
+        marginBottom:44, maxWidth:300, lineHeight:1.5 }}>
+        Ahorra sin complicarte. La app que te ayuda a entender tus gastos y tomar mejores decisiones.
       </div>
 
       <button onClick={onEntrar} style={{
-        background:V("--accent"), color:V("--bg"), border:"none", borderRadius:14,
-        padding:"14px 48px", fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:15,
-        cursor:"pointer", letterSpacing:"0.02em",
-      }}>Comenzar</button>
+        background:V("--accent"), color:V("--bg"), border:"none", borderRadius:999,
+        padding:"16px 56px", fontFamily:UI, fontWeight:800, fontSize:16,
+        cursor:"pointer", letterSpacing:"0.01em", marginBottom:14,
+        boxShadow:"0 0 40px rgba(116,198,157,0.16)",
+      }}>Continuar</button>
+      <div style={{ fontFamily:UI, fontSize:12, color:V("--text-dim") }}>Tu dinero, bajo control.</div>
     </div>
   );
 }
@@ -909,20 +931,20 @@ function Num({ v, decimals=0, color, size=14, mono=true, suffix="€" }) {
     : v;
   return (
     <span style={{
-      fontFamily: mono ? "'JetBrains Mono', monospace" : "'Syne', sans-serif",
+      fontFamily: mono ? "'JetBrains Mono', monospace" : "'Inter', sans-serif",
       fontSize: size, color: color || V("--text"), fontWeight: 500,
     }}>{formatted}{suffix}</span>
   );
 }
 
-function BarraProgreso({ valor, maximo, color="#00A3E0", altura=6 }) {
+function BarraProgreso({ valor, maximo, color=V("--c2"), altura=6 }) {
   const pct = maximo > 0 ? Math.min(100, (valor/maximo)*100) : 0;
   const excede = pct >= 100;
   return (
     <div style={{ background:"rgba(255,255,255,0.07)", borderRadius:99, height:altura, overflow:"hidden" }}>
       <div style={{
         width:`${pct}%`, height:"100%", borderRadius:99,
-        background: excede ? "#FF4757" : color,
+        background: excede ? V("--warn") : color,
         transition: "width 0.5s cubic-bezier(0.4,0,0.2,1)",
         boxShadow: excede ? "0 0 8px #FF475780" : `0 0 6px ${color}60`,
       }}/>
@@ -1011,7 +1033,7 @@ function SelectorBanco({ value, onChange, compact=true }) {
     <div style={{ position:"relative" }}>
       <button onClick={(e) => { e.stopPropagation(); setAbierto(a => !a); }} style={{
         fontFamily:"'JetBrains Mono',monospace", fontSize: compact?9:11, fontWeight:600,
-        color: meta.color, background: meta.color + "20",
+        color: meta.color, background: mix(meta.color, "20"),
         padding: compact ? "2px 6px" : "4px 10px",
         borderRadius:4, border:"none", cursor:"pointer",
         display:"flex", alignItems:"center", gap:3,
@@ -1023,18 +1045,18 @@ function SelectorBanco({ value, onChange, compact=true }) {
           <div onClick={() => setAbierto(false)} style={{ position:"fixed", inset:0, zIndex:50 }}/>
           <div style={{
             position:"absolute", top:"calc(100% + 4px)", right:0, zIndex:51,
-            background:"#0F1521", border:"1px solid rgba(255,255,255,0.1)",
+            background:V("--surface-elevated"), border:"1px solid rgba(255,255,255,0.1)",
             borderRadius:8, padding:4, boxShadow:"0 8px 24px rgba(0,0,0,0.4)", minWidth:140,
           }}>
             {Object.entries(BANCO_META).map(([id, m]) => (
               <button key={id} onClick={() => { onChange(id); setAbierto(false); }} style={{
                 display:"flex", alignItems:"center", gap:8, width:"100%",
                 padding:"6px 10px", borderRadius:6, border:"none", cursor:"pointer",
-                background: id === value ? m.color + "15" : "transparent",
-                fontFamily:"'Syne',sans-serif", fontSize:12, color:V("--text-mid"), textAlign:"left",
+                background: id === value ? mix(m.color, "15") : "transparent",
+                fontFamily:"'Inter',sans-serif", fontSize:12, color:V("--text-mid"), textAlign:"left",
               }}>
                 <span style={{
-                  width:18, height:18, borderRadius:4, background: m.color + "25",
+                  width:18, height:18, borderRadius:4, background: mix(m.color, "25"),
                   display:"flex", alignItems:"center", justifyContent:"center",
                   fontSize:10, fontWeight:800, color: m.color,
                 }}>{m.icono}</span>
@@ -1056,9 +1078,9 @@ function SelectorCuenta({ value, cuentas, onChange, placeholder="Sin asignar" })
   return (
     <div style={{ position:"relative" }}>
       <button onClick={(e) => { e.stopPropagation(); setAbierto(a => !a); }} style={{
-        fontFamily:"'Syne',sans-serif", fontSize:11, fontWeight:600,
+        fontFamily:"'Inter',sans-serif", fontSize:11, fontWeight:600,
         color: meta ? meta.color : V("--text-dim"),
-        background: meta ? meta.color + "15" : V("--surface-2"),
+        background: meta ? mix(meta.color, "15") : V("--surface-2"),
         padding:"4px 10px", borderRadius:6, border:"none", cursor:"pointer",
         display:"flex", alignItems:"center", gap:5,
       }}>
@@ -1070,14 +1092,14 @@ function SelectorCuenta({ value, cuentas, onChange, placeholder="Sin asignar" })
           <div onClick={() => setAbierto(false)} style={{ position:"fixed", inset:0, zIndex:50 }}/>
           <div style={{
             position:"absolute", top:"calc(100% + 4px)", right:0, zIndex:51,
-            background:"#0F1521", border:"1px solid rgba(255,255,255,0.1)",
+            background:V("--surface-elevated"), border:"1px solid rgba(255,255,255,0.1)",
             borderRadius:8, padding:4, boxShadow:"0 8px 24px rgba(0,0,0,0.4)",
             minWidth:220, maxHeight:280, overflowY:"auto",
           }}>
             <button onClick={() => { onChange(null); setAbierto(false); }} style={{
               display:"block", width:"100%", padding:"6px 10px", borderRadius:6,
               border:"none", cursor:"pointer", background:"transparent",
-              fontFamily:"'Syne',sans-serif", fontSize:12, color:V("--text-dim"),
+              fontFamily:"'Inter',sans-serif", fontSize:12, color:V("--text-dim"),
               textAlign:"left", fontStyle:"italic",
             }}>— Sin asignar —</button>
             {cuentas.map(c => {
@@ -1086,12 +1108,12 @@ function SelectorCuenta({ value, cuentas, onChange, placeholder="Sin asignar" })
                 <button key={c.id} onClick={() => { onChange(c.id); setAbierto(false); }} style={{
                   display:"flex", alignItems:"center", gap:8, width:"100%",
                   padding:"6px 10px", borderRadius:6, border:"none", cursor:"pointer",
-                  background: c.id === value ? m.color + "15" : "transparent",
-                  fontFamily:"'Syne',sans-serif", fontSize:12, color:V("--text-mid"),
+                  background: c.id === value ? mix(m.color, "15") : "transparent",
+                  fontFamily:"'Inter',sans-serif", fontSize:12, color:V("--text-mid"),
                   textAlign:"left",
                 }}>
                   <span style={{
-                    width:18, height:18, borderRadius:4, background: m.color + "25",
+                    width:18, height:18, borderRadius:4, background: mix(m.color, "25"),
                     display:"flex", alignItems:"center", justifyContent:"center",
                     fontSize:10, fontWeight:800, color: m.color, flexShrink:0,
                   }}>{m.icono}</span>
@@ -1125,7 +1147,7 @@ function SelectorProposito({ value, onChange }) {
           <div onClick={() => setAbierto(false)} style={{ position:"fixed", inset:0, zIndex:50 }}/>
           <div style={{
             position:"absolute", top:"calc(100% + 4px)", right:0, zIndex:51,
-            background:"#0F1521", border:"1px solid rgba(255,255,255,0.1)",
+            background:V("--surface-elevated"), border:"1px solid rgba(255,255,255,0.1)",
             borderRadius:8, padding:4, boxShadow:"0 8px 24px rgba(0,0,0,0.4)", minWidth:140,
           }}>
             {Object.entries(PROPOSITOS).map(([id, p]) => (
@@ -1133,7 +1155,7 @@ function SelectorProposito({ value, onChange }) {
                 display:"flex", alignItems:"center", gap:6, width:"100%",
                 padding:"5px 8px", borderRadius:5, border:"none", cursor:"pointer",
                 background: id === value ? "rgba(38,208,124,0.15)" : "transparent",
-                fontFamily:"'Syne',sans-serif", fontSize:11, color:V("--text-mid"), textAlign:"left",
+                fontFamily:"'Inter',sans-serif", fontSize:11, color:V("--text-mid"), textAlign:"left",
               }}>
                 <span>{p.icono}</span> <span>{p.label}</span>
               </button>
@@ -1150,7 +1172,7 @@ function BotonAnadir({ onClick, label, color=V("--accent") }) {
     <button onClick={onClick} style={{
       width:"100%", marginTop:8, padding:10, borderRadius:10,
       border:`1.5px dashed ${color}50`, background:"transparent",
-      color, cursor:"pointer", fontFamily:"'Syne',sans-serif", fontSize:12, fontWeight:600,
+      color, cursor:"pointer", fontFamily:"'Inter',sans-serif", fontSize:12, fontWeight:600,
     }}>+ {label}</button>
   );
 }
@@ -1174,8 +1196,8 @@ function FilaGastoCatalogo({ gasto, onPagado, onImporte, onBanco, onEliminar }) 
       </button>
 
       <span style={{
-        flex:1, fontSize:13, fontFamily:"'Syne',sans-serif", fontWeight:500, minWidth:0,
-        color: gasto.pagado ? "#4CAF7D" : V("--text-mid"),
+        flex:1, fontSize:13, fontFamily:"'Inter',sans-serif", fontWeight:500, minWidth:0,
+        color: gasto.pagado ? V("--accent") : V("--text-mid"),
         textDecoration: gasto.pagado ? "line-through" : "none",
         opacity: gasto.pagado ? 0.7 : 1,
         overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap",
@@ -1223,7 +1245,7 @@ function FormularioAnadirGasto({ tipo, onGuardar, onCancelar, colorAccion=V("--a
         onChange={e => setNombre(e.target.value)}
         style={{ width:"100%", background:V("--border"), border:"1px solid rgba(255,255,255,0.1)",
           borderRadius:8, padding:"8px 10px", color:V("--text"), fontSize:13, outline:"none",
-          fontFamily:"'Syne',sans-serif", marginBottom:8 }}
+          fontFamily:"'Inter',sans-serif", marginBottom:8 }}
       />
       <div style={{ display:"flex", gap:6, marginBottom:8, flexWrap:"wrap" }}>
         {Object.keys(BANCO_META).map(b => (
@@ -1239,7 +1261,7 @@ function FormularioAnadirGasto({ tipo, onGuardar, onCancelar, colorAccion=V("--a
         <InputMoneda valor={importe} onChange={setImporte}/>
         <button onClick={guardar} style={{
           flex:1, background:colorAccion, color:V("--bg"), border:"none", borderRadius:8,
-          fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:13, cursor:"pointer",
+          fontFamily:"'Inter',sans-serif", fontWeight:700, fontSize:13, cursor:"pointer",
         }}>Guardar</button>
         <button onClick={onCancelar} style={{
           padding:"0 12px", background:V("--border"), color:V("--text-dim"),
@@ -1307,33 +1329,33 @@ function BloqueBancos({ datos, onUpdateDatos }) {
         {/* Resumen siempre visible */}
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr 1fr", gap:6 }}>
           <div style={{ textAlign:"center", background:"rgba(0,163,224,0.08)", borderRadius:8, padding:"8px 4px" }}>
-            <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:12, fontWeight:700, color:"#00A3E0" }}>
+            <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:12, fontWeight:700, color:V("--c2") }}>
               {totalLiquido.toLocaleString("es-ES",{minimumFractionDigits:0})}€
             </div>
-            <div style={{ fontFamily:"'Syne',sans-serif", fontSize:8, color:V("--text-dim"), marginTop:2 }}>Líquido</div>
+            <div style={{ fontFamily:"'Inter',sans-serif", fontSize:8, color:V("--text-dim"), marginTop:2 }}>Líquido</div>
           </div>
           <div style={{ textAlign:"center", background:"rgba(176,111,232,0.08)", borderRadius:8, padding:"8px 4px" }}>
-            <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:12, fontWeight:700, color:"#B06FE8" }}>
+            <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:12, fontWeight:700, color:V("--c3") }}>
               {totalCompartido.toLocaleString("es-ES",{minimumFractionDigits:0})}€
             </div>
-            <div style={{ fontFamily:"'Syne',sans-serif", fontSize:8, color:V("--text-dim"), marginTop:2 }}>
+            <div style={{ fontFamily:"'Inter',sans-serif", fontSize:8, color:V("--text-dim"), marginTop:2 }}>
               🤝 50% ({saldoCompartido.toLocaleString("es-ES",{minimumFractionDigits:0})}€)
             </div>
           </div>
           <div style={{ textAlign:"center", background:"rgba(255,107,53,0.08)", borderRadius:8, padding:"8px 4px" }}>
-            <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:12, fontWeight:700, color:"#FF6B35" }}>
+            <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:12, fontWeight:700, color:V("--c4") }}>
               {totalAsignado.toLocaleString("es-ES",{minimumFractionDigits:0})}€
             </div>
-            <div style={{ fontFamily:"'Syne',sans-serif", fontSize:8, color:V("--text-dim"), marginTop:2 }}>Asignado</div>
+            <div style={{ fontFamily:"'Inter',sans-serif", fontSize:8, color:V("--text-dim"), marginTop:2 }}>Asignado</div>
           </div>
           <div style={{ textAlign:"center",
             background: libreTotal >= 0 ? "rgba(38,208,124,0.08)" : "rgba(255,71,87,0.08)",
             borderRadius:8, padding:"8px 4px" }}>
             <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:12, fontWeight:700,
-              color: libreTotal >= 0 ? V("--accent") : "#FF4757" }}>
+              color: libreTotal >= 0 ? V("--accent") : V("--negative") }}>
               {libreTotal >= 0 ? "+" : ""}{libreTotal.toLocaleString("es-ES",{minimumFractionDigits:0})}€
             </div>
-            <div style={{ fontFamily:"'Syne',sans-serif", fontSize:8, color:V("--text-dim"), marginTop:2 }}>Libre</div>
+            <div style={{ fontFamily:"'Inter',sans-serif", fontSize:8, color:V("--text-dim"), marginTop:2 }}>Libre</div>
           </div>
         </div>
       </div>
@@ -1358,12 +1380,12 @@ function BloqueBancos({ datos, onUpdateDatos }) {
                 <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
                   <div style={{ display:"flex", alignItems:"center", gap:8 }}>
                     <div style={{
-                      width:24, height:24, borderRadius:6, background: meta.color + "25",
+                      width:24, height:24, borderRadius:6, background: mix(meta.color, "25"),
                       display:"flex", alignItems:"center", justifyContent:"center",
-                      fontFamily:"'Syne',sans-serif", fontSize:12, fontWeight:800, color: meta.color,
+                      fontFamily:"'Inter',sans-serif", fontSize:12, fontWeight:800, color: meta.color,
                     }}>{meta.icono}</div>
                     <div>
-                      <div style={{ fontFamily:"'Syne',sans-serif", fontSize:13, fontWeight:700, color:V("--text-mid") }}>
+                      <div style={{ fontFamily:"'Inter',sans-serif", fontSize:13, fontWeight:700, color:V("--text-mid") }}>
                         {meta.label}
                       </div>
                       <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:V("--text-dim"), marginTop:1 }}>
@@ -1375,15 +1397,15 @@ function BloqueBancos({ datos, onUpdateDatos }) {
                   <button onClick={() => setModoBanco(bancoId, esSuma ? "reserva" : "suma")} style={{
                     padding:"3px 8px", borderRadius:5, border:"none", cursor:"pointer", fontSize:9,
                     fontFamily:"'JetBrains Mono',monospace", fontWeight:600,
-                    background: V("--border"), color:"#8B9DBB",
+                    background: V("--border"), color:V("--text-dim"),
                   }}>{esSuma ? "→ reserva" : "→ suma"}</button>
                 </div>
 
                 {/* Total del banco: editable si reserva, display si suma */}
                 <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
                   marginBottom:10, padding:"6px 8px", borderRadius:6,
-                  background: meta.color + "10" }}>
-                  <span style={{ fontFamily:"'Syne',sans-serif", fontSize:11, color:"#8B9DBB" }}>
+                  background: mix(meta.color, "10") }}>
+                  <span style={{ fontFamily:"'Inter',sans-serif", fontSize:11, color:V("--text-dim") }}>
                     Total {esSuma ? "(auto)" : "(introduce tú)"}
                   </span>
                   {esSuma ? (
@@ -1398,7 +1420,7 @@ function BloqueBancos({ datos, onUpdateDatos }) {
 
                 {/* Lista de cuentas */}
                 {cuentasBanco.length === 0 && (
-                  <div style={{ padding:"8px", textAlign:"center", fontFamily:"'Syne',sans-serif",
+                  <div style={{ padding:"8px", textAlign:"center", fontFamily:"'Inter',sans-serif",
                     fontSize:11, color:V("--text-dim"), fontStyle:"italic" }}>
                     Sin cuentas
                   </div>
@@ -1421,11 +1443,11 @@ function BloqueBancos({ datos, onUpdateDatos }) {
                           autoFocus
                           style={{ flex:1, background:V("--border"), border:"1px solid "+meta.color+"40",
                             borderRadius:5, padding:"3px 6px", color:V("--text"), fontSize:12, outline:"none",
-                            fontFamily:"'Syne',sans-serif", minWidth:0 }}
+                            fontFamily:"'Inter',sans-serif", minWidth:0 }}
                         />
                       ) : (
                         <span onClick={() => setEditandoNombre(c.id)} style={{
-                          flex:1, fontFamily:"'Syne',sans-serif", fontSize:12, color:V("--text-mid"),
+                          flex:1, fontFamily:"'Inter',sans-serif", fontSize:12, color:V("--text-mid"),
                           cursor:"pointer", minWidth:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap",
                         }}>
                           {esCompartida && <span style={{ marginRight:4 }}>🤝</span>}
@@ -1439,7 +1461,7 @@ function BloqueBancos({ datos, onUpdateDatos }) {
                       <button onClick={() => actualizarCuenta(c.id, { compartida: !esCompartida })} title={esCompartida ? "Quitar compartida" : "Marcar compartida"} style={{
                         fontSize:11, padding:"2px 5px", borderRadius:4, border:"none", cursor:"pointer",
                         background: esCompartida ? "rgba(176,111,232,0.2)" : V("--surface-2"),
-                        color: esCompartida ? "#B06FE8" : V("--text-dim"),
+                        color: esCompartida ? V("--c3") : V("--text-dim"),
                       }}>🤝</button>
                       <SelectorProposito value={c.proposito} onChange={p => actualizarCuenta(c.id, { proposito: p })}/>
                       <InputMoneda valor={c.asignado} onChange={v => actualizarCuenta(c.id, { asignado: v })} compact ancho={55}/>
@@ -1457,20 +1479,20 @@ function BloqueBancos({ datos, onUpdateDatos }) {
                     border: `1px solid ${libre >= 0 ? "#26D07C25" : "#FF475730"}`,
                   }}>
                     <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
-                      <span style={{ fontFamily:"'Syne',sans-serif", fontSize:11, color:"#8B9DBB" }}>
+                      <span style={{ fontFamily:"'Inter',sans-serif", fontSize:11, color:V("--text-dim") }}>
                         reservado <span style={{ color:V("--text-mid"), fontFamily:"'JetBrains Mono',monospace" }}>
                           {asignado.toLocaleString("es-ES",{minimumFractionDigits:0})}€
                         </span>
                       </span>
                       <span style={{
                         fontFamily:"'JetBrains Mono',monospace", fontSize:13, fontWeight:700,
-                        color: libre >= 0 ? V("--accent") : "#FF4757",
+                        color: libre >= 0 ? V("--accent") : V("--negative"),
                       }}>
                         🔓 {libre >= 0 ? "+" : ""}{libre.toLocaleString("es-ES",{minimumFractionDigits:0})}€ libre
                       </span>
                     </div>
                     {libre < 0 && (
-                      <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, color:"#FF4757", marginTop:4 }}>
+                      <div style={{ fontFamily:"'Inter',sans-serif", fontSize:10, color:V("--warn"), marginTop:4 }}>
                         ⚠ Has reservado más de lo que tienes en el banco
                       </div>
                     )}
@@ -1514,13 +1536,13 @@ function FormularioAnadirCuenta({ onGuardar, onCancelar, colorAccion=V("--accent
         onChange={e => setNombre(e.target.value)}
         style={{ width:"100%", background:V("--border"), border:"1px solid rgba(255,255,255,0.1)",
           borderRadius:6, padding:"6px 10px", color:V("--text"), fontSize:12, outline:"none",
-          fontFamily:"'Syne',sans-serif", marginBottom:6 }}
+          fontFamily:"'Inter',sans-serif", marginBottom:6 }}
       />
       <div style={{ display:"flex", gap:4, flexWrap:"wrap", marginBottom:8 }}>
         {Object.entries(PROPOSITOS).map(([id, p]) => (
           <button key={id} onClick={() => setProposito(id)} style={{
             padding:"3px 7px", borderRadius:5, border:"none", cursor:"pointer", fontSize:10,
-            fontFamily:"'Syne',sans-serif", fontWeight:600,
+            fontFamily:"'Inter',sans-serif", fontWeight:600,
             background: proposito === id ? colorAccion + "25" : V("--surface-2"),
             color: proposito === id ? colorAccion : V("--text-dim"),
           }}>{p.icono} {p.label}</button>
@@ -1531,10 +1553,10 @@ function FormularioAnadirCuenta({ onGuardar, onCancelar, colorAccion=V("--accent
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
         padding:"6px 0", marginBottom:8 }}>
         <div>
-          <div style={{ fontFamily:"'Syne',sans-serif", fontSize:11, color:V("--text-mid") }}>
+          <div style={{ fontFamily:"'Inter',sans-serif", fontSize:11, color:V("--text-mid") }}>
             🤝 Cuenta compartida
           </div>
-          <div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:V("--text-dim"), marginTop:1 }}>
+          <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:V("--text-dim"), marginTop:1 }}>
             no suma al banco · cuenta el 50% en patrimonio
           </div>
         </div>
@@ -1542,7 +1564,7 @@ function FormularioAnadirCuenta({ onGuardar, onCancelar, colorAccion=V("--accent
           padding:"3px 10px", borderRadius:16, border:"none", cursor:"pointer", fontSize:10,
           fontFamily:"'JetBrains Mono',monospace", fontWeight:600,
           background: compartida ? "rgba(176,111,232,0.2)" : V("--border"),
-          color: compartida ? "#B06FE8" : V("--text-dim"),
+          color: compartida ? V("--c3") : V("--text-dim"),
         }}>{compartida ? "SÍ" : "NO"}</button>
       </div>
 
@@ -1550,7 +1572,7 @@ function FormularioAnadirCuenta({ onGuardar, onCancelar, colorAccion=V("--accent
         <InputMoneda valor={asignado} onChange={setAsignado} compact ancho={70}/>
         <button onClick={guardar} style={{
           flex:1, background:colorAccion, color:V("--bg"), border:"none", borderRadius:6,
-          fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:12, cursor:"pointer",
+          fontFamily:"'Inter',sans-serif", fontWeight:700, fontSize:12, cursor:"pointer",
         }}>Crear</button>
         <button onClick={onCancelar} style={{
           padding:"0 10px", background:V("--border"), color:V("--text-dim"),
@@ -1648,7 +1670,7 @@ function VistaInicio({ datos, claveM, mesNum, onUpdateDatos }) {
           <button onClick={() => setAnadiendoFuente(true)} style={{
             width:"100%", padding:"6px", borderRadius:6, border:"none", cursor:"pointer",
             background:"rgba(255,255,255,0.03)", color:V("--text-dim"),
-            fontFamily:"'Syne',sans-serif", fontSize:11, fontWeight:600, marginTop:4,
+            fontFamily:"'Inter',sans-serif", fontSize:11, fontWeight:600, marginTop:4,
           }}>+ Añadir fuente de ingreso</button>
         )}
 
@@ -1668,8 +1690,8 @@ function VistaInicio({ datos, claveM, mesNum, onUpdateDatos }) {
           ) : (
             <button onClick={() => setAnadiendoIngresoMes(true)} style={{
               width:"100%", padding:"6px", borderRadius:6, border:"none", cursor:"pointer",
-              background:"rgba(255,140,66,0.06)", color:"#FF8C42",
-              fontFamily:"'Syne',sans-serif", fontSize:11, fontWeight:600, marginTop:4,
+              background:"rgba(255,140,66,0.06)", color:V("--warn"),
+              fontFamily:"'Inter',sans-serif", fontSize:11, fontWeight:600, marginTop:4,
             }}>+ Añadir ingreso solo de este mes</button>
           )}
         </div>
@@ -1678,9 +1700,9 @@ function VistaInicio({ datos, claveM, mesNum, onUpdateDatos }) {
         <div style={{ padding:"9px 0", marginTop:4, borderTop:"1px solid rgba(255,255,255,0.04)" }}>
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
             <div>
-              <div style={{ fontFamily:"'Syne',sans-serif", fontSize:13, color:V("--text-mid") }}>
+              <div style={{ fontFamily:"'Inter',sans-serif", fontSize:13, color:V("--text-mid") }}>
                 Km coche trabajo
-                <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:8, color:"#FF8C42",
+                <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:8, color:V("--warn"),
                   background:"rgba(255,140,66,0.12)", padding:"1px 5px", borderRadius:3, marginLeft:5 }}>SOLO MES</span>
               </div>
               <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:V("--text-dim"), marginTop:2 }}>
@@ -1692,7 +1714,7 @@ function VistaInicio({ datos, claveM, mesNum, onUpdateDatos }) {
         </div>
 
         <div style={{ display:"flex", justifyContent:"space-between", marginTop:10, paddingTop:8, borderTop:"1px solid rgba(255,255,255,0.08)" }}>
-          <span style={{ fontFamily:"'Syne',sans-serif", fontSize:12, fontWeight:700, color:V("--text-mid") }}>TOTAL</span>
+          <span style={{ fontFamily:"'Inter',sans-serif", fontSize:12, fontWeight:700, color:V("--text-mid") }}>TOTAL</span>
           <Num v={totalIngresos} decimals={2} color={V("--accent")} size={15}/>
         </div>
       </div>
@@ -1715,16 +1737,16 @@ function FilaIngreso({ fuente, onNombre, onImporte, onEliminar, soloMes=false })
           autoFocus
           style={{ flex:1, background:V("--border"), border:"1px solid rgba(255,255,255,0.15)",
             borderRadius:5, padding:"3px 6px", color:V("--text"), fontSize:13, outline:"none",
-            fontFamily:"'Syne',sans-serif", minWidth:0 }}
+            fontFamily:"'Inter',sans-serif", minWidth:0 }}
         />
       ) : (
         <span onClick={() => setEditando(true)} style={{
-          flex:1, fontFamily:"'Syne',sans-serif", fontSize:13, color:V("--text-mid"),
+          flex:1, fontFamily:"'Inter',sans-serif", fontSize:13, color:V("--text-mid"),
           cursor:"pointer", minWidth:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap",
         }}>
           {fuente.nombre}
           {soloMes && (
-            <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:8, color:"#FF8C42",
+            <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:8, color:V("--warn"),
               background:"rgba(255,140,66,0.12)", padding:"1px 5px", borderRadius:3, marginLeft:5 }}>SOLO MES</span>
           )}
         </span>
@@ -1752,13 +1774,13 @@ function FormularioAnadirIngreso({ onGuardar, onCancelar }) {
         onChange={e => setNombre(e.target.value)}
         style={{ width:"100%", background:V("--border"), border:"1px solid rgba(255,255,255,0.1)",
           borderRadius:6, padding:"6px 10px", color:V("--text"), fontSize:12, outline:"none",
-          fontFamily:"'Syne',sans-serif", marginBottom:6 }}
+          fontFamily:"'Inter',sans-serif", marginBottom:6 }}
       />
       <div style={{ display:"flex", gap:6 }}>
         <InputMoneda valor={importe} onChange={setImporte} compact ancho={70}/>
         <button onClick={guardar} style={{
           flex:1, background:V("--accent"), color:V("--bg"), border:"none", borderRadius:6,
-          fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:12, cursor:"pointer",
+          fontFamily:"'Inter',sans-serif", fontWeight:700, fontSize:12, cursor:"pointer",
         }}>Añadir</button>
         <button onClick={onCancelar} style={{
           padding:"0 10px", background:V("--border"), color:V("--text-dim"),
@@ -1802,7 +1824,7 @@ function BloqueAportacionAnual({ datos, claveM, mesNum, onUpdateDatos }) {
         <div style={{ display:"flex", alignItems:"center", gap:8 }}>
           <span style={{ fontSize:16 }}>📐</span>
           <div>
-            <div style={{ fontFamily:"'Syne',sans-serif", fontSize:11, fontWeight:700, color:V("--text-mid") }}>
+            <div style={{ fontFamily:"'Inter',sans-serif", fontSize:11, fontWeight:700, color:V("--text-mid") }}>
               A aportar el mes que viene
             </div>
             <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:8, color:V("--text-dim") }}>
@@ -1825,8 +1847,8 @@ function BloqueAportacionAnual({ datos, claveM, mesNum, onUpdateDatos }) {
         <div style={{ padding:"0 14px 12px" }}>
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
             padding:"8px 0", borderTop:"1px solid rgba(255,255,255,0.06)" }}>
-            <span style={{ fontFamily:"'Syne',sans-serif", fontSize:11, color:V("--text-dim") }}>Pendiente este año</span>
-            <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:13, fontWeight:700, color:"#FF6B35" }}>
+            <span style={{ fontFamily:"'Inter',sans-serif", fontSize:11, color:V("--text-dim") }}>Pendiente este año</span>
+            <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:13, fontWeight:700, color:V("--c4") }}>
               {pendienteAnual.toLocaleString("es-ES",{minimumFractionDigits:0})}€
             </span>
           </div>
@@ -1835,7 +1857,7 @@ function BloqueAportacionAnual({ datos, claveM, mesNum, onUpdateDatos }) {
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
             padding:"6px 0", borderBottom:`1px solid ${V("--border")}` }}>
             <div>
-              <div style={{ fontFamily:"'Syne',sans-serif", fontSize:11, color:V("--text-mid") }}>% del extra a destinar</div>
+              <div style={{ fontFamily:"'Inter',sans-serif", fontSize:11, color:V("--text-mid") }}>% del extra a destinar</div>
               <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:V("--text-dim"), marginTop:1 }}>
                 del sueldo extra anual
               </div>
@@ -1846,7 +1868,7 @@ function BloqueAportacionAnual({ datos, claveM, mesNum, onUpdateDatos }) {
           {/* Cuenta vinculada */}
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
             padding:"6px 0", borderBottom:`1px solid ${V("--border")}` }}>
-            <span style={{ fontFamily:"'Syne',sans-serif", fontSize:11, color:V("--text-mid") }}>Cuenta de la reserva</span>
+            <span style={{ fontFamily:"'Inter',sans-serif", fontSize:11, color:V("--text-mid") }}>Cuenta de la reserva</span>
             <SelectorCuenta value={dEf.reservaImpCuenta} cuentas={dEf.cuentas}
               onChange={setReservaImpCuenta}/>
           </div>
@@ -1854,13 +1876,13 @@ function BloqueAportacionAnual({ datos, claveM, mesNum, onUpdateDatos }) {
           {/* Reserva impuestos = saldo de la cuenta */}
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", padding:"6px 0" }}>
             <div>
-              <div style={{ fontFamily:"'Syne',sans-serif", fontSize:11, color:V("--text-mid") }}>Reserva impuestos</div>
+              <div style={{ fontFamily:"'Inter',sans-serif", fontSize:11, color:V("--text-mid") }}>Reserva impuestos</div>
               {cuentaReservaImp ? (
-                <div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:V("--text-dim"), marginTop:1 }}>
+                <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:V("--text-dim"), marginTop:1 }}>
                   desde {cuentaReservaImp.nombre}
                 </div>
               ) : (
-                <div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:"#FF8C42", marginTop:1 }}>
+                <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:V("--warn"), marginTop:1 }}>
                   sin cuenta asignada
                 </div>
               )}
@@ -1873,7 +1895,7 @@ function BloqueAportacionAnual({ datos, claveM, mesNum, onUpdateDatos }) {
             </span>
           </div>
 
-          <div style={{ marginTop:8, fontFamily:"'Syne',sans-serif", fontSize:9, color:V("--text-dim"),
+          <div style={{ marginTop:8, fontFamily:"'Inter',sans-serif", fontSize:9, color:V("--text-dim"),
             padding:"6px 8px", background:"rgba(0,163,224,0.05)", borderRadius:5, lineHeight:1.4 }}>
             📐 (pendiente − reserva imp.{pct > 0 ? ` − ${pct.toFixed(2)}% del extra` : ""}) ÷ {Math.max(0, 10-mesNum)} aportaciones (hasta noviembre)
           </div>
@@ -1882,10 +1904,10 @@ function BloqueAportacionAnual({ datos, claveM, mesNum, onUpdateDatos }) {
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
             marginTop:8, padding:"8px 10px", background:"rgba(38,208,124,0.06)", borderRadius:8 }}>
             <div style={{ flex:1 }}>
-              <div style={{ fontFamily:"'Syne',sans-serif", fontSize:11, fontWeight:600, color:V("--text-mid") }}>
+              <div style={{ fontFamily:"'Inter',sans-serif", fontSize:11, fontWeight:600, color:V("--text-mid") }}>
                 🤖 Crear gasto automático
               </div>
-              <div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:V("--text-dim"), marginTop:1 }}>
+              <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:V("--text-dim"), marginTop:1 }}>
                 añade un ahorro = esta cifra redondeada a 50€
               </div>
             </div>
@@ -1972,10 +1994,10 @@ function VistaGastos({ datos, claveM, mesNum, onUpdateDatos }) {
           padding:"12px 14px", cursor:"pointer" }}>
         <div style={{ display:"flex", alignItems:"center", gap:8 }}>
           <span style={{ fontSize:16 }}>{icono}</span>
-          <span style={{ fontFamily:"'Syne',sans-serif", fontSize:12, fontWeight:700, color:V("--text-mid") }}>{titulo}</span>
+          <span style={{ fontFamily:"'Inter',sans-serif", fontSize:12, fontWeight:700, color:V("--text-mid") }}>{titulo}</span>
         </div>
         <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-          <Num v={total} decimals={2} color="#E8A838" size={13}/>
+          <Num v={total} decimals={2} color={V("--c3")} size={13}/>
           <span style={{ color:V("--text-dim"), fontSize:12 }}>{seccionAbierta[id] ? "▲" : "▼"}</span>
         </div>
       </div>
@@ -1999,8 +2021,8 @@ function VistaGastos({ datos, claveM, mesNum, onUpdateDatos }) {
           <button key={s.id} onClick={() => setSubGasto(s.id)} style={{
             flex:1, padding:"9px 6px", borderRadius:9, border:"none", cursor:"pointer",
             display:"flex", alignItems:"center", justifyContent:"center", gap:6,
-            background: subGasto === s.id ? V("--accent") + "20" : "transparent",
-            fontFamily:"'Syne',sans-serif", fontSize:13, fontWeight:700,
+            background: subGasto === s.id ? mix(V("--accent"), "20") : "transparent",
+            fontFamily:"'Inter',sans-serif", fontSize:13, fontWeight:700,
             color: subGasto === s.id ? V("--accent") : V("--text-dim"),
             transition:"all 0.2s",
           }}>
@@ -2015,15 +2037,15 @@ function VistaGastos({ datos, claveM, mesNum, onUpdateDatos }) {
         border:`1px solid ${V("--border")}`, marginBottom:14 }}>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8, marginBottom:12 }}>
           {[
-            { label:"Gastos", v:tGastos,    color:"#E8A838" },
+            { label:"Gastos", v:tGastos,    color:V("--c3") },
             { label:"Pagado", v:totalPagado,color:V("--accent") },
-            { label:"Remanente", v:remanente,color: remanente >= 0 ? V("--accent") : "#FF4757" },
+            { label:"Remanente", v:remanente,color: remanente >= 0 ? V("--accent") : V("--negative") },
           ].map(({ label, v, color }) => (
             <div key={label} style={{ textAlign:"center", background:"rgba(255,255,255,0.03)", borderRadius:10, padding:"10px 4px" }}>
               <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:14, fontWeight:600, color }}>
                 {v.toLocaleString("es-ES",{minimumFractionDigits:0})}€
               </div>
-              <div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:V("--text-dim"), marginTop:3 }}>{label}</div>
+              <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:V("--text-dim"), marginTop:3 }}>{label}</div>
             </div>
           ))}
         </div>
@@ -2035,14 +2057,14 @@ function VistaGastos({ datos, claveM, mesNum, onUpdateDatos }) {
 
       <div style={{ background:"rgba(255,140,66,0.05)", border:"1px solid rgba(255,140,66,0.15)",
         borderRadius:10, padding:"8px 12px", marginBottom:10,
-        fontFamily:"'Syne',sans-serif", fontSize:10, color:"#FF8C42", lineHeight:1.5 }}>
+        fontFamily:"'Inter',sans-serif", fontSize:10, color:V("--warn"), lineHeight:1.5 }}>
         ℹ️ Editar importe/banco cambia el catálogo global. Los checks de pagado son del mes y quedan registrados como histórico.
       </div>
 
       {/* FIJOS */}
       <Section id="fijos" titulo="Gastos Fijos" icono="🏠" total={tFijos}>
         {fijos.length === 0 && (
-          <div style={{ padding:"12px 0", textAlign:"center", fontFamily:"'Syne',sans-serif",
+          <div style={{ padding:"12px 0", textAlign:"center", fontFamily:"'Inter',sans-serif",
             fontSize:12, color:V("--text-dim"), fontStyle:"italic" }}>Sin gastos fijos activos</div>
         )}
         {fijos.map(g => (
@@ -2065,7 +2087,7 @@ function VistaGastos({ datos, claveM, mesNum, onUpdateDatos }) {
       {/* VARIABLES */}
       <Section id="variables" titulo="Gastos Variables" icono="📱" total={tVars}>
         {variables.length === 0 && (
-          <div style={{ padding:"12px 0", textAlign:"center", fontFamily:"'Syne',sans-serif",
+          <div style={{ padding:"12px 0", textAlign:"center", fontFamily:"'Inter',sans-serif",
             fontSize:12, color:V("--text-dim"), fontStyle:"italic" }}>Sin gastos variables activos</div>
         )}
         {variables.map(g => (
@@ -2079,16 +2101,16 @@ function VistaGastos({ datos, claveM, mesNum, onUpdateDatos }) {
         {anadiendo === "variables" ? (
           <FormularioAnadirGasto tipo="variable"
             onGuardar={d => añadirAlCatalogo("catalogoVariables", d)}
-            onCancelar={() => setAnadiendo(null)} colorAccion="#00A3E0"/>
+            onCancelar={() => setAnadiendo(null)} colorAccion={V("--c2")}/>
         ) : (
-          <BotonAnadir onClick={() => setAnadiendo("variables")} label="Añadir gasto variable" color="#00A3E0"/>
+          <BotonAnadir onClick={() => setAnadiendo("variables")} label="Añadir gasto variable" color={V("--c2")}/>
         )}
       </Section>
 
       {/* AHORRO */}
       <Section id="ahorro" titulo="Ahorro" icono="💰" total={tAhorro}>
         {ahorro.length === 0 && (
-          <div style={{ padding:"12px 0", textAlign:"center", fontFamily:"'Syne',sans-serif",
+          <div style={{ padding:"12px 0", textAlign:"center", fontFamily:"'Inter',sans-serif",
             fontSize:12, color:V("--text-dim"), fontStyle:"italic" }}>Sin partidas de ahorro activas</div>
         )}
         {ahorro.map(g => (
@@ -2108,10 +2130,10 @@ function VistaGastos({ datos, claveM, mesNum, onUpdateDatos }) {
           marginTop:8, padding:"8px 10px", borderRadius:8,
           background: datos.autoReservaAnual ? "rgba(38,208,124,0.06)" : "rgba(255,255,255,0.02)" }}>
           <div style={{ flex:1 }}>
-            <div style={{ fontFamily:"'Syne',sans-serif", fontSize:11, fontWeight:600, color:V("--text-mid") }}>
+            <div style={{ fontFamily:"'Inter',sans-serif", fontSize:11, fontWeight:600, color:V("--text-mid") }}>
               🤖 Reserva anual automática
             </div>
-            <div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:V("--text-dim"), marginTop:1 }}>
+            <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:V("--text-dim"), marginTop:1 }}>
               añade el prorrateo (redondeado a 50€) como ahorro
             </div>
           </div>
@@ -2126,16 +2148,16 @@ function VistaGastos({ datos, claveM, mesNum, onUpdateDatos }) {
         {anadiendo === "ahorro" ? (
           <FormularioAnadirGasto tipo="ahorro"
             onGuardar={d => añadirAlCatalogo("catalogoAhorro", d)}
-            onCancelar={() => setAnadiendo(null)} colorAccion="#E8A838"/>
+            onCancelar={() => setAnadiendo(null)} colorAccion={V("--c3")}/>
         ) : (
-          <BotonAnadir onClick={() => setAnadiendo("ahorro")} label="Añadir partida de ahorro" color="#E8A838"/>
+          <BotonAnadir onClick={() => setAnadiendo("ahorro")} label="Añadir partida de ahorro" color={V("--c3")}/>
         )}
       </Section>
 
       {/* PUNTUALES */}
       <Section id="puntuales" titulo="Gastos Puntuales" icono="⚡" total={tPunt}>
         {puntuales.length === 0 && (
-          <div style={{ padding:"12px 0", textAlign:"center", fontFamily:"'Syne',sans-serif",
+          <div style={{ padding:"12px 0", textAlign:"center", fontFamily:"'Inter',sans-serif",
             fontSize:12, color:V("--text-dim"), fontStyle:"italic" }}>Sin gastos puntuales este mes</div>
         )}
         {puntuales.map((g, i) => (
@@ -2148,9 +2170,9 @@ function VistaGastos({ datos, claveM, mesNum, onUpdateDatos }) {
         ))}
         {anadiendo === "puntuales" ? (
           <FormularioAnadirGasto tipo="puntual" onGuardar={añadirPuntual}
-            onCancelar={() => setAnadiendo(null)} colorAccion="#FF6B35"/>
+            onCancelar={() => setAnadiendo(null)} colorAccion={V("--c4")}/>
         ) : (
-          <BotonAnadir onClick={() => setAnadiendo("puntuales")} label="Añadir gasto puntual" color="#FF6B35"/>
+          <BotonAnadir onClick={() => setAnadiendo("puntuales")} label="Añadir gasto puntual" color={V("--c4")}/>
         )}
       </Section>
       </div>}
@@ -2296,8 +2318,8 @@ function VistaAnuales({ datos, claveM, onUpdateDatos }) {
           {añoCatalogo < añoAhora && (
             <button onClick={reiniciarAño} style={{
               padding:"4px 10px", borderRadius:6, border:"1px solid #FF8C4250",
-              background:"#FF8C4215", color:"#FF8C42", cursor:"pointer", fontSize:10,
-              fontFamily:"'Syne',sans-serif", fontWeight:600,
+              background:"#FF8C4215", color:V("--warn"), cursor:"pointer", fontSize:10,
+              fontFamily:"'Inter',sans-serif", fontWeight:600,
             }}>⟳ Reiniciar a {añoAhora}</button>
           )}
         </div>
@@ -2305,13 +2327,13 @@ function VistaAnuales({ datos, claveM, onUpdateDatos }) {
           {[
             { label:"Total año", v:totalAño,       color:V("--text-mid") },
             { label:"Pagado",    v:totalPagado,    color:V("--accent") },
-            { label:"Pendiente", v:totalPendiente, color:"#FF6B35" },
+            { label:"Pendiente", v:totalPendiente, color:V("--c4") },
           ].map(({ label, v, color }) => (
             <div key={label} style={{ textAlign:"center", background:"rgba(255,255,255,0.03)", borderRadius:10, padding:"10px 4px" }}>
               <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:14, fontWeight:600, color }}>
                 {v.toLocaleString("es-ES",{minimumFractionDigits:0})}€
               </div>
-              <div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:V("--text-dim"), marginTop:3 }}>{label}</div>
+              <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:V("--text-dim"), marginTop:3 }}>{label}</div>
             </div>
           ))}
         </div>
@@ -2332,7 +2354,7 @@ function VistaAnuales({ datos, claveM, onUpdateDatos }) {
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
                 <div style={{ display:"flex", alignItems:"center", gap:8 }}>
                   <span style={{ fontSize:16 }}>{info.icono}</span>
-                  <span style={{ fontFamily:"'Syne',sans-serif", fontSize:12, fontWeight:700, color:V("--text-mid") }}>{cat}</span>
+                  <span style={{ fontFamily:"'Inter',sans-serif", fontSize:12, fontWeight:700, color:V("--text-mid") }}>{cat}</span>
                 </div>
                 <div style={{ display:"flex", alignItems:"center", gap:6 }}>
                   <Num v={total} decimals={0} color={V("--text-mid")} size={13}/>
@@ -2347,7 +2369,7 @@ function VistaAnuales({ datos, claveM, onUpdateDatos }) {
                 <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:V("--accent") }}>
                   pagado {pagado.toLocaleString("es-ES",{minimumFractionDigits:0})}€
                 </span>
-                <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:"#FF6B35" }}>
+                <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:V("--c4") }}>
                   pendiente {pendiente.toLocaleString("es-ES",{minimumFractionDigits:0})}€
                 </span>
               </div>
@@ -2370,7 +2392,7 @@ function VistaAnuales({ datos, claveM, onUpdateDatos }) {
                 ) : (
                   <button onClick={() => setAnadiendoConceptoEn(cat)} style={{
                     background:"none", border:"none", color:V("--text-dim"), cursor:"pointer",
-                    fontFamily:"'Syne',sans-serif", fontSize:10, padding:"4px 0", marginTop:2,
+                    fontFamily:"'Inter',sans-serif", fontSize:10, padding:"4px 0", marginTop:2,
                   }}>+ añadir concepto</button>
                 )}
               </div>
@@ -2385,7 +2407,7 @@ function VistaAnuales({ datos, claveM, onUpdateDatos }) {
           onGuardar={añadirBloque}
           onCancelar={() => setAnadiendoBloque(false)}/>
       ) : (
-        <BotonAnadir onClick={() => setAnadiendoBloque(true)} label="Añadir nuevo bloque" color="#B06FE8"/>
+        <BotonAnadir onClick={() => setAnadiendoBloque(true)} label="Añadir nuevo bloque" color={V("--c3")}/>
       )}
     </div>
   );
@@ -2420,12 +2442,12 @@ function FilaConcepto({ concepto, onCerrado, onPagadoImporte, onNombre, onImport
             autoFocus
             style={{ flex:1, background:V("--border"), border:"1px solid rgba(255,255,255,0.15)",
               borderRadius:5, padding:"2px 6px", color:V("--text"), fontSize:11, outline:"none",
-              fontFamily:"'Syne',sans-serif" }}
+              fontFamily:"'Inter',sans-serif" }}
           />
         ) : (
           <span onClick={() => setEditando(true)} style={{
-            flex:1, fontFamily:"'Syne',sans-serif", fontSize:11,
-            color: cerrado ? "#4CAF7D" : V("--text-mid"),
+            flex:1, fontFamily:"'Inter',sans-serif", fontSize:11,
+            color: cerrado ? V("--accent") : V("--text-mid"),
             textDecoration: cerrado ? "line-through" : "none",
             opacity: cerrado ? 0.7 : 1,
             cursor:"pointer", minWidth:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap",
@@ -2457,7 +2479,7 @@ function FilaConcepto({ concepto, onCerrado, onPagadoImporte, onNombre, onImport
                 {pct.toFixed(0)}%
               </span>
               {pendiente > 0 && (
-                <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:8, color:"#FF8C42" }}>
+                <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:8, color:V("--warn") }}>
                   faltan {pendiente.toLocaleString("es-ES",{minimumFractionDigits:0})}€
                 </span>
               )}
@@ -2478,12 +2500,12 @@ function FormularioAnadirConcepto({ onGuardar, onCancelar }) {
         onChange={e => setNombre(e.target.value)}
         style={{ flex:1, background:V("--border"), border:"1px solid rgba(255,255,255,0.1)",
           borderRadius:5, padding:"4px 8px", color:V("--text"), fontSize:11, outline:"none",
-          fontFamily:"'Syne',sans-serif" }}
+          fontFamily:"'Inter',sans-serif" }}
       />
       <InputMoneda valor={importe} onChange={setImporte} compact ancho={50}/>
       <button onClick={() => { if (nombre.trim()) onGuardar({ nombre: nombre.trim(), importe }); }} style={{
         background:V("--accent"), color:V("--bg"), border:"none", borderRadius:5,
-        padding:"4px 8px", cursor:"pointer", fontSize:11, fontWeight:700, fontFamily:"'Syne',sans-serif",
+        padding:"4px 8px", cursor:"pointer", fontSize:11, fontWeight:700, fontFamily:"'Inter',sans-serif",
       }}>✓</button>
       <button onClick={onCancelar} style={{
         background:V("--border"), color:V("--text-dim"), border:"none", borderRadius:5,
@@ -2502,12 +2524,12 @@ function FormularioAnadirBloque({ onGuardar, onCancelar }) {
         onChange={e => setNombre(e.target.value.toUpperCase())}
         style={{ width:"100%", background:V("--border"), border:"1px solid rgba(255,255,255,0.1)",
           borderRadius:6, padding:"6px 10px", color:V("--text"), fontSize:13, outline:"none",
-          fontFamily:"'Syne',sans-serif", marginBottom:8 }}
+          fontFamily:"'Inter',sans-serif", marginBottom:8 }}
       />
       <div style={{ display:"flex", gap:6 }}>
         <button onClick={() => { if (nombre.trim()) onGuardar(nombre.trim()); }} style={{
-          flex:1, background:"#B06FE8", color:V("--bg"), border:"none", borderRadius:6,
-          fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:12, cursor:"pointer", padding:"6px",
+          flex:1, background:V("--c3"), color:V("--bg"), border:"none", borderRadius:6,
+          fontFamily:"'Inter',sans-serif", fontWeight:700, fontSize:12, cursor:"pointer", padding:"6px",
         }}>Crear bloque</button>
         <button onClick={onCancelar} style={{
           padding:"0 10px", background:V("--border"), color:V("--text-dim"),
@@ -2558,11 +2580,11 @@ function FilaInversion({ inv, onUpdate, onEliminar }) {
               style={{ width:"100%", background:V("--border"),
                 border:"1px solid rgba(255,255,255,0.15)", borderRadius:5,
                 padding:"3px 6px", color:V("--text"), fontSize:13, outline:"none",
-                fontFamily:"'Syne',sans-serif" }}
+                fontFamily:"'Inter',sans-serif" }}
             />
           ) : (
             <div onClick={() => setEditandoMeta(true)} style={{
-              fontFamily:"'Syne',sans-serif", fontSize:13, fontWeight:600,
+              fontFamily:"'Inter',sans-serif", fontSize:13, fontWeight:600,
               color:V("--text-mid"), overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap",
               cursor:"pointer",
             }}>
@@ -2596,8 +2618,8 @@ function FilaInversion({ inv, onUpdate, onEliminar }) {
             {Object.entries(TIPOS_ACTIVO).map(([id, t]) => (
               <button key={id} onClick={() => onUpdate({ ...inv, tipo: id })} style={{
                 padding:"3px 8px", borderRadius:6, border:"none", cursor:"pointer", fontSize:10,
-                fontFamily:"'Syne',sans-serif", fontWeight:600,
-                background: inv.tipo === id ? t.color + "25" : V("--surface-2"),
+                fontFamily:"'Inter',sans-serif", fontWeight:600,
+                background: inv.tipo === id ? mix(t.color, "25") : V("--surface-2"),
                 color: inv.tipo === id ? t.color : V("--text-dim"),
               }}>{t.icono} {t.label}</button>
             ))}
@@ -2610,7 +2632,7 @@ function FilaInversion({ inv, onUpdate, onEliminar }) {
         // Planes/pensión: sólo posición del fondo
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
           <div>
-            <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, color:V("--text-dim"), marginBottom:2 }}>
+            <div style={{ fontFamily:"'Inter',sans-serif", fontSize:10, color:V("--text-dim"), marginBottom:2 }}>
               posición del fondo
             </div>
             <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:20, fontWeight:700, color: tipo.color }}>
@@ -2625,13 +2647,13 @@ function FilaInversion({ inv, onUpdate, onEliminar }) {
           {/* Cabeceras y campos editables inline */}
           <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:8 }}>
             <div>
-              <div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:V("--text-dim"), marginBottom:3 }}>
+              <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:V("--text-dim"), marginBottom:3 }}>
                 Inversión inicial
               </div>
               <InputMoneda valor={inv.invertido} onChange={v => onUpdate({ ...inv, invertido: v })} compact ancho={75}/>
             </div>
             <div>
-              <div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:V("--text-dim"), marginBottom:3 }}>
+              <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:V("--text-dim"), marginBottom:3 }}>
                 Posición actual
               </div>
               <InputMoneda valor={inv.valorActual} onChange={v => onUpdate({ ...inv, valorActual: v })} compact ancho={75}/>
@@ -2645,16 +2667,16 @@ function FilaInversion({ inv, onUpdate, onEliminar }) {
             background: ganando ? "rgba(38,208,124,0.08)" : "rgba(255,71,87,0.08)",
             border: `1px solid ${ganando ? "#26D07C20" : "#FF475720"}`,
           }}>
-            <span style={{ fontFamily:"'Syne',sans-serif", fontSize:11, color:"#8B9DBB" }}>
+            <span style={{ fontFamily:"'Inter',sans-serif", fontSize:11, color:V("--text-dim") }}>
               plusvalía
             </span>
             <div style={{ display:"flex", alignItems:"center", gap:8 }}>
               <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:13, fontWeight:700,
-                color: ganando ? V("--accent") : "#FF4757" }}>
+                color: ganando ? V("--accent") : V("--negative") }}>
                 {ganando ? "+" : ""}{plusvalia.toLocaleString("es-ES",{minimumFractionDigits:2})}€
               </span>
               <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:11, fontWeight:600,
-                color: ganando ? V("--accent") : "#FF4757", opacity:0.8 }}>
+                color: ganando ? V("--accent") : V("--negative"), opacity:0.8 }}>
                 {ganando ? "+" : ""}{pctPlusvalia.toFixed(2)}%
               </span>
             </div>
@@ -2694,7 +2716,7 @@ function FormularioAnadirInversion({ onGuardar, onCancelar }) {
         onChange={e => setNombre(e.target.value)}
         style={{ width:"100%", background:V("--border"), border:"1px solid rgba(255,255,255,0.1)",
           borderRadius:8, padding:"8px 10px", color:V("--text"), fontSize:13, outline:"none",
-          fontFamily:"'Syne',sans-serif", marginBottom:8 }}/>
+          fontFamily:"'Inter',sans-serif", marginBottom:8 }}/>
       <input placeholder="Entidad (ej. HNA, MyInvestor, Trade…)" value={entidad}
         onChange={e => setEntidad(e.target.value)}
         style={{ width:"100%", background:V("--border"), border:"1px solid rgba(255,255,255,0.1)",
@@ -2705,8 +2727,8 @@ function FormularioAnadirInversion({ onGuardar, onCancelar }) {
         {Object.entries(TIPOS_ACTIVO).map(([id, t]) => (
           <button key={id} onClick={() => setTipo(id)} style={{
             padding:"4px 10px", borderRadius:6, border:"none", cursor:"pointer", fontSize:11,
-            fontFamily:"'Syne',sans-serif", fontWeight:600,
-            background: tipo === id ? t.color + "25" : V("--surface-2"),
+            fontFamily:"'Inter',sans-serif", fontWeight:600,
+            background: tipo === id ? mix(t.color, "25") : V("--surface-2"),
             color: tipo === id ? t.color : V("--text-dim"),
           }}>{t.icono} {t.label}</button>
         ))}
@@ -2715,7 +2737,7 @@ function FormularioAnadirInversion({ onGuardar, onCancelar }) {
       {soloValor ? (
         // Planes/pensión: sólo posición
         <div style={{ marginBottom:10 }}>
-          <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, color:V("--text-dim"), marginBottom:3 }}>
+          <div style={{ fontFamily:"'Inter',sans-serif", fontSize:10, color:V("--text-dim"), marginBottom:3 }}>
             Posición del fondo
           </div>
           <InputMoneda valor={valorActual} onChange={setValorActual} compact ancho={80}/>
@@ -2723,13 +2745,13 @@ function FormularioAnadirInversion({ onGuardar, onCancelar }) {
       ) : (
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:8, marginBottom:10 }}>
           <div>
-            <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, color:V("--text-dim"), marginBottom:3 }}>
+            <div style={{ fontFamily:"'Inter',sans-serif", fontSize:10, color:V("--text-dim"), marginBottom:3 }}>
               Inversión inicial
             </div>
             <InputMoneda valor={invertido} onChange={setInvertido} compact ancho={75}/>
           </div>
           <div>
-            <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, color:V("--text-dim"), marginBottom:3 }}>
+            <div style={{ fontFamily:"'Inter',sans-serif", fontSize:10, color:V("--text-dim"), marginBottom:3 }}>
               Posición actual
             </div>
             <InputMoneda valor={valorActual} onChange={setValorActual} compact ancho={75}/>
@@ -2740,7 +2762,7 @@ function FormularioAnadirInversion({ onGuardar, onCancelar }) {
       <div style={{ display:"flex", gap:8 }}>
         <button onClick={guardar} style={{
           flex:1, background:V("--accent"), color:V("--bg"), border:"none", borderRadius:8,
-          fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:13, cursor:"pointer", padding:"8px",
+          fontFamily:"'Inter',sans-serif", fontWeight:700, fontSize:13, cursor:"pointer", padding:"8px",
         }}>Añadir</button>
         <button onClick={onCancelar} style={{
           padding:"0 14px", background:V("--border"), color:V("--text-dim"),
@@ -2790,12 +2812,12 @@ function VistaInversiones({ datos, claveM, onUpdateDatos }) {
         border: `1px solid ${ganando ? "#26D07C30" : "#FF475730"}`,
         borderRadius:18, padding:"18px 20px", marginBottom:14,
       }}>
-        <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, fontWeight:700,
-          color: ganando ? V("--accent") : "#FF4757", letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:6 }}>
+        <div style={{ fontFamily:"'Inter',sans-serif", fontSize:10, fontWeight:700,
+          color: ganando ? V("--accent") : V("--negative"), letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:6 }}>
           📈 Cartera total
         </div>
         <div style={{ fontFamily:SERIF, fontSize:34, fontWeight:700,
-          color: ganando ? V("--accent") : "#FF4757", letterSpacing:"-0.02em" }}>
+          color: ganando ? V("--accent") : V("--negative"), letterSpacing:"-0.02em" }}>
           {total.valorActual.toLocaleString("es-ES",{minimumFractionDigits:2})}€
         </div>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginTop:8 }}>
@@ -2804,7 +2826,7 @@ function VistaInversiones({ datos, claveM, onUpdateDatos }) {
           </span>
           <div style={{
             fontFamily:"'JetBrains Mono',monospace", fontSize:13, fontWeight:700,
-            color: ganando ? V("--accent") : "#FF4757",
+            color: ganando ? V("--accent") : V("--negative"),
             background: ganando ? "#26D07C20" : "#FF475720",
             padding:"4px 10px", borderRadius:6,
           }}>
@@ -2826,7 +2848,7 @@ function VistaInversiones({ datos, claveM, onUpdateDatos }) {
               return (
                 <div key={tipoId} style={{ marginBottom:10 }}>
                   <div style={{ display:"flex", justifyContent:"space-between", marginBottom:4 }}>
-                    <span style={{ fontFamily:"'Syne',sans-serif", fontSize:12, color:V("--text-mid") }}>
+                    <span style={{ fontFamily:"'Inter',sans-serif", fontSize:12, color:V("--text-mid") }}>
                       {t.icono} {t.label}
                     </span>
                     <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:12, color: t.color }}>
@@ -2845,7 +2867,7 @@ function VistaInversiones({ datos, claveM, onUpdateDatos }) {
       </div>
 
       {inversiones.length === 0 && (
-        <div style={{ padding:"24px", textAlign:"center", fontFamily:"'Syne',sans-serif",
+        <div style={{ padding:"24px", textAlign:"center", fontFamily:"'Inter',sans-serif",
           fontSize:13, color:V("--text-dim"), fontStyle:"italic",
           background:"rgba(255,255,255,0.02)", borderRadius:12,
           border:"1px dashed rgba(255,255,255,0.06)", marginBottom:8 }}>
@@ -2928,7 +2950,7 @@ function VistaPatrimonio({ datos, claveM, onUpdateDatos }) {
       {/* Resumen patrimonio neto */}
       <div style={{ background:"linear-gradient(135deg, rgba(38,208,124,0.12), rgba(0,163,224,0.06))",
         border:"1px solid rgba(38,208,124,0.25)", borderRadius:18, padding:"18px 20px", marginBottom:14 }}>
-        <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, fontWeight:700, color:V("--accent"),
+        <div style={{ fontFamily:"'Inter',sans-serif", fontSize:10, fontWeight:700, color:V("--accent"),
           letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:6 }}>
           💎 Patrimonio neto
         </div>
@@ -2938,14 +2960,14 @@ function VistaPatrimonio({ datos, claveM, onUpdateDatos }) {
         </div>
         <div style={{ marginTop:10, display:"flex", flexDirection:"column", gap:4 }}>
           {[
-            { label:"Líquido", v:liquido, c:"#00A3E0" },
-            ...(compartido > 0 ? [{ label:"🤝 Compartido (50%)", v:compartido, c:"#B06FE8" }] : []),
-            { label:"Inversiones", v:inversion, c:"#E8A838" },
+            { label:"Líquido", v:liquido, c:V("--c2") },
+            ...(compartido > 0 ? [{ label:"🤝 Compartido (50%)", v:compartido, c:V("--c3") }] : []),
+            { label:"Inversiones", v:inversion, c:V("--c3") },
             { label:"Inmuebles", v:inmuebles, c:V("--accent") },
-            { label:"− Deudas", v:-deudas, c:"#FF4757" },
+            { label:"− Deudas", v:-deudas, c:V("--negative") },
           ].map(({label, v, c}) => (
             <div key={label} style={{ display:"flex", justifyContent:"space-between" }}>
-              <span style={{ fontFamily:"'Syne',sans-serif", fontSize:11, color:V("--text-dim") }}>{label}</span>
+              <span style={{ fontFamily:"'Inter',sans-serif", fontSize:11, color:V("--text-dim") }}>{label}</span>
               <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:11, color:c }}>
                 {v.toLocaleString("es-ES",{minimumFractionDigits:0})}€
               </span>
@@ -2963,7 +2985,7 @@ function VistaPatrimonio({ datos, claveM, onUpdateDatos }) {
           return (
             <div key={inm.id} style={{ padding:"8px 0", borderBottom:`1px solid ${V("--border")}` }}>
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:4 }}>
-                <span style={{ fontFamily:"'Syne',sans-serif", fontSize:13, fontWeight:600, color:V("--text-mid"), flex:1 }}>
+                <span style={{ fontFamily:"'Inter',sans-serif", fontSize:13, fontWeight:600, color:V("--text-mid"), flex:1 }}>
                   {inm.nombre}
                 </span>
                 <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:14, fontWeight:700, color:V("--accent") }}>
@@ -2973,9 +2995,9 @@ function VistaPatrimonio({ datos, claveM, onUpdateDatos }) {
                   style={{ background:"none", border:"none", cursor:"pointer", color:"#FF475760", fontSize:14, padding:"0 0 0 8px" }}>×</button>
               </div>
               <div style={{ display:"flex", gap:8, alignItems:"center" }}>
-                <span style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:V("--text-dim") }}>valor base</span>
+                <span style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:V("--text-dim") }}>valor base</span>
                 <InputMoneda valor={inm.valorBase} onChange={v => actualizarInmueble(inm.id, { valorBase: v })} compact ancho={75}/>
-                <span style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:V("--text-dim") }}>reval/año</span>
+                <span style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:V("--text-dim") }}>reval/año</span>
                 <InputNumero valor={inm.revalAnual || 0} onChange={v => actualizarInmueble(inm.id, { revalAnual: v })} sufijo="%" compact ancho={42} step={0.5}/>
               </div>
             </div>
@@ -2997,7 +3019,7 @@ function VistaPatrimonio({ datos, claveM, onUpdateDatos }) {
         ))}
         {anadiendoDeuda
           ? <FormularioAnadirDeuda onGuardar={añadirDeuda} onCancelar={() => setAnadiendoDeuda(false)}/>
-          : <BotonAnadir onClick={() => setAnadiendoDeuda(true)} label="Añadir deuda" color="#FF4757"/>}
+          : <BotonAnadir onClick={() => setAnadiendoDeuda(true)} label="Añadir deuda" color={V("--negative")}/>}
       </div>
     </div>
   );
@@ -3013,17 +3035,17 @@ function FormularioAnadirInmueble({ onGuardar, onCancelar }) {
       <input placeholder="Nombre (ej. Piso Petrer)" value={nombre} onChange={e => setNombre(e.target.value)}
         style={{ width:"100%", background:V("--surface-2"), border:"1px solid rgba(255,255,255,0.1)",
           borderRadius:8, padding:"8px 10px", color:V("--text"), fontSize:13, outline:"none",
-          fontFamily:"'Syne',sans-serif", marginBottom:8 }}/>
+          fontFamily:"'Inter',sans-serif", marginBottom:8 }}/>
       <div style={{ display:"flex", gap:8, marginBottom:10, alignItems:"center" }}>
-        <div><div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:V("--text-dim"), marginBottom:3 }}>Valor</div>
+        <div><div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:V("--text-dim"), marginBottom:3 }}>Valor</div>
           <InputMoneda valor={valorBase} onChange={setValorBase} compact ancho={80}/></div>
-        <div><div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:V("--text-dim"), marginBottom:3 }}>Revaloriz./año</div>
+        <div><div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:V("--text-dim"), marginBottom:3 }}>Revaloriz./año</div>
           <InputNumero valor={revalAnual} onChange={setRevalAnual} sufijo="%" compact ancho={50} step={0.5}/></div>
       </div>
       <div style={{ display:"flex", gap:8 }}>
         <button onClick={() => { if (nombre.trim() && valorBase > 0) onGuardar({ nombre: nombre.trim(), valorBase, revalAnual }); }}
-          style={{ flex:1, background:V("--accent"), color:"#0A0E17", border:"none", borderRadius:8,
-            fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:13, cursor:"pointer", padding:"8px" }}>Crear</button>
+          style={{ flex:1, background:V("--accent"), color:V("--bg"), border:"none", borderRadius:8,
+            fontFamily:"'Inter',sans-serif", fontWeight:700, fontSize:13, cursor:"pointer", padding:"8px" }}>Crear</button>
         <button onClick={onCancelar} style={{ padding:"0 14px", background:V("--surface-2"), color:V("--text-dim"),
           border:"none", borderRadius:8, cursor:"pointer", fontSize:13 }}>✕</button>
       </div>
@@ -3045,27 +3067,27 @@ function FormularioAnadirDeuda({ onGuardar, onCancelar }) {
       <input placeholder="Nombre (ej. Hipoteca)" value={nombre} onChange={e => setNombre(e.target.value)}
         style={{ width:"100%", background:V("--surface-2"), border:"1px solid rgba(255,255,255,0.1)",
           borderRadius:8, padding:"8px 10px", color:V("--text"), fontSize:13, outline:"none",
-          fontFamily:"'Syne',sans-serif", marginBottom:8 }}/>
+          fontFamily:"'Inter',sans-serif", marginBottom:8 }}/>
 
       <div style={{ display:"flex", gap:8, marginBottom:8, alignItems:"center" }}>
-        <div><div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:V("--text-dim"), marginBottom:3 }}>Importe inicial</div>
+        <div><div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:V("--text-dim"), marginBottom:3 }}>Importe inicial</div>
           <InputMoneda valor={capitalInicial} onChange={setCapitalInicial} compact ancho={80}/></div>
-        <div><div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:V("--text-dim"), marginBottom:3 }}>Deuda actual</div>
+        <div><div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:V("--text-dim"), marginBottom:3 }}>Deuda actual</div>
           <InputMoneda valor={saldoActual} onChange={setSaldoActual} compact ancho={80}/></div>
       </div>
 
       <div style={{ display:"flex", gap:8, marginBottom:8, alignItems:"center" }}>
-        <div><div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:V("--text-dim"), marginBottom:3 }}>Interés (TIN)</div>
+        <div><div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:V("--text-dim"), marginBottom:3 }}>Interés (TIN)</div>
           <InputNumero valor={tin} onChange={setTin} sufijo="%" compact ancho={48} step={0.05}/></div>
-        <div><div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:V("--text-dim"), marginBottom:3 }}>Plazo</div>
+        <div><div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:V("--text-dim"), marginBottom:3 }}>Plazo</div>
           <InputNumero valor={plazoAnios} onChange={setPlazoAnios} sufijo="años" compact ancho={42} step={1}/></div>
         <div style={{ flex:1 }}>
-          <div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:V("--text-dim"), marginBottom:3 }}>Tipo</div>
+          <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:V("--text-dim"), marginBottom:3 }}>Tipo</div>
           <div style={{ display:"flex", gap:3 }}>
             {["fijo","variable"].map(t => (
               <button key={t} onClick={() => setTipoInteres(t)} style={{
                 flex:1, padding:"5px 4px", borderRadius:6, border:"none", cursor:"pointer", fontSize:10,
-                fontFamily:"'Syne',sans-serif", fontWeight:600,
+                fontFamily:"'Inter',sans-serif", fontWeight:600,
                 background: tipoInteres === t ? V("--accent")+"25" : V("--surface-2"),
                 color: tipoInteres === t ? V("--accent") : V("--text-dim"),
               }}>{t === "fijo" ? "Fijo" : "Variable"}</button>
@@ -3081,7 +3103,7 @@ function FormularioAnadirDeuda({ onGuardar, onCancelar }) {
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
             padding:"8px 10px", marginBottom:10, borderRadius:8, background:"rgba(38,208,124,0.08)",
             border:"1px solid rgba(38,208,124,0.2)" }}>
-            <span style={{ fontFamily:"'Syne',sans-serif", fontSize:11, color:V("--text-mid") }}>
+            <span style={{ fontFamily:"'Inter',sans-serif", fontSize:11, color:V("--text-mid") }}>
               📐 Cuota calculada
             </span>
             <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:15, fontWeight:800, color:V("--accent") }}>
@@ -3096,8 +3118,8 @@ function FormularioAnadirDeuda({ onGuardar, onCancelar }) {
           if (nombre.trim() && capitalInicial > 0 && saldoActual > 0 && plazoAnios > 0)
             onGuardar({ nombre: nombre.trim(), capitalInicial, saldoActual, tin, tipoInteres, plazoAnios });
         }}
-          style={{ flex:1, background:"#FF4757", color:"#fff", border:"none", borderRadius:8,
-            fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:13, cursor:"pointer", padding:"8px" }}>Crear</button>
+          style={{ flex:1, background:V("--negative"), color:"#fff", border:"none", borderRadius:8,
+            fontFamily:"'Inter',sans-serif", fontWeight:700, fontSize:13, cursor:"pointer", padding:"8px" }}>Crear</button>
         <button onClick={onCancelar} style={{ padding:"0 14px", background:V("--surface-2"), color:V("--text-dim"),
           border:"none", borderRadius:8, cursor:"pointer", fontSize:13 }}>✕</button>
       </div>
@@ -3116,18 +3138,18 @@ function FilaDeuda({ deuda, claveM, onActualizar, onEliminar }) {
       {/* Cabecera: nombre + saldo + cuota */}
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:6 }}>
         <div onClick={() => setAbierto(o => !o)} style={{ flex:1, cursor:"pointer", minWidth:0 }}>
-          <span style={{ fontFamily:"'Syne',sans-serif", fontSize:13, fontWeight:600, color:V("--text-mid") }}>
+          <span style={{ fontFamily:"'Inter',sans-serif", fontSize:13, fontWeight:600, color:V("--text-mid") }}>
             {deuda.nombre}
           </span>
           <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:8, color:V("--text-dim"),
             background: deuda.tipoInteres === "variable" ? "rgba(255,140,66,0.15)" : "rgba(38,208,124,0.12)",
-            color: deuda.tipoInteres === "variable" ? "#FF8C42" : V("--accent"),
+            color: deuda.tipoInteres === "variable" ? V("--warn") : V("--accent"),
             padding:"1px 5px", borderRadius:3, marginLeft:6 }}>
             {deuda.tipoInteres === "variable" ? "VAR" : "FIJO"} {deuda.tin}%
           </span>
         </div>
         <div style={{ textAlign:"right" }}>
-          <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:14, fontWeight:700, color:"#FF4757" }}>
+          <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:14, fontWeight:700, color:V("--warn") }}>
             {saldoHoy.toLocaleString("es-ES",{minimumFractionDigits:0})}€
           </div>
           <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:V("--text-dim") }}>
@@ -3139,7 +3161,7 @@ function FilaDeuda({ deuda, claveM, onActualizar, onEliminar }) {
       </div>
 
       {/* Progreso amortización */}
-      <BarraProgreso valor={a.pctPagado} maximo={100} color="#FF4757" altura={5}/>
+      <BarraProgreso valor={a.pctPagado} maximo={100} color={V("--warn")} altura={5}/>
       <div style={{ display:"flex", justifyContent:"space-between", marginTop:3 }}>
         <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:V("--text-dim") }}>
           pagado {fmtTiempo(a.pagado)} · {a.pctPagado.toFixed(0)}%
@@ -3153,28 +3175,28 @@ function FilaDeuda({ deuda, claveM, onActualizar, onEliminar }) {
       {abierto && (
         <div style={{ marginTop:8, padding:"8px", background:"rgba(255,255,255,0.02)", borderRadius:8 }}>
           <div style={{ display:"flex", gap:8, marginBottom:6, alignItems:"center", flexWrap:"wrap" }}>
-            <span style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:V("--text-dim") }}>capital inicial</span>
+            <span style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:V("--text-dim") }}>capital inicial</span>
             <InputMoneda valor={deuda.capitalInicial} onChange={v => onActualizar({ capitalInicial: v })} compact ancho={70}/>
-            <span style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:V("--text-dim") }}>deuda actual</span>
+            <span style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:V("--text-dim") }}>deuda actual</span>
             <InputMoneda valor={deuda.saldoActual} onChange={v => onActualizar({ saldoActual: v, mesBase: claveM })} compact ancho={70}/>
           </div>
           <div style={{ display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" }}>
-            <span style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:V("--text-dim") }}>TIN</span>
+            <span style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:V("--text-dim") }}>TIN</span>
             <InputNumero valor={deuda.tin} onChange={v => onActualizar({ tin: v })} sufijo="%" compact ancho={48} step={0.05}/>
-            <span style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:V("--text-dim") }}>plazo</span>
+            <span style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:V("--text-dim") }}>plazo</span>
             <InputNumero valor={deuda.plazoAnios} onChange={v => onActualizar({ plazoAnios: v })} sufijo="años" compact ancho={42} step={1}/>
             <div style={{ display:"flex", gap:3 }}>
               {["fijo","variable"].map(t => (
                 <button key={t} onClick={() => onActualizar({ tipoInteres: t })} style={{
                   padding:"4px 8px", borderRadius:6, border:"none", cursor:"pointer", fontSize:9,
-                  fontFamily:"'Syne',sans-serif", fontWeight:600,
+                  fontFamily:"'Inter',sans-serif", fontWeight:600,
                   background: deuda.tipoInteres === t ? V("--accent")+"25" : V("--surface-2"),
                   color: deuda.tipoInteres === t ? V("--accent") : V("--text-dim"),
                 }}>{t === "fijo" ? "Fijo" : "Variable"}</button>
               ))}
             </div>
           </div>
-          <div style={{ marginTop:8, fontFamily:"'Syne',sans-serif", fontSize:9, color:V("--text-dim"),
+          <div style={{ marginTop:8, fontFamily:"'Inter',sans-serif", fontSize:9, color:V("--text-dim"),
             padding:"6px 8px", background:"rgba(255,71,87,0.05)", borderRadius:5, lineHeight:1.4 }}>
             💡 La cuota se calcula con el sistema francés (capital, interés y plazo). Compárala con tu recibo: si coincide, los datos son correctos. {deuda.tipoInteres === "variable" ? "Al revisar el euríbor, actualiza el TIN." : ""}
           </div>
@@ -3202,8 +3224,8 @@ function VistaCartera({ datos, claveM, onUpdateDatos }) {
           <button key={s.id} onClick={() => setSub(s.id)} style={{
             flex:1, padding:"9px 4px", borderRadius:9, border:"none", cursor:"pointer",
             display:"flex", alignItems:"center", justifyContent:"center", gap:4,
-            background: sub === s.id ? V("--accent") + "20" : "transparent",
-            fontFamily:"'Syne',sans-serif", fontSize:12, fontWeight:700,
+            background: sub === s.id ? mix(V("--accent"), "20") : "transparent",
+            fontFamily:"'Inter',sans-serif", fontSize:12, fontWeight:700,
             color: sub === s.id ? V("--accent") : V("--text-dim"),
             transition:"all 0.2s",
           }}>
@@ -3261,7 +3283,7 @@ function BloqueAlertas({ datos, claveM, mesNum }) {
 
   if (alertas.length === 0) return null;
 
-  const colorTipo = { error:"#FF4757", warn:"#FF8C42", ok:V("--accent") };
+  const colorTipo = { error:V("--warn"), warn:V("--warn"), ok:V("--accent") };
   return (
     <div style={{ marginBottom:14 }}>
       {alertas.map((a, i) => (
@@ -3271,7 +3293,7 @@ function BloqueAlertas({ datos, claveM, mesNum }) {
           border:`1px solid ${colorTipo[a.tipo]}30`,
         }}>
           <span style={{ fontSize:14 }}>{a.icono}</span>
-          <span style={{ fontFamily:"'Syne',sans-serif", fontSize:11, color:V("--text-mid"), lineHeight:1.4 }}>
+          <span style={{ fontFamily:"'Inter',sans-serif", fontSize:11, color:V("--text-mid"), lineHeight:1.4 }}>
             {a.texto}
           </span>
         </div>
@@ -3354,8 +3376,8 @@ function VistaAnalisis({ datos, claveM, mesNum, onUpdateDatos }) {
           <button key={s.id} onClick={() => setSubAna(s.id)} style={{
             flex:1, padding:"9px 4px", borderRadius:9, border:"none", cursor:"pointer",
             display:"flex", alignItems:"center", justifyContent:"center", gap:5,
-            background: subAna === s.id ? V("--accent") + "20" : "transparent",
-            fontFamily:"'Syne',sans-serif", fontSize:12, fontWeight:700,
+            background: subAna === s.id ? mix(V("--accent"), "20") : "transparent",
+            fontFamily:"'Inter',sans-serif", fontSize:12, fontWeight:700,
             color: subAna === s.id ? V("--accent") : V("--text-dim"),
             transition:"all 0.2s",
           }}>
@@ -3371,7 +3393,7 @@ function VistaAnalisis({ datos, claveM, mesNum, onUpdateDatos }) {
       {/* Patrimonio */}
       <div style={{ background:"linear-gradient(135deg, #00A3E020, #B06FE815)",
         border:"1px solid #00A3E030", borderRadius:18, padding:"18px 20px", marginBottom:14 }}>
-        <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, fontWeight:700, color:"#00A3E0",
+        <div style={{ fontFamily:"'Inter',sans-serif", fontSize:10, fontWeight:700, color:V("--c2"),
           letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:6 }}>
           💎 Patrimonio neto
         </div>
@@ -3380,25 +3402,25 @@ function VistaAnalisis({ datos, claveM, mesNum, onUpdateDatos }) {
           {patrimonio.toLocaleString("es-ES",{minimumFractionDigits:0})}€
         </div>
         <div style={{ display:"flex", gap:6, marginTop:10 }}>
-          <div style={{ flex: liquidez || 1, height:8, background:"#00A3E0", borderRadius:4 }}/>
+          <div style={{ flex: liquidez || 1, height:8, background:V("--c2"), borderRadius:4 }}/>
           {liquidezCompartida > 0 && (
-            <div style={{ flex: liquidezCompartida, height:8, background:"#B06FE8", borderRadius:4, opacity:0.7 }}/>
+            <div style={{ flex: liquidezCompartida, height:8, background:V("--c3"), borderRadius:4, opacity:0.7 }}/>
           )}
-          <div style={{ flex: cartera.valorActual || 1, height:8, background:"#E8A838", borderRadius:4 }}/>
+          <div style={{ flex: cartera.valorActual || 1, height:8, background:V("--c3"), borderRadius:4 }}/>
           {inmueblesTotal > 0 && (
             <div style={{ flex: inmueblesTotal, height:8, background:V("--accent"), borderRadius:4 }}/>
           )}
         </div>
         <div style={{ display:"flex", justifyContent:"space-between", marginTop:6, flexWrap:"wrap", gap:6 }}>
-          <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:"#00A3E0" }}>
+          <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:V("--c2") }}>
             Líquido {liquidez.toLocaleString("es-ES",{minimumFractionDigits:0})}€
           </span>
           {liquidezCompartida > 0 && (
-            <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:"#B06FE8" }}>
+            <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:V("--c3") }}>
               🤝 {liquidezCompartida.toLocaleString("es-ES",{minimumFractionDigits:0})}€
             </span>
           )}
-          <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:"#E8A838" }}>
+          <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:V("--c3") }}>
             Inversión {cartera.valorActual.toLocaleString("es-ES",{minimumFractionDigits:0})}€
           </span>
           {inmueblesTotal > 0 && (
@@ -3407,7 +3429,7 @@ function VistaAnalisis({ datos, claveM, mesNum, onUpdateDatos }) {
             </span>
           )}
           {deudasTotal > 0 && (
-            <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:"#FF4757" }}>
+            <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:V("--warn") }}>
               − Deudas {deudasTotal.toLocaleString("es-ES",{minimumFractionDigits:0})}€
             </span>
           )}
@@ -3420,19 +3442,19 @@ function VistaAnalisis({ datos, claveM, mesNum, onUpdateDatos }) {
       {/* KPIs */}
       <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr", gap:10, marginBottom:14 }}>
         {[
-          { label:"Tasa de ahorro", v:`${tasaAhorro.toFixed(1)}%`, sub:`${ahorro.toLocaleString("es-ES",{minimumFractionDigits:0})}€/mes`, color: tasaAhorro >= 20 ? V("--accent") : "#FF8C42", ok: tasaAhorro >= 20 },
-          { label:"Remanente mes", v:`${margen.toLocaleString("es-ES",{minimumFractionDigits:0})}€`, sub:"tras todos los gastos", color: margen >= 0 ? "#00A3E0" : "#FF4757", ok: margen >= 0 },
-          { label:"Aportación anual", v:`${Math.max(0,aportacion).toFixed(0)}€`, sub:`hasta noviembre`, color:"#E8A838", ok:true },
-          { label:"Cobertura SOS", v:`${(saldoEmergencia/BASE_EMERGENCIA).toFixed(1)} meses`, sub:`base ${BASE_EMERGENCIA.toLocaleString("es-ES")}€/mes`, color:"#B06FE8", ok: saldoEmergencia >= BASE_EMERGENCIA * 4 },
+          { label:"Tasa de ahorro", v:`${tasaAhorro.toFixed(1)}%`, sub:`${ahorro.toLocaleString("es-ES",{minimumFractionDigits:0})}€/mes`, color: tasaAhorro >= 20 ? V("--accent") : V("--warn"), ok: tasaAhorro >= 20 },
+          { label:"Remanente mes", v:`${margen.toLocaleString("es-ES",{minimumFractionDigits:0})}€`, sub:"tras todos los gastos", color: margen >= 0 ? V("--c2") : V("--warn"), ok: margen >= 0 },
+          { label:"Aportación anual", v:`${Math.max(0,aportacion).toFixed(0)}€`, sub:`hasta noviembre`, color:V("--c3"), ok:true },
+          { label:"Cobertura SOS", v:`${(saldoEmergencia/BASE_EMERGENCIA).toFixed(1)} meses`, sub:`base ${BASE_EMERGENCIA.toLocaleString("es-ES")}€/mes`, color:V("--c3"), ok: saldoEmergencia >= BASE_EMERGENCIA * 4 },
         ].map(({ label, v, sub, color, ok }) => (
           <div key={label} style={{ background:V("--surface"), borderRadius:14, padding:"14px 12px",
             border:`1px solid ${color}25` }}>
-            <div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:V("--text-dim"),
+            <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:V("--text-dim"),
               letterSpacing:"0.08em", textTransform:"uppercase", marginBottom:6 }}>{label}</div>
             <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:18, fontWeight:700, color, marginBottom:3 }}>{v}</div>
-            <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, color:V("--text-dim"), lineHeight:1.4 }}>{sub}</div>
-            <div style={{ marginTop:6, fontFamily:"'Syne',sans-serif", fontSize:10,
-              color: ok ? V("--accent") : "#FF8C42" }}>{ok ? "✅ en objetivo" : "⚠ revisar"}</div>
+            <div style={{ fontFamily:"'Inter',sans-serif", fontSize:10, color:V("--text-dim"), lineHeight:1.4 }}>{sub}</div>
+            <div style={{ marginTop:6, fontFamily:"'Inter',sans-serif", fontSize:10,
+              color: ok ? V("--accent") : V("--warn") }}>{ok ? "✅ en objetivo" : "⚠ revisar"}</div>
           </div>
         ))}
       </div>
@@ -3445,9 +3467,9 @@ function VistaAnalisis({ datos, claveM, mesNum, onUpdateDatos }) {
         </div>
         <DonutChart segmentos={[
           { label:"Fijos",     valor:fijos,     color:V("--accent") },
-          { label:"Variables", valor:vars,      color:"#5AA9E6" },
-          { label:"Ahorro",    valor:ahorro,    color:"#E8C468" },
-          { label:"Puntuales", valor:puntuales, color:"#E8836A" },
+          { label:"Variables", valor:vars,      color:V("--c2") },
+          { label:"Ahorro",    valor:ahorro,    color:V("--c3") },
+          { label:"Puntuales", valor:puntuales, color:V("--c4") },
         ]}/>
       </div>
 
@@ -3464,7 +3486,7 @@ function VistaAnalisis({ datos, claveM, mesNum, onUpdateDatos }) {
           return (
             <div key={banco} style={{ marginBottom:12 }}>
               <div style={{ display:"flex", justifyContent:"space-between", marginBottom:4 }}>
-                <span style={{ fontFamily:"'Syne',sans-serif", fontSize:12, color:V("--text-mid") }}>{meta.label}</span>
+                <span style={{ fontFamily:"'Inter',sans-serif", fontSize:12, color:V("--text-mid") }}>{meta.label}</span>
                 <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:12, color:meta.color }}>
                   {v.toLocaleString("es-ES",{minimumFractionDigits:0})}€ · {pct.toFixed(0)}%
                 </span>
@@ -3560,7 +3582,7 @@ function DonutChart({ segmentos, tamano = 130 }) {
           return (
             <div key={i} style={{ display:"flex", alignItems:"center", gap:8, marginBottom:7 }}>
               <span style={{ width:9, height:9, borderRadius:"50%", background:s.color, flexShrink:0 }}/>
-              <span style={{ flex:1, fontFamily:"'Syne',sans-serif", fontSize:12, color:V("--text-mid"),
+              <span style={{ flex:1, fontFamily:"'Inter',sans-serif", fontSize:12, color:V("--text-mid"),
                 overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>{s.label}</span>
               <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:11, color:V("--text"), fontWeight:600 }}>
                 {s.valor.toLocaleString("es-ES",{minimumFractionDigits:0})}€
@@ -3596,7 +3618,7 @@ function GraficaPatrimonio({ datos, claveM }) {
         <div style={{ fontFamily:SERIF, fontSize:15, fontWeight:600, color:V("--text-mid"), letterSpacing:"0", marginBottom:8 }}>
           📈 Evolución del patrimonio
         </div>
-        <div style={{ fontFamily:"'Syne',sans-serif", fontSize:11, color:V("--text-dim"),
+        <div style={{ fontFamily:"'Inter',sans-serif", fontSize:11, color:V("--text-dim"),
           fontStyle:"italic", textAlign:"center", padding:"10px 0" }}>
           El histórico se irá dibujando a medida que pasen los meses.
         </div>
@@ -3619,7 +3641,7 @@ function GraficaPatrimonio({ datos, claveM }) {
   const primero = puntos[0];
   const delta = ultimo.valor - primero.valor;
   const subiendo = delta >= 0;
-  const colorLinea = subiendo ? V("--accent") : "#FF4757";
+  const colorLinea = subiendo ? V("--accent") : V("--warn");
 
   // Qué etiquetas de mes mostrar en eje X (máximo ~5 para que no se solapen)
   const paso = Math.max(1, Math.ceil(puntos.length / 5));
@@ -3726,7 +3748,7 @@ function BloqueObjetivos({ objetivos, cuentas, claveM, onUpdateDatos, autoObjeti
       </div>
 
       {objetivos.length === 0 && !anadiendo && (
-        <div style={{ padding:"14px", textAlign:"center", fontFamily:"'Syne',sans-serif",
+        <div style={{ padding:"14px", textAlign:"center", fontFamily:"'Inter',sans-serif",
           fontSize:12, color:V("--text-dim"), fontStyle:"italic",
           background:"rgba(255,255,255,0.02)", borderRadius:10,
           border:"1px dashed rgba(255,255,255,0.06)", marginBottom:8 }}>
@@ -3761,10 +3783,10 @@ function FilaObjetivo({ objetivo, cuentas, claveM, onActualizar, onEliminar }) {
   // Color y etiqueta del estado
   let estadoColor = V("--accent"), estadoLabel = "🟢 En ritmo";
   if (ev.completado)       { estadoColor = V("--accent"); estadoLabel = "✅ Completado"; }
-  else if (ev.vencido)     { estadoColor = "#FF4757"; estadoLabel = "🔴 Plazo vencido"; }
+  else if (ev.vencido)     { estadoColor = V("--warn"); estadoLabel = "🔴 Plazo vencido"; }
   else if (ev.ritmo === "adelantado") { estadoColor = V("--accent"); estadoLabel = "🚀 Adelantado"; }
-  else if (ev.ritmo === "atrasado")   { estadoColor = "#FF8C42"; estadoLabel = "🟠 Atrasado"; }
-  else if (ev.ritmo === "alDia")      { estadoColor = "#00A3E0"; estadoLabel = "🟢 Al día"; }
+  else if (ev.ritmo === "atrasado")   { estadoColor = V("--warn"); estadoLabel = "🟠 Atrasado"; }
+  else if (ev.ritmo === "alDia")      { estadoColor = V("--c2"); estadoLabel = "🟢 Al día"; }
 
   return (
     <div style={{ background:"rgba(255,255,255,0.02)", borderRadius:12, padding:"12px 14px",
@@ -3773,7 +3795,7 @@ function FilaObjetivo({ objetivo, cuentas, claveM, onActualizar, onEliminar }) {
       {/* Cabecera: nombre + fecha + eliminar */}
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"flex-start", marginBottom:8 }}>
         <div style={{ flex:1, minWidth:0 }}>
-          <div style={{ fontFamily:"'Syne',sans-serif", fontSize:13, fontWeight:700, color:V("--text-mid") }}>
+          <div style={{ fontFamily:"'Inter',sans-serif", fontSize:13, fontWeight:700, color:V("--text-mid") }}>
             {objetivo.nombre}
           </div>
           <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:V("--text-dim"), marginTop:2 }}>
@@ -3800,7 +3822,7 @@ function FilaObjetivo({ objetivo, cuentas, claveM, onActualizar, onEliminar }) {
       {/* Estado + cuota mensual */}
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
         padding:"8px 10px", borderRadius:8, background: estadoColor + "10" }}>
-        <span style={{ fontFamily:"'Syne',sans-serif", fontSize:11, fontWeight:600, color:estadoColor }}>
+        <span style={{ fontFamily:"'Inter',sans-serif", fontSize:11, fontWeight:600, color:estadoColor }}>
           {estadoLabel}
         </span>
         {!ev.completado && !ev.vencido && (
@@ -3808,13 +3830,13 @@ function FilaObjetivo({ objetivo, cuentas, claveM, onActualizar, onEliminar }) {
             <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:13, fontWeight:700, color:V("--text") }}>
               {ev.cuotaMensual.toLocaleString("es-ES",{minimumFractionDigits:0})}€<span style={{ fontSize:9, color:V("--text-dim") }}>/mes</span>
             </div>
-            <div style={{ fontFamily:"'Syne',sans-serif", fontSize:8, color:V("--text-dim") }}>
+            <div style={{ fontFamily:"'Inter',sans-serif", fontSize:8, color:V("--text-dim") }}>
               para llegar a tiempo
             </div>
           </div>
         )}
         {ev.vencido && (
-          <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:11, color:"#FF4757" }}>
+          <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:11, color:V("--warn") }}>
             faltan {ev.restante.toLocaleString("es-ES",{minimumFractionDigits:0})}€
           </span>
         )}
@@ -3823,7 +3845,7 @@ function FilaObjetivo({ objetivo, cuentas, claveM, onActualizar, onEliminar }) {
       {/* Ahorrado manual editable (solo si no hay cuenta vinculada) */}
       {!ev.cuenta && !ev.completado && (
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginTop:8 }}>
-          <span style={{ fontFamily:"'Syne',sans-serif", fontSize:11, color:"#8B9DBB" }}>
+          <span style={{ fontFamily:"'Inter',sans-serif", fontSize:11, color:V("--text-dim") }}>
             Ahorrado hasta ahora
           </span>
           <InputMoneda valor={objetivo.ahorradoManual || 0}
@@ -3862,21 +3884,21 @@ function FormularioAnadirObjetivo({ cuentas, claveM, onGuardar, onCancelar }) {
         onChange={e => setNombre(e.target.value)}
         style={{ width:"100%", background:V("--border"), border:"1px solid rgba(255,255,255,0.1)",
           borderRadius:8, padding:"8px 10px", color:V("--text"), fontSize:13, outline:"none",
-          fontFamily:"'Syne',sans-serif", marginBottom:8 }}
+          fontFamily:"'Inter',sans-serif", marginBottom:8 }}
       />
 
       <div style={{ display:"flex", gap:8, marginBottom:8, alignItems:"center" }}>
         <div>
-          <div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:V("--text-dim"), marginBottom:3 }}>Importe</div>
+          <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:V("--text-dim"), marginBottom:3 }}>Importe</div>
           <InputMoneda valor={importe} onChange={setImporte} compact ancho={65}/>
         </div>
         <div style={{ flex:1 }}>
-          <div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:V("--text-dim"), marginBottom:3 }}>Fecha límite</div>
+          <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:V("--text-dim"), marginBottom:3 }}>Fecha límite</div>
           <div style={{ display:"flex", gap:4 }}>
             <select value={mesLim} onChange={e => setMesLim(Number(e.target.value))}
-              style={{ flex:1, background:"#0F1521", border:"1px solid rgba(255,255,255,0.1)",
+              style={{ flex:1, background:V("--surface-elevated"), border:"1px solid rgba(255,255,255,0.1)",
                 borderRadius:8, padding:"5px 6px", color:V("--text"), fontSize:11, outline:"none",
-                fontFamily:"'Syne',sans-serif" }}>
+                fontFamily:"'Inter',sans-serif" }}>
               {MESES.map((m, i) => <option key={i} value={i+1}>{m}</option>)}
             </select>
             <input type="number" min={añoActualNum} max={añoActualNum+30} value={añoLim}
@@ -3891,8 +3913,8 @@ function FormularioAnadirObjetivo({ cuentas, claveM, onGuardar, onCancelar }) {
 
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
         <div>
-          <div style={{ fontFamily:"'Syne',sans-serif", fontSize:11, color:V("--text-mid") }}>Cuenta vinculada</div>
-          <div style={{ fontFamily:"'Syne',sans-serif", fontSize:8, color:V("--text-dim"), marginTop:1 }}>
+          <div style={{ fontFamily:"'Inter',sans-serif", fontSize:11, color:V("--text-mid") }}>Cuenta vinculada</div>
+          <div style={{ fontFamily:"'Inter',sans-serif", fontSize:8, color:V("--text-dim"), marginTop:1 }}>
             el saldo de la cuenta será tu progreso · opcional
           </div>
         </div>
@@ -3902,7 +3924,7 @@ function FormularioAnadirObjetivo({ cuentas, claveM, onGuardar, onCancelar }) {
       <div style={{ display:"flex", gap:8 }}>
         <button onClick={guardar} style={{
           flex:1, background:V("--accent"), color:V("--bg"), border:"none", borderRadius:8,
-          fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:13, cursor:"pointer", padding:"8px",
+          fontFamily:"'Inter',sans-serif", fontWeight:700, fontSize:13, cursor:"pointer", padding:"8px",
         }}>Crear objetivo</button>
         <button onClick={onCancelar} style={{
           padding:"0 14px", background:V("--border"), color:V("--text-dim"),
@@ -3918,13 +3940,13 @@ function FormularioAnadirObjetivo({ cuentas, claveM, onGuardar, onCancelar }) {
 // ═══════════════════════════════════════════════════════
 
 const CLASIFICACIONES_DISPONIBLES = [
-  { id:"necesidad", label:"Necesidad", color:"#00A3E0" },
-  { id:"deseo",     label:"Deseo",     color:"#FF6B35" },
+  { id:"necesidad", label:"Necesidad", color:V("--c2") },
+  { id:"deseo",     label:"Deseo",     color:V("--c4") },
   { id:"ahorro",    label:"Ahorro",    color:V("--accent") },
-  { id:"deuda",     label:"Deuda",     color:"#FF4757" },
-  { id:"educacion", label:"Educación", color:"#E8A838" },
-  { id:"libertad",  label:"Libertad",  color:"#B06FE8" },
-  { id:"dar",       label:"Dar",       color:"#8B9DBB" },
+  { id:"deuda",     label:"Deuda",     color:V("--warn") },
+  { id:"educacion", label:"Educación", color:V("--c3") },
+  { id:"libertad",  label:"Libertad",  color:V("--c3") },
+  { id:"dar",       label:"Dar",       color:V("--text-dim") },
 ];
 
 function BloqueTeoriasAhorro({ gastos, totalIngresos, onReclasificar }) {
@@ -3962,7 +3984,7 @@ function BloqueTeoriasAhorro({ gastos, totalIngresos, onReclasificar }) {
           {Object.entries(TEORIAS_AHORRO).map(([id, t]) => (
             <button key={id} onClick={() => setTeoriaSel(id)} style={{
               padding:"4px 10px", borderRadius:6, border:"none", cursor:"pointer", fontSize:11,
-              fontFamily:"'Syne',sans-serif", fontWeight:600,
+              fontFamily:"'Inter',sans-serif", fontWeight:600,
               background: teoriaSel === id ? "rgba(38,208,124,0.2)" : V("--surface-2"),
               color: teoriaSel === id ? V("--accent") : V("--text-dim"),
             }}>{t.nombre}</button>
@@ -3970,7 +3992,7 @@ function BloqueTeoriasAhorro({ gastos, totalIngresos, onReclasificar }) {
         </div>
 
         {/* Descripción */}
-        <div style={{ fontFamily:"'Syne',sans-serif", fontSize:11, color:"#8B9DBB",
+        <div style={{ fontFamily:"'Inter',sans-serif", fontSize:11, color:V("--text-dim"),
           marginBottom:12, lineHeight:1.5, fontStyle:"italic" }}>
           {teoria.descripcion}
           <span style={{ fontSize:9, color:V("--text-dim"), marginLeft:5 }}>— {teoria.autor}</span>
@@ -3984,7 +4006,7 @@ function BloqueTeoriasAhorro({ gastos, totalIngresos, onReclasificar }) {
             <div key={cat.id} style={{ marginBottom:12 }}>
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:4 }}>
                 <div>
-                  <span style={{ fontFamily:"'Syne',sans-serif", fontSize:12, fontWeight:600, color:V("--text-mid") }}>
+                  <span style={{ fontFamily:"'Inter',sans-serif", fontSize:12, fontWeight:600, color:V("--text-mid") }}>
                     {cat.label}
                   </span>
                   <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9,
@@ -3994,12 +4016,12 @@ function BloqueTeoriasAhorro({ gastos, totalIngresos, onReclasificar }) {
                 </div>
                 <div style={{ textAlign:"right" }}>
                   <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:13, fontWeight:700,
-                    color: excede ? "#FF4757" : dentro ? V("--accent") : "#FF8C42" }}>
+                    color: excede ? V("--warn") : dentro ? V("--accent") : V("--warn") }}>
                     {cat.pctReal.toFixed(1)}%
                   </span>
                 </div>
               </div>
-              <BarraProgreso valor={cat.pctReal} maximo={100} color={excede ? "#FF4757" : cat.color} altura={6}/>
+              <BarraProgreso valor={cat.pctReal} maximo={100} color={excede ? V("--warn") : cat.color} altura={6}/>
               <div style={{ display:"flex", justifyContent:"space-between", marginTop:3 }}>
                 <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:V("--text-dim") }}>
                   real {cat.real.toLocaleString("es-ES",{minimumFractionDigits:0})}€
@@ -4015,8 +4037,8 @@ function BloqueTeoriasAhorro({ gastos, totalIngresos, onReclasificar }) {
         {/* Toggle para ver/editar la clasificación de cada gasto */}
         <button onClick={() => setMostrarDetalle(d => !d)} style={{
           width:"100%", marginTop:6, padding:"8px", borderRadius:8, border:"none", cursor:"pointer",
-          background:"rgba(255,255,255,0.04)", color:"#8B9DBB",
-          fontFamily:"'Syne',sans-serif", fontSize:11, fontWeight:600,
+          background:"rgba(255,255,255,0.04)", color:V("--text-dim"),
+          fontFamily:"'Inter',sans-serif", fontSize:11, fontWeight:600,
         }}>
           {mostrarDetalle ? "▲ Ocultar clasificación de gastos" : "▼ Ver / re-clasificar gastos"}
         </button>
@@ -4024,7 +4046,7 @@ function BloqueTeoriasAhorro({ gastos, totalIngresos, onReclasificar }) {
         {/* Detalle: cada gasto con su clasificación editable */}
         {mostrarDetalle && (
           <div style={{ marginTop:10, padding:"10px", background:"rgba(255,255,255,0.02)", borderRadius:8 }}>
-            <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, color:V("--text-dim"), marginBottom:8, lineHeight:1.4 }}>
+            <div style={{ fontFamily:"'Inter',sans-serif", fontSize:10, color:V("--text-dim"), marginBottom:8, lineHeight:1.4 }}>
               Por defecto: fijos = necesidad, variables = deseo, ahorro = ahorro. Puedes re-clasificar gastos individualmente (ej. el gimnasio como deseo en lugar de necesidad).
             </div>
             {gastos.map(g => (
@@ -4033,7 +4055,7 @@ function BloqueTeoriasAhorro({ gastos, totalIngresos, onReclasificar }) {
                 borderBottom:`1px solid ${V("--border")}`,
               }}>
                 <span style={{
-                  fontFamily:"'Syne',sans-serif", fontSize:11, color:V("--text-mid"), flex:1, minWidth:0,
+                  fontFamily:"'Inter',sans-serif", fontSize:11, color:V("--text-mid"), flex:1, minWidth:0,
                   overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap",
                 }}>{g.nombre}</span>
                 <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:V("--text-dim") }}>
@@ -4057,8 +4079,8 @@ function SelectorClasificacion({ value, onChange }) {
   return (
     <div style={{ position:"relative" }}>
       <button onClick={(e) => { e.stopPropagation(); setAbierto(a => !a); }} style={{
-        fontFamily:"'Syne',sans-serif", fontSize:9, fontWeight:600,
-        color: actual.color, background: actual.color + "20",
+        fontFamily:"'Inter',sans-serif", fontSize:9, fontWeight:600,
+        color: actual.color, background: mix(actual.color, "20"),
         padding:"2px 6px", borderRadius:4, border:"none", cursor:"pointer",
         display:"flex", alignItems:"center", gap:3,
       }}>
@@ -4069,15 +4091,15 @@ function SelectorClasificacion({ value, onChange }) {
           <div onClick={() => setAbierto(false)} style={{ position:"fixed", inset:0, zIndex:50 }}/>
           <div style={{
             position:"absolute", top:"calc(100% + 4px)", right:0, zIndex:51,
-            background:"#0F1521", border:"1px solid rgba(255,255,255,0.1)",
+            background:V("--surface-elevated"), border:"1px solid rgba(255,255,255,0.1)",
             borderRadius:8, padding:4, boxShadow:"0 8px 24px rgba(0,0,0,0.4)", minWidth:120,
           }}>
             {CLASIFICACIONES_DISPONIBLES.map(c => (
               <button key={c.id} onClick={() => { onChange(c.id); setAbierto(false); }} style={{
                 display:"block", width:"100%", padding:"5px 10px", borderRadius:5,
                 border:"none", cursor:"pointer",
-                background: c.id === value ? c.color + "15" : "transparent",
-                fontFamily:"'Syne',sans-serif", fontSize:11, color: c.color,
+                background: c.id === value ? mix(c.color, "15") : "transparent",
+                fontFamily:"'Inter',sans-serif", fontSize:11, color: c.color,
                 textAlign:"left", fontWeight:600,
               }}>{c.label}</button>
             ))}
@@ -4147,7 +4169,7 @@ function BotonAjustes({ tema, setTema }) {
         React.createElement("div", {
           style: {
             position: "absolute", top: "calc(100% + 6px)", right: 0, zIndex: 101,
-            background: "#0F1521", border: "1px solid rgba(255,255,255,0.1)",
+            background: V("--surface-elevated"), border: "1px solid rgba(255,255,255,0.1)",
             borderRadius: 10, padding: 6, boxShadow: "0 8px 24px rgba(0,0,0,0.4)",
             minWidth: 200,
           }
@@ -4157,7 +4179,7 @@ function BotonAjustes({ tema, setTema }) {
             style: {
               display: "flex", alignItems: "center", gap: 8, width: "100%",
               padding: "8px 10px", borderRadius: 6, border: "none", cursor: "pointer",
-              background: "transparent", fontFamily: "'Syne',sans-serif",
+              background: "transparent", fontFamily: "'Inter',sans-serif",
               fontSize: 12, color: V("--text-mid"), textAlign: "left",
             }
           }, "💾 Exportar backup"),
@@ -4166,7 +4188,7 @@ function BotonAjustes({ tema, setTema }) {
             style: {
               display: "flex", alignItems: "center", gap: 8, width: "100%",
               padding: "8px 10px", borderRadius: 6, border: "none", cursor: "pointer",
-              background: "transparent", fontFamily: "'Syne',sans-serif",
+              background: "transparent", fontFamily: "'Inter',sans-serif",
               fontSize: 12, color: V("--text-mid"), textAlign: "left",
             }
           }, "📂 Importar backup"),
@@ -4180,7 +4202,7 @@ function BotonAjustes({ tema, setTema }) {
           // ─── Selector de tema ───
           React.createElement("div", {
             style: {
-              padding: "6px 10px", fontFamily: "'Syne',sans-serif",
+              padding: "6px 10px", fontFamily: "'Inter',sans-serif",
               fontSize: 10, fontWeight: 700, color: V("--text-dim"),
               letterSpacing: "0.08em", textTransform: "uppercase",
             }
@@ -4198,7 +4220,7 @@ function BotonAjustes({ tema, setTema }) {
                   border: tema === id ? `1px solid ${t["--accent"]}` : "1px solid transparent",
                   cursor: "pointer",
                   background: tema === id ? t["--accent"] + "20" : "rgba(255,255,255,0.05)",
-                  fontFamily: "'Syne',sans-serif", fontSize: 11, fontWeight: 600,
+                  fontFamily: "'Inter',sans-serif", fontSize: 11, fontWeight: 600,
                   color: tema === id ? t["--accent"] : V("--text-mid"),
                 }
               },
@@ -4221,8 +4243,8 @@ function BotonAjustes({ tema, setTema }) {
             style: {
               display: "flex", alignItems: "center", gap: 8, width: "100%",
               padding: "8px 10px", borderRadius: 6, border: "none", cursor: "pointer",
-              background: "transparent", fontFamily: "'Syne',sans-serif",
-              fontSize: 12, color: "#00A3E0", textAlign: "left",
+              background: "transparent", fontFamily: "'Inter',sans-serif",
+              fontSize: 12, color: V("--c2"), textAlign: "left",
             }
           }, "🔄 Forzar actualización"),
           React.createElement("div", {
@@ -4233,8 +4255,8 @@ function BotonAjustes({ tema, setTema }) {
             style: {
               display: "flex", alignItems: "center", gap: 8, width: "100%",
               padding: "8px 10px", borderRadius: 6, border: "none", cursor: "pointer",
-              background: "transparent", fontFamily: "'Syne',sans-serif",
-              fontSize: 12, color: "#FF4757", textAlign: "left",
+              background: "transparent", fontFamily: "'Inter',sans-serif",
+              fontSize: 12, color: V("--warn"), textAlign: "left",
             }
           }, "🗑 Reiniciar todo")
         )
@@ -4409,7 +4431,7 @@ function App() {
 
   return (
     <div style={{ background:V("--bg"), minHeight:"100vh", maxWidth:480, margin:"0 auto",
-      fontFamily:"'Syne',sans-serif", color:V("--text"), paddingBottom:80 }}>
+      fontFamily:"'Inter',sans-serif", color:V("--text"), paddingBottom:80 }}>
       <style>{css}</style>
 
       {bienvenida && <PantallaBienvenida onEntrar={cerrarBienvenida}/>}
@@ -4420,11 +4442,8 @@ function App() {
         position:"sticky", top:0, zIndex:10, backdropFilter:"blur(12px)",
       }}>
         {/* Marca */}
-        <div style={{ display:"flex", alignItems:"center", justifyContent:"center", gap:8, marginBottom:12 }}>
-          <LogoBarras size={22}/>
-          <span style={{ fontFamily:SERIF, fontSize:22, fontWeight:700, color:V("--text"), lineHeight:1 }}>LO</span>
-          <span style={{ fontFamily:"'Syne',sans-serif", fontSize:10, fontWeight:600, letterSpacing:"0.25em",
-            color:V("--text-dim"), textTransform:"uppercase", marginTop:2 }}>Inteligente</span>
+        <div style={{ display:"flex", alignItems:"center", justifyContent:"center", marginBottom:12 }}>
+          <MarcaLO serifSize={22} sansSize={17} isoSize={20}/>
         </div>
 
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14 }}>
@@ -4435,7 +4454,7 @@ function App() {
             <div>
               <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:V("--text-dim"),
                 letterSpacing:"0.12em", textTransform:"uppercase" }}>control mensual</div>
-              <div style={{ fontFamily:"'Syne',sans-serif", fontSize:20, fontWeight:800, letterSpacing:"-0.02em" }}>
+              <div style={{ fontFamily:"'Inter',sans-serif", fontSize:20, fontWeight:800, letterSpacing:"-0.02em" }}>
                 {MESES[nav.mes]} <span style={{ color:V("--text-dim"), fontWeight:400, fontSize:16 }}>{nav.año}</span>
               </div>
             </div>
@@ -4443,7 +4462,7 @@ function App() {
             <button onClick={cerrado ? reabrirMes : cerrarMes} title={cerrado ? "Reabrir mes" : "Cerrar mes"} style={{
               background: cerrado ? "rgba(255,140,66,0.18)" : V("--border"),
               border: cerrado ? "1px solid #FF8C4250" : "1px solid transparent",
-              color: cerrado ? "#FF8C42" : V("--text-dim"),
+              color: cerrado ? V("--warn") : V("--text-dim"),
               cursor:"pointer", fontSize:16, width:34, height:34, borderRadius:8,
               display:"flex", alignItems:"center", justifyContent:"center",
             }}>{cerrado ? "🔒" : "🔓"}</button>
@@ -4482,10 +4501,10 @@ function App() {
         }}>
           <span style={{ fontSize:18 }}>🔒</span>
           <div style={{ flex:1 }}>
-            <div style={{ fontFamily:"'Syne',sans-serif", fontSize:12, fontWeight:700, color:"#FF8C42" }}>
+            <div style={{ fontFamily:"'Inter',sans-serif", fontSize:12, fontWeight:700, color:V("--warn") }}>
               Mes cerrado · sólo lectura
             </div>
-            <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, color:"#8B9DBB", marginTop:2 }}>
+            <div style={{ fontFamily:"'Inter',sans-serif", fontSize:10, color:V("--text-dim"), marginTop:2 }}>
               Pulsa el candado de arriba para reabrir y editar
             </div>
           </div>

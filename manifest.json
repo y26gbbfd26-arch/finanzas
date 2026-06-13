@@ -1,7 +1,7 @@
 {
-  "name": "LO Inteligente",
-  "short_name": "LO",
-  "description": "Tus finanzas, en su mejor versión",
+  "name": "economízalo",
+  "short_name": "lo",
+  "description": "Ahorra sin complicarte. Tu dinero, bajo control.",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

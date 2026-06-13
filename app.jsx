@@ -3014,6 +3014,23 @@ function FormularioAnadirDeuda({ onGuardar, onCancelar }) {
         </div>
       </div>
 
+      {/* Preview de la cuota calculada en vivo */}
+      {capitalInicial > 0 && plazoAnios > 0 && (() => {
+        const prev = analizarDeuda({ capitalInicial, saldoActual, tin, plazoAnios });
+        return (
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
+            padding:"8px 10px", marginBottom:10, borderRadius:8, background:"rgba(38,208,124,0.08)",
+            border:"1px solid rgba(38,208,124,0.2)" }}>
+            <span style={{ fontFamily:"'Syne',sans-serif", fontSize:11, color:V("--text-mid") }}>
+              📐 Cuota calculada
+            </span>
+            <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:15, fontWeight:800, color:V("--accent") }}>
+              {prev.cuota.toLocaleString("es-ES",{minimumFractionDigits:2, maximumFractionDigits:2})}€<span style={{ fontSize:9, color:V("--text-dim") }}>/mes</span>
+            </span>
+          </div>
+        );
+      })()}
+
       <div style={{ display:"flex", gap:8 }}>
         <button onClick={() => {
           if (nombre.trim() && capitalInicial > 0 && saldoActual > 0 && plazoAnios > 0)
@@ -3054,7 +3071,7 @@ function FilaDeuda({ deuda, claveM, onActualizar, onEliminar }) {
             {saldoHoy.toLocaleString("es-ES",{minimumFractionDigits:0})}€
           </div>
           <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:V("--text-dim") }}>
-            cuota {a.cuota.toLocaleString("es-ES",{minimumFractionDigits:0,maximumFractionDigits:0})}€/mes
+            cuota {a.cuota.toLocaleString("es-ES",{minimumFractionDigits:2,maximumFractionDigits:2})}€/mes
           </div>
         </div>
         <button onClick={onEliminar} style={{ background:"none", border:"none", cursor:"pointer",

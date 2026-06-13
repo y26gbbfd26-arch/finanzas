@@ -273,6 +273,10 @@ function datosVacios() {
     porcentajeExtra:   42.86,  // % de la nómina extra que se destina a anuales (default 3/7)
     inversiones:       [],
     objetivos:         [],  // [{id, nombre, importe, fechaLimite:"YYYY-MM", cuentaId, ahorradoManual, creadoEn}]
+    inmuebles:         [],  // [{id, nombre, valorBase, mesBase:"YYYY-MM", revalAnual}] (valor derivado por mes)
+    deudas:            [],  // [{id, nombre, saldoBase, mesBase:"YYYY-MM", cuotaMensual}] (saldo derivado por mes)
+    autoReservaAnual:  false,  // inyecta gasto de ahorro = prorrateo anual redondeado a 50€
+    autoObjetivos:     false,  // inyecta gasto de ahorro = suma cuotas de objetivos redondeada a 50€
 
     // ─── Por año: gastos anuales del año en curso ───
     anuales: {
@@ -379,6 +383,8 @@ function crearSnapshotMes(datos) {
     anuales:           JSON.parse(JSON.stringify(datos.anuales)),
     inversiones:       JSON.parse(JSON.stringify(datos.inversiones || [])),
     objetivos:         JSON.parse(JSON.stringify(datos.objetivos || [])),
+    inmuebles:         JSON.parse(JSON.stringify(datos.inmuebles || [])),
+    deudas:            JSON.parse(JSON.stringify(datos.deudas || [])),
   };
 }
 
@@ -400,6 +406,8 @@ function datosEfectivosMes(datos, claveM) {
     anuales:           mes.snapshot.anuales,
     inversiones:       mes.snapshot.inversiones,
     objetivos:         mes.snapshot.objetivos || datos.objetivos || [],
+    inmuebles:         mes.snapshot.inmuebles || datos.inmuebles || [],
+    deudas:            mes.snapshot.deudas || datos.deudas || [],
   };
 }
 
@@ -441,9 +449,15 @@ function gastosVariablesDeMes(datos, claveM) {
 function gastosAhorroDeMes(datos, claveM) {
   const d = datosEfectivosMes(datos, claveM);
   const mes = getMes(datos, claveM);
-  return d.catalogoAhorro
+  const manuales = d.catalogoAhorro
     .filter(g => g.importe > 0)
     .map(g => ({ ...g, pagado: (mes.pagosAhorro && mes.pagosAhorro[g.id]) || false }));
+  // Inyectar gastos de ahorro automáticos (reserva anual, objetivos) si están activos
+  const mesNum = Number(claveM.split("-")[1]) - 1;  // "YYYY-MM" → 0..11
+  const autos = gastosAhorroAutomaticos(datos, claveM, mesNum).map(g => ({
+    ...g, pagado: (mes.pagosAhorro && mes.pagosAhorro[g.id]) || false,
+  }));
+  return [...manuales, ...autos];
 }
 
 function gastosPuntualesDeMes(datos, claveM) {
@@ -628,6 +642,70 @@ function evaluarObjetivo(objetivo, cuentas, claveM) {
   }
 
   return { cuenta, ahorrado, restante, pctAhorrado, mesesRestantes, completado, vencido, cuotaMensual, ritmo };
+}
+
+// ═══════════════════════════════════════════════════════
+// PATRIMONIO: INMUEBLES, DEUDAS Y AUTOMATISMOS
+// ═══════════════════════════════════════════════════════
+
+// Redondeo hacia arriba al múltiplo de 50 más cercano
+function redondear50(x) {
+  return Math.ceil((x || 0) / 50) * 50;
+}
+
+// Valor de un inmueble en un mes dado, aplicando revalorización lineal anual
+// desde su mes base. valor(M) = valorBase × (1 + revalAnual%/100 × meses/12)
+function valorInmuebleEnMes(inm, claveM) {
+  const base = inm.valorBase || 0;
+  if (!inm.revalAnual || !inm.mesBase) return base;
+  const meses = Math.max(0, mesesEntre(inm.mesBase, claveM));
+  return base * (1 + (inm.revalAnual / 100) * (meses / 12));
+}
+
+// Saldo de una deuda en un mes dado: saldoBase − cuota × meses transcurridos (mín 0)
+function saldoDeudaEnMes(deuda, claveM) {
+  const base = deuda.saldoBase || 0;
+  if (!deuda.cuotaMensual || !deuda.mesBase) return base;
+  const meses = Math.max(0, mesesEntre(deuda.mesBase, claveM));
+  return Math.max(0, base - (deuda.cuotaMensual * meses));
+}
+
+// Totales de inmuebles y deudas en un mes
+function totalInmuebles(datos, claveM) {
+  return (datos.inmuebles || []).reduce((a, i) => a + valorInmuebleEnMes(i, claveM), 0);
+}
+function totalDeudas(datos, claveM) {
+  return (datos.deudas || []).reduce((a, d) => a + saldoDeudaEnMes(d, claveM), 0);
+}
+
+// Suma de cuotas mensuales de objetivos activos (no completados ni vencidos)
+function totalCuotaObjetivos(datos, claveM) {
+  return (datos.objetivos || []).reduce((a, o) => {
+    const ev = evaluarObjetivo(o, datos.cuentas, claveM);
+    return a + (ev.completado || ev.vencido ? 0 : ev.cuotaMensual);
+  }, 0);
+}
+
+// Gastos de ahorro "automáticos" que se inyectan según los flags activos.
+// No se almacenan: se calculan al vuelo para el mes que se mira (no divergen, respetan el pasado).
+function gastosAhorroAutomaticos(datos, claveM, mesNum) {
+  const autos = [];
+  if (datos.autoReservaAnual) {
+    const imp = redondear50(Math.max(0, calcularAportacionAnual(datos, mesNum, claveM)));
+    if (imp > 0) autos.push({
+      id: "auto-reserva-anual", nombre: "Reserva gastos anuales", importe: imp,
+      banco: datos.reservaImpCuenta ? (datos.cuentas.find(c => c.id === datos.reservaImpCuenta) || {}).banco || "BBVA" : "BBVA",
+      auto: true, clasificacion: "ahorro",
+    });
+  }
+  if (datos.autoObjetivos) {
+    const imp = redondear50(totalCuotaObjetivos(datos, claveM));
+    if (imp > 0) autos.push({
+      id: "auto-objetivos", nombre: "Aportación a objetivos", importe: imp,
+      banco: "BBVA", auto: true, clasificacion: "ahorro",
+    });
+  }
+  return autos;
 }
 
 // Inversiones
@@ -1634,6 +1712,25 @@ function BloqueAportacionAnual({ datos, claveM, mesNum, onUpdateDatos }) {
             padding:"6px 8px", background:"rgba(0,163,224,0.05)", borderRadius:5, lineHeight:1.4 }}>
             📐 (pendiente − reserva imp.{pct > 0 ? ` − ${pct.toFixed(2)}% del extra` : ""}) ÷ {Math.max(0, 10-mesNum)} aportaciones (hasta noviembre)
           </div>
+
+          {/* Automatismo: crear gasto de ahorro con esta aportación (redondeada a 50€) */}
+          <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
+            marginTop:8, padding:"8px 10px", background:"rgba(38,208,124,0.06)", borderRadius:8 }}>
+            <div style={{ flex:1 }}>
+              <div style={{ fontFamily:"'Syne',sans-serif", fontSize:11, fontWeight:600, color:V("--text-mid") }}>
+                🤖 Crear gasto automático
+              </div>
+              <div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:V("--text-dim"), marginTop:1 }}>
+                añade un ahorro = esta cifra redondeada a 50€
+              </div>
+            </div>
+            <button onClick={() => onUpdateDatos(d => { d.autoReservaAnual = !d.autoReservaAnual; })} style={{
+              padding:"4px 12px", borderRadius:16, border:"none", cursor:"pointer", fontSize:11,
+              fontFamily:"'JetBrains Mono',monospace", fontWeight:700,
+              background: datos.autoReservaAnual ? "rgba(38,208,124,0.25)" : V("--surface-2"),
+              color: datos.autoReservaAnual ? V("--accent") : V("--text-dim"),
+            }}>{datos.autoReservaAnual ? "ON" : "OFF"}</button>
+          </div>
         </div>
       )}
     </div>
@@ -2591,6 +2688,217 @@ function VistaInversiones({ datos, claveM, onUpdateDatos }) {
 // VISTA ANÁLISIS
 // ═══════════════════════════════════════════════════════
 
+// ═══════════════════════════════════════════════════════
+// VISTA PATRIMONIO (inmuebles + deudas + neto)
+// ═══════════════════════════════════════════════════════
+function VistaPatrimonio({ datos, claveM, onUpdateDatos }) {
+  const dEf = datosEfectivosMes(datos, claveM);
+  const [anadiendoInm, setAnadiendoInm] = useState(false);
+  const [anadiendoDeuda, setAnadiendoDeuda] = useState(false);
+
+  // Cálculos del patrimonio neto para el mes actual
+  const liquido = Object.keys(BANCO_META).reduce((a,b) => a + totalBanco(dEf.bancosConfig, dEf.cuentas, b), 0);
+  const compartido = patrimonioCompartido(dEf.cuentas);
+  const inversion = calcularTotalCartera(dEf.inversiones || []).valorActual;
+  const inmuebles = totalInmuebles(dEf, claveM);
+  const deudas = totalDeudas(dEf, claveM);
+  const activos = liquido + compartido + inversion + inmuebles;
+  const neto = activos - deudas;
+
+  // Handlers inmuebles
+  const añadirInmueble = (data) => {
+    const nuevoId = `inm-${Date.now()}`;
+    onUpdateDatos(d => {
+      if (!d.inmuebles) d.inmuebles = [];
+      d.inmuebles.push({ ...data, id: nuevoId, mesBase: claveM });
+    });
+    setAnadiendoInm(false);
+  };
+  const actualizarInmueble = (id, cambios) => onUpdateDatos(d => {
+    d.inmuebles = (d.inmuebles || []).map(i => i.id === id ? { ...i, ...cambios } : i);
+  });
+  const eliminarInmueble = (id) => onUpdateDatos(d => {
+    d.inmuebles = (d.inmuebles || []).filter(i => i.id !== id);
+  });
+
+  // Handlers deudas
+  const añadirDeuda = (data) => {
+    const nuevoId = `deuda-${Date.now()}`;
+    onUpdateDatos(d => {
+      if (!d.deudas) d.deudas = [];
+      d.deudas.push({ ...data, id: nuevoId, mesBase: claveM });
+    });
+    setAnadiendoDeuda(false);
+  };
+  const actualizarDeuda = (id, cambios) => onUpdateDatos(d => {
+    d.deudas = (d.deudas || []).map(x => x.id === id ? { ...x, ...cambios } : x);
+  });
+  const eliminarDeuda = (id) => onUpdateDatos(d => {
+    d.deudas = (d.deudas || []).filter(x => x.id !== id);
+  });
+
+  return (
+    <div>
+      {/* Resumen patrimonio neto */}
+      <div style={{ background:"linear-gradient(135deg, rgba(38,208,124,0.12), rgba(0,163,224,0.06))",
+        border:"1px solid rgba(38,208,124,0.25)", borderRadius:18, padding:"18px 20px", marginBottom:14 }}>
+        <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, fontWeight:700, color:V("--accent"),
+          letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:6 }}>
+          💎 Patrimonio neto
+        </div>
+        <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:28, fontWeight:800,
+          color:V("--text"), letterSpacing:"-0.02em" }}>
+          {neto.toLocaleString("es-ES",{minimumFractionDigits:0})}€
+        </div>
+        <div style={{ marginTop:10, display:"flex", flexDirection:"column", gap:4 }}>
+          {[
+            { label:"Líquido", v:liquido, c:"#00A3E0" },
+            ...(compartido > 0 ? [{ label:"🤝 Compartido (50%)", v:compartido, c:"#B06FE8" }] : []),
+            { label:"Inversiones", v:inversion, c:"#E8A838" },
+            { label:"Inmuebles", v:inmuebles, c:V("--accent") },
+            { label:"− Deudas", v:-deudas, c:"#FF4757" },
+          ].map(({label, v, c}) => (
+            <div key={label} style={{ display:"flex", justifyContent:"space-between" }}>
+              <span style={{ fontFamily:"'Syne',sans-serif", fontSize:11, color:V("--text-dim") }}>{label}</span>
+              <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:11, color:c }}>
+                {v.toLocaleString("es-ES",{minimumFractionDigits:0})}€
+              </span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* INMUEBLES */}
+      <div style={{ background:V("--surface"), borderRadius:14, padding:"14px 16px",
+        border:"1px solid rgba(255,255,255,0.06)", marginBottom:12 }}>
+        <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, fontWeight:700, color:V("--text-dim"),
+          letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:10 }}>🏡 Inmuebles</div>
+        {(dEf.inmuebles || []).map(inm => {
+          const valorHoy = valorInmuebleEnMes(inm, claveM);
+          return (
+            <div key={inm.id} style={{ padding:"8px 0", borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:4 }}>
+                <span style={{ fontFamily:"'Syne',sans-serif", fontSize:13, fontWeight:600, color:V("--text-mid"), flex:1 }}>
+                  {inm.nombre}
+                </span>
+                <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:14, fontWeight:700, color:V("--accent") }}>
+                  {valorHoy.toLocaleString("es-ES",{minimumFractionDigits:0})}€
+                </span>
+                <button onClick={() => { if(confirm(`¿Eliminar "${inm.nombre}"?`)) eliminarInmueble(inm.id); }}
+                  style={{ background:"none", border:"none", cursor:"pointer", color:"#FF475760", fontSize:14, padding:"0 0 0 8px" }}>×</button>
+              </div>
+              <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+                <span style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:V("--text-dim") }}>valor base</span>
+                <InputMoneda valor={inm.valorBase} onChange={v => actualizarInmueble(inm.id, { valorBase: v })} compact ancho={75}/>
+                <span style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:V("--text-dim") }}>reval/año</span>
+                <InputNumero valor={inm.revalAnual || 0} onChange={v => actualizarInmueble(inm.id, { revalAnual: v })} sufijo="%" compact ancho={42} step={0.5}/>
+              </div>
+            </div>
+          );
+        })}
+        {anadiendoInm
+          ? <FormularioAnadirInmueble onGuardar={añadirInmueble} onCancelar={() => setAnadiendoInm(false)}/>
+          : <BotonAnadir onClick={() => setAnadiendoInm(true)} label="Añadir inmueble" color={V("--accent")}/>}
+      </div>
+
+      {/* DEUDAS */}
+      <div style={{ background:V("--surface"), borderRadius:14, padding:"14px 16px",
+        border:"1px solid rgba(255,255,255,0.06)", marginBottom:12 }}>
+        <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, fontWeight:700, color:V("--text-dim"),
+          letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:10 }}>💳 Deudas</div>
+        {(dEf.deudas || []).map(deuda => {
+          const saldoHoy = saldoDeudaEnMes(deuda, claveM);
+          const mesesParaSaldar = deuda.cuotaMensual > 0 ? Math.ceil(saldoHoy / deuda.cuotaMensual) : null;
+          return (
+            <div key={deuda.id} style={{ padding:"8px 0", borderBottom:"1px solid rgba(255,255,255,0.04)" }}>
+              <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:4 }}>
+                <span style={{ fontFamily:"'Syne',sans-serif", fontSize:13, fontWeight:600, color:V("--text-mid"), flex:1 }}>
+                  {deuda.nombre}
+                </span>
+                <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:14, fontWeight:700, color:"#FF4757" }}>
+                  {saldoHoy.toLocaleString("es-ES",{minimumFractionDigits:0})}€
+                </span>
+                <button onClick={() => { if(confirm(`¿Eliminar "${deuda.nombre}"?`)) eliminarDeuda(deuda.id); }}
+                  style={{ background:"none", border:"none", cursor:"pointer", color:"#FF475760", fontSize:14, padding:"0 0 0 8px" }}>×</button>
+              </div>
+              <div style={{ display:"flex", gap:8, alignItems:"center" }}>
+                <span style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:V("--text-dim") }}>saldo base</span>
+                <InputMoneda valor={deuda.saldoBase} onChange={v => actualizarDeuda(deuda.id, { saldoBase: v, mesBase: claveM })} compact ancho={75}/>
+                <span style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:V("--text-dim") }}>cuota/mes</span>
+                <InputMoneda valor={deuda.cuotaMensual} onChange={v => actualizarDeuda(deuda.id, { cuotaMensual: v })} compact ancho={60}/>
+              </div>
+              {mesesParaSaldar !== null && saldoHoy > 0 && (
+                <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:V("--text-dim"), marginTop:3 }}>
+                  ~{mesesParaSaldar} {mesesParaSaldar === 1 ? "mes" : "meses"} para saldarla
+                </div>
+              )}
+            </div>
+          );
+        })}
+        {anadiendoDeuda
+          ? <FormularioAnadirDeuda onGuardar={añadirDeuda} onCancelar={() => setAnadiendoDeuda(false)}/>
+          : <BotonAnadir onClick={() => setAnadiendoDeuda(true)} label="Añadir deuda" color="#FF4757"/>}
+      </div>
+    </div>
+  );
+}
+
+function FormularioAnadirInmueble({ onGuardar, onCancelar }) {
+  const [nombre, setNombre] = useState("");
+  const [valorBase, setValorBase] = useState(0);
+  const [revalAnual, setRevalAnual] = useState(0);
+  return (
+    <div style={{ marginTop:8, padding:"12px", background:"rgba(255,255,255,0.03)", borderRadius:10,
+      border:"1px solid rgba(255,255,255,0.08)" }}>
+      <input placeholder="Nombre (ej. Piso Petrer)" value={nombre} onChange={e => setNombre(e.target.value)}
+        style={{ width:"100%", background:V("--surface-2"), border:"1px solid rgba(255,255,255,0.1)",
+          borderRadius:8, padding:"8px 10px", color:V("--text"), fontSize:13, outline:"none",
+          fontFamily:"'Syne',sans-serif", marginBottom:8 }}/>
+      <div style={{ display:"flex", gap:8, marginBottom:10, alignItems:"center" }}>
+        <div><div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:V("--text-dim"), marginBottom:3 }}>Valor</div>
+          <InputMoneda valor={valorBase} onChange={setValorBase} compact ancho={80}/></div>
+        <div><div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:V("--text-dim"), marginBottom:3 }}>Revaloriz./año</div>
+          <InputNumero valor={revalAnual} onChange={setRevalAnual} sufijo="%" compact ancho={50} step={0.5}/></div>
+      </div>
+      <div style={{ display:"flex", gap:8 }}>
+        <button onClick={() => { if (nombre.trim() && valorBase > 0) onGuardar({ nombre: nombre.trim(), valorBase, revalAnual }); }}
+          style={{ flex:1, background:V("--accent"), color:"#0A0E17", border:"none", borderRadius:8,
+            fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:13, cursor:"pointer", padding:"8px" }}>Crear</button>
+        <button onClick={onCancelar} style={{ padding:"0 14px", background:V("--surface-2"), color:V("--text-dim"),
+          border:"none", borderRadius:8, cursor:"pointer", fontSize:13 }}>✕</button>
+      </div>
+    </div>
+  );
+}
+
+function FormularioAnadirDeuda({ onGuardar, onCancelar }) {
+  const [nombre, setNombre] = useState("");
+  const [saldoBase, setSaldoBase] = useState(0);
+  const [cuotaMensual, setCuotaMensual] = useState(0);
+  return (
+    <div style={{ marginTop:8, padding:"12px", background:"rgba(255,255,255,0.03)", borderRadius:10,
+      border:"1px solid rgba(255,255,255,0.08)" }}>
+      <input placeholder="Nombre (ej. Hipoteca)" value={nombre} onChange={e => setNombre(e.target.value)}
+        style={{ width:"100%", background:V("--surface-2"), border:"1px solid rgba(255,255,255,0.1)",
+          borderRadius:8, padding:"8px 10px", color:V("--text"), fontSize:13, outline:"none",
+          fontFamily:"'Syne',sans-serif", marginBottom:8 }}/>
+      <div style={{ display:"flex", gap:8, marginBottom:10, alignItems:"center" }}>
+        <div><div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:V("--text-dim"), marginBottom:3 }}>Saldo pendiente</div>
+          <InputMoneda valor={saldoBase} onChange={setSaldoBase} compact ancho={80}/></div>
+        <div><div style={{ fontFamily:"'Syne',sans-serif", fontSize:9, color:V("--text-dim"), marginBottom:3 }}>Cuota/mes</div>
+          <InputMoneda valor={cuotaMensual} onChange={setCuotaMensual} compact ancho={65}/></div>
+      </div>
+      <div style={{ display:"flex", gap:8 }}>
+        <button onClick={() => { if (nombre.trim() && saldoBase > 0) onGuardar({ nombre: nombre.trim(), saldoBase, cuotaMensual }); }}
+          style={{ flex:1, background:"#FF4757", color:"#fff", border:"none", borderRadius:8,
+            fontFamily:"'Syne',sans-serif", fontWeight:700, fontSize:13, cursor:"pointer", padding:"8px" }}>Crear</button>
+        <button onClick={onCancelar} style={{ padding:"0 14px", background:V("--surface-2"), color:V("--text-dim"),
+          border:"none", borderRadius:8, cursor:"pointer", fontSize:13 }}>✕</button>
+      </div>
+    </div>
+  );
+}
+
 function VistaCartera({ datos, claveM, onUpdateDatos }) {
   const [sub, setSub] = useState("bancos");
   const dEf = datosEfectivosMes(datos, claveM);
@@ -2604,23 +2912,85 @@ function VistaCartera({ datos, claveM, onUpdateDatos }) {
         {[
           { id:"bancos", icono:"🏦", label:"Bancos" },
           { id:"inversiones", icono:"📈", label:"Inversiones" },
+          { id:"patrimonio", icono:"💎", label:"Patrimonio" },
         ].map(s => (
           <button key={s.id} onClick={() => setSub(s.id)} style={{
-            flex:1, padding:"9px 6px", borderRadius:9, border:"none", cursor:"pointer",
-            display:"flex", alignItems:"center", justifyContent:"center", gap:6,
+            flex:1, padding:"9px 4px", borderRadius:9, border:"none", cursor:"pointer",
+            display:"flex", alignItems:"center", justifyContent:"center", gap:4,
             background: sub === s.id ? V("--accent") + "20" : "transparent",
-            fontFamily:"'Syne',sans-serif", fontSize:13, fontWeight:700,
+            fontFamily:"'Syne',sans-serif", fontSize:12, fontWeight:700,
             color: sub === s.id ? V("--accent") : V("--text-dim"),
             transition:"all 0.2s",
           }}>
-            <span style={{ fontSize:15 }}>{s.icono}</span> {s.label}
+            <span style={{ fontSize:14 }}>{s.icono}</span> {s.label}
           </button>
         ))}
       </div>
 
-      {sub === "bancos"
-        ? <BloqueBancos datos={dEf} onUpdateDatos={onUpdateDatos}/>
-        : <VistaInversiones datos={datos} claveM={claveM} onUpdateDatos={onUpdateDatos}/>}
+      {sub === "bancos" && <BloqueBancos datos={dEf} onUpdateDatos={onUpdateDatos}/>}
+      {sub === "inversiones" && <VistaInversiones datos={datos} claveM={claveM} onUpdateDatos={onUpdateDatos}/>}
+      {sub === "patrimonio" && <VistaPatrimonio datos={datos} claveM={claveM} onUpdateDatos={onUpdateDatos}/>}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════
+// BLOQUE ALERTAS / SEMÁFOROS
+// ═══════════════════════════════════════════════════════
+function BloqueAlertas({ datos, claveM, mesNum }) {
+  const dEf = datosEfectivosMes(datos, claveM);
+  const alertas = [];
+
+  // 1. Remanente del mes negativo
+  const ingresos = calcularIngresosMes(datos, claveM);
+  const { total: gastos } = calcularGastoMensualTotal(datos, claveM);
+  const remanente = ingresos - gastos;
+  if (remanente < 0) {
+    alertas.push({ tipo:"error", icono:"⚠️",
+      texto:`Gastas ${Math.abs(remanente).toLocaleString("es-ES",{minimumFractionDigits:0})}€ más de lo que ingresas este mes` });
+  }
+
+  // 2. Reserva de impuestos insuficiente para lo pendiente
+  const reserva = calcularReservaEfectiva(dEf);
+  const pendienteAnual = totalAnualesPendiente(dEf);
+  if (pendienteAnual > 0 && reserva < pendienteAnual * 0.5 && mesNum >= 6) {
+    alertas.push({ tipo:"warn", icono:"🟠",
+      texto:`Tu reserva (${reserva.toLocaleString("es-ES",{minimumFractionDigits:0})}€) cubre menos de la mitad de los anuales pendientes` });
+  }
+
+  // 3. Objetivos atrasados o vencidos
+  (dEf.objetivos || []).forEach(o => {
+    const ev = evaluarObjetivo(o, dEf.cuentas, claveM);
+    if (ev.vencido) alertas.push({ tipo:"error", icono:"🔴", texto:`Objetivo "${o.nombre}" venció sin completarse` });
+    else if (ev.ritmo === "atrasado") alertas.push({ tipo:"warn", icono:"🟠", texto:`Objetivo "${o.nombre}" va atrasado` });
+  });
+
+  // 4. Deudas que se saldan pronto (buena noticia)
+  (dEf.deudas || []).forEach(deuda => {
+    const saldo = saldoDeudaEnMes(deuda, claveM);
+    if (saldo > 0 && deuda.cuotaMensual > 0) {
+      const meses = Math.ceil(saldo / deuda.cuotaMensual);
+      if (meses <= 3) alertas.push({ tipo:"ok", icono:"🎉", texto:`"${deuda.nombre}" se salda en ~${meses} ${meses===1?"mes":"meses"}` });
+    }
+  });
+
+  if (alertas.length === 0) return null;
+
+  const colorTipo = { error:"#FF4757", warn:"#FF8C42", ok:V("--accent") };
+  return (
+    <div style={{ marginBottom:14 }}>
+      {alertas.map((a, i) => (
+        <div key={i} style={{
+          display:"flex", alignItems:"center", gap:8, padding:"9px 12px", marginBottom:6,
+          background: colorTipo[a.tipo] + "12", borderRadius:10,
+          border:`1px solid ${colorTipo[a.tipo]}30`,
+        }}>
+          <span style={{ fontSize:14 }}>{a.icono}</span>
+          <span style={{ fontFamily:"'Syne',sans-serif", fontSize:11, color:V("--text-mid"), lineHeight:1.4 }}>
+            {a.texto}
+          </span>
+        </div>
+      ))}
     </div>
   );
 }
@@ -2637,10 +3007,12 @@ function VistaAnalisis({ datos, claveM, mesNum, onUpdateDatos }) {
   const tasaAhorro = totalIngresos > 0 ? (ahorro / totalIngresos) * 100 : 0;
 
   const cartera = calcularTotalCartera(dEf.inversiones || []);
-  // Patrimonio: líquido propio + 50% compartido + inversiones
+  // Patrimonio NETO: líquido + 50% compartido + inversiones + inmuebles − deudas
   const liquidez = Object.keys(BANCO_META).reduce((a, b) => a + totalBanco(dEf.bancosConfig, dEf.cuentas, b), 0);
   const liquidezCompartida = patrimonioCompartido(dEf.cuentas);
-  const patrimonio = liquidez + liquidezCompartida + cartera.valorActual;
+  const inmueblesTotal = totalInmuebles(dEf, claveM);
+  const deudasTotal = totalDeudas(dEf, claveM);
+  const patrimonio = liquidez + liquidezCompartida + cartera.valorActual + inmueblesTotal - deudasTotal;
 
   const saldoEmergencia = dEf.cuentas
     .filter(c => c.proposito === "emergencia" && !c.compartida)
@@ -2708,12 +3080,15 @@ function VistaAnalisis({ datos, claveM, mesNum, onUpdateDatos }) {
       </div>
 
       {subAna === "resumen" && <div>
+      {/* Alertas / semáforos */}
+      <BloqueAlertas datos={datos} claveM={claveM} mesNum={mesNum}/>
+
       {/* Patrimonio */}
       <div style={{ background:"linear-gradient(135deg, #00A3E020, #B06FE815)",
         border:"1px solid #00A3E030", borderRadius:18, padding:"18px 20px", marginBottom:14 }}>
         <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, fontWeight:700, color:"#00A3E0",
           letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:6 }}>
-          💰 Patrimonio total
+          💎 Patrimonio neto
         </div>
         <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:28, fontWeight:800,
           color:V("--text"), letterSpacing:"-0.02em" }}>
@@ -2725,6 +3100,9 @@ function VistaAnalisis({ datos, claveM, mesNum, onUpdateDatos }) {
             <div style={{ flex: liquidezCompartida, height:8, background:"#B06FE8", borderRadius:4, opacity:0.7 }}/>
           )}
           <div style={{ flex: cartera.valorActual || 1, height:8, background:"#E8A838", borderRadius:4 }}/>
+          {inmueblesTotal > 0 && (
+            <div style={{ flex: inmueblesTotal, height:8, background:V("--accent"), borderRadius:4 }}/>
+          )}
         </div>
         <div style={{ display:"flex", justifyContent:"space-between", marginTop:6, flexWrap:"wrap", gap:6 }}>
           <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:"#00A3E0" }}>
@@ -2738,6 +3116,16 @@ function VistaAnalisis({ datos, claveM, mesNum, onUpdateDatos }) {
           <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:"#E8A838" }}>
             Inversión {cartera.valorActual.toLocaleString("es-ES",{minimumFractionDigits:0})}€
           </span>
+          {inmueblesTotal > 0 && (
+            <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:V("--accent") }}>
+              🏡 {inmueblesTotal.toLocaleString("es-ES",{minimumFractionDigits:0})}€
+            </span>
+          )}
+          {deudasTotal > 0 && (
+            <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:"#FF4757" }}>
+              − Deudas {deudasTotal.toLocaleString("es-ES",{minimumFractionDigits:0})}€
+            </span>
+          )}
         </div>
       </div>
 
@@ -2839,6 +3227,7 @@ function VistaAnalisis({ datos, claveM, mesNum, onUpdateDatos }) {
           cuentas={dEf.cuentas}
           claveM={claveM}
           onUpdateDatos={onUpdateDatos}
+          autoObjetivos={datos.autoObjetivos}
         />
       </div>}
     </div>
@@ -2857,7 +3246,9 @@ function patrimonioDeMes(datos, clave) {
     a + totalBanco(dEf.bancosConfig, dEf.cuentas, b), 0);
   const compartido = patrimonioCompartido(dEf.cuentas);
   const inversion = calcularTotalCartera(dEf.inversiones || []).valorActual;
-  return liquidez + compartido + inversion;
+  const inmuebles = totalInmuebles(dEf, clave);
+  const deudas = totalDeudas(dEf, clave);
+  return liquidez + compartido + inversion + inmuebles - deudas;  // patrimonio NETO
 }
 
 function GraficaPatrimonio({ datos, claveM }) {
@@ -2975,7 +3366,7 @@ function GraficaPatrimonio({ datos, claveM }) {
 // BLOQUE OBJETIVOS DE AHORRO
 // ═══════════════════════════════════════════════════════
 
-function BloqueObjetivos({ objetivos, cuentas, claveM, onUpdateDatos }) {
+function BloqueObjetivos({ objetivos, cuentas, claveM, onUpdateDatos, autoObjetivos }) {
   const [anadiendo, setAnadiendo] = useState(false);
 
   const añadirObjetivo = (data) => {
@@ -2996,9 +3387,20 @@ function BloqueObjetivos({ objetivos, cuentas, claveM, onUpdateDatos }) {
   return (
     <div style={{ background:V("--surface"), borderRadius:14,
       border:"1px solid rgba(255,255,255,0.06)", marginBottom:12, padding:"14px 16px" }}>
-      <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, fontWeight:700, color:V("--text-dim"),
-        letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:12 }}>
-        🎯 Objetivos de ahorro
+      <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
+        <div style={{ fontFamily:"'Syne',sans-serif", fontSize:10, fontWeight:700, color:V("--text-dim"),
+          letterSpacing:"0.1em", textTransform:"uppercase" }}>
+          🎯 Objetivos de ahorro
+        </div>
+        {objetivos.length > 0 && (
+          <button onClick={() => onUpdateDatos(d => { d.autoObjetivos = !d.autoObjetivos; })} title="Crear gasto de ahorro automático con la suma de cuotas"
+            style={{
+              padding:"3px 10px", borderRadius:14, border:"none", cursor:"pointer", fontSize:9,
+              fontFamily:"'JetBrains Mono',monospace", fontWeight:700,
+              background: autoObjetivos ? "rgba(38,208,124,0.25)" : V("--surface-2"),
+              color: autoObjetivos ? V("--accent") : V("--text-dim"),
+            }}>🤖 {autoObjetivos ? "ON" : "OFF"}</button>
+        )}
       </div>
 
       {objetivos.length === 0 && !anadiendo && (
@@ -3588,6 +3990,8 @@ function App() {
           anuales:           snapshot.anuales,
           inversiones:       snapshot.inversiones,
           objetivos:         snapshot.objetivos || [],
+          inmuebles:         snapshot.inmuebles || [],
+          deudas:            snapshot.deudas || [],
           meses:             mesesDummy,  // ← clave: escrituras en meses se descartan
         };
         fn(puente);
@@ -3602,6 +4006,8 @@ function App() {
         snapshot.anuales           = puente.anuales;
         snapshot.inversiones       = puente.inversiones;
         snapshot.objetivos         = puente.objetivos;
+        snapshot.inmuebles         = puente.inmuebles;
+        snapshot.deudas            = puente.deudas;
       };
 
       // Replicar en snapshot del mes actual (si lo tiene)

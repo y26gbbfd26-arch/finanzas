@@ -31,7 +31,7 @@ const TARIFA_KM = 0.20;
 // ═══════════════════════════════════════════════════════
 const TEMAS = {
   midnight: {
-    nombre: "Bosque", emoji: "🌲",
+    nombre: "Bosque",
     "--bg": "#0A1410", "--bg-deep": "#050907",
     "--surface": "rgba(149,213,178,0.04)", "--surface-2": "rgba(149,213,178,0.08)",
     "--surface-elevated": "#102019", "--surface-soft": "#15281F",
@@ -43,7 +43,7 @@ const TEMAS = {
     "--warn": "#E8A838", "--negative": "#E8765A",
   },
   ocean: {
-    nombre: "Océano", emoji: "🌊",
+    nombre: "Océano",
     "--bg": "#091622", "--bg-deep": "#040A10",
     "--surface": "rgba(72,202,228,0.04)", "--surface-2": "rgba(72,202,228,0.08)",
     "--surface-elevated": "#0E1F2D", "--surface-soft": "#11263340",
@@ -55,7 +55,7 @@ const TEMAS = {
     "--warn": "#E8A838", "--negative": "#E8765A",
   },
   plum: {
-    nombre: "Coral", emoji: "🪸",
+    nombre: "Coral",
     "--bg": "#1A0E15", "--bg-deep": "#0E060A",
     "--surface": "rgba(231,111,81,0.05)", "--surface-2": "rgba(231,111,81,0.09)",
     "--surface-elevated": "#24131D", "--surface-soft": "#2E1826",
@@ -67,7 +67,7 @@ const TEMAS = {
     "--warn": "#E0B23C", "--negative": "#D9534F",
   },
   paper: {
-    nombre: "Marfil", emoji: "📜",
+    nombre: "Marfil",
     "--bg": "#ECE7DC", "--bg-deep": "#E3DDCF",
     "--surface": "rgba(45,74,30,0.04)", "--surface-2": "rgba(45,74,30,0.07)",
     "--surface-elevated": "#F7F4EC", "--surface-soft": "#F0EBDF",
@@ -152,21 +152,21 @@ const CLASIF_DEFAULT_POR_TIPO = {
 };
 
 const PROPOSITOS = {
-  operativa:  { label: "Operativa",       icono: "💳" },
-  emergencia: { label: "Emergencia",      icono: "🛟" },
-  anuales:    { label: "Gastos anuales",  icono: "📆" },
-  ahorro:     { label: "Ahorro/Objetivo", icono: "🎯" },
-  inversion:  { label: "Inversión",       icono: "📈" },
-  otros:      { label: "Otros",           icono: "🗂"  },
+  operativa:  { label: "Operativa",       icono: "deuda" },
+  emergencia: { label: "Emergencia",      icono: "salvavidas" },
+  anuales:    { label: "Gastos anuales",  icono: "calendario" },
+  ahorro:     { label: "Ahorro/Objetivo", icono: "objetivo" },
+  inversion:  { label: "Inversión",       icono: "inversiones" },
+  otros:      { label: "Otros",           icono: "carpeta" },
 };
 
 const TIPOS_ACTIVO = {
-  fondo:   { label:"Fondo",       color:V("--c4"), icono:"🏦" },
-  etf:     { label:"ETF",         color:V("--c2"), icono:"📊" },
-  accion:  { label:"Acción",      color:V("--accent"), icono:"📈" },
-  cripto:  { label:"Cripto",      color:V("--c3"), icono:"₿"  },
-  bono:    { label:"Bono",        color:V("--c3"), icono:"📜" },
-  pension: { label:"Plan/Pensión", color:V("--text-dim"), icono:"🛡", soloValor:true },
+  fondo:   { label:"Fondo",       color:V("--c4"), icono:"fondo" },
+  etf:     { label:"ETF",         color:V("--c2"), icono:"etf" },
+  accion:  { label:"Acción",      color:V("--accent"), icono:"accion" },
+  cripto:  { label:"Cripto",      color:V("--c3"), icono:"cripto" },
+  bono:    { label:"Bono",        color:V("--c3"), icono:"bono" },
+  pension: { label:"Plan/Pensión", color:V("--text-dim"), icono:"pension", soloValor:true },
 };
 
 // ─────────────────────────────────────────────────────
@@ -802,7 +802,7 @@ const ICONOS = {
   gastos:      <><path d="M6 3h12v18l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4V3z"/><path d="M9 8h6"/><path d="M9 12h6"/></>,
   cartera:     <><path d="M3 9l9-5 9 5"/><path d="M5 9v9"/><path d="M9 9v9"/><path d="M15 9v9"/><path d="M19 9v9"/><path d="M3 18h18"/></>,
   analisis:    <><path d="M4 4v16h16"/><path d="M7 14l3-4 3 2 4-6"/></>,
-  // Secciones
+  // Secciones / categorías
   banco:       <><path d="M3 9l9-5 9 5"/><path d="M5 9v9"/><path d="M9 9v9"/><path d="M15 9v9"/><path d="M19 9v9"/><path d="M3 18h18"/></>,
   inversiones: <><path d="M3 17l6-6 4 4 7-8"/><path d="M16 7h5v5"/></>,
   patrimonio:  <><path d="M6 3h12l3 5-9 13L3 8z"/><path d="M3 8h18"/><path d="M9 3l3 18 3-18"/></>,
@@ -813,9 +813,38 @@ const ICONOS = {
   resumen:     <><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="11" width="7" height="10" rx="1.5"/><rect x="3" y="15" width="7" height="6" rx="1.5"/></>,
   teorias:     <><circle cx="12" cy="12" r="8"/><path d="M12 4v8h8"/></>,
   anuales:     <><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18"/><path d="M8 3v4"/><path d="M16 3v4"/></>,
-  fila:        <><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></>,
-  ajustes:     <><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.13-1.3l1.9-1.4-2-3.46-2.25.9A7 7 0 0 0 14 4.6L13.6 2.2h-3.2L10 4.6a7 7 0 0 0-2.42 1.4l-2.25-.9-2 3.46 1.9 1.4A7 7 0 0 0 5 12c0 .44.05.87.13 1.3l-1.9 1.4 2 3.46 2.25-.9A7 7 0 0 0 10 19.4l.4 2.4h3.2l.4-2.4a7 7 0 0 0 2.42-1.4l2.25.9 2-3.46-1.9-1.4c.08-.43.13-.86.13-1.3z"/></>,
+  calendario:  <><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18"/><path d="M8 3v4"/><path d="M16 3v4"/></>,
+  // Estados / acciones
+  auto:        <><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></>,
+  formula:     <><rect x="5" y="3" width="14" height="18" rx="2"/><path d="M8 7h8"/><path d="M8.5 11h0M12 11h0M15.5 11h0M8.5 14.5h0M12 14.5h0M15.5 14.5h0"/></>,
+  alerta:      <><path d="M12 3l9 16H3z"/><path d="M12 10v4"/><path d="M12 17h.01"/></>,
+  check:       <><circle cx="12" cy="12" r="9"/><path d="M8 12l3 3 5-6"/></>,
+  celebra:     <><path d="M12 3l2.4 5.6 6 .5-4.6 4 1.4 5.9L12 16l-5.2 3 1.4-5.9-4.6-4 6-.5z"/></>,
+  candado:     <><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></>,
+  candadoAbierto: <><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 7.5-1.8"/></>,
+  lapiz:       <><path d="M4 20h4l10-10-4-4L4 16z"/><path d="M13.5 6.5l4 4"/></>,
+  bombilla:    <><path d="M9.5 18h5"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.7.7 1 1.4 1 2.5h6c0-1.1.3-1.8 1-2.5A6 6 0 0 0 12 3z"/></>,
+  link:        <><path d="M10 14a3.5 3.5 0 0 0 5 0l3-3a3.5 3.5 0 0 0-5-5l-1.5 1.5"/><path d="M14 10a3.5 3.5 0 0 0-5 0l-3 3a3.5 3.5 0 0 0 5 5l1.5-1.5"/></>,
+  escudo:      <><path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6z"/></>,
+  movil:       <><rect x="7" y="3" width="10" height="18" rx="2"/><path d="M11 18h2"/></>,
+  carpeta:     <><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></>,
+  exportar:    <><path d="M5 21h14"/><path d="M5 3h9l5 5v8H5z"/><path d="M14 3v5h5"/><path d="M12 16v-6"/><path d="M9.5 12.5l2.5 2.5 2.5-2.5"/></>,
+  importar:    <><path d="M5 20h14"/><path d="M12 16V4"/><path d="M7.5 9.5L12 5l4.5 4.5"/></>,
+  paleta:      <><path d="M12 3a9 9 0 1 0 0 18c1 0 1.6-.9 1.6-2s-.6-2 .4-2H17a4 4 0 0 0 4-4c0-5-4-7-9-7z"/><circle cx="7.5" cy="11" r="1" fill="currentColor"/><circle cx="12" cy="8" r="1" fill="currentColor"/><circle cx="16" cy="11" r="1" fill="currentColor"/></>,
+  refresh:     <><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></>,
+  papelera:    <><path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13h10l1-13"/></>,
+  ajustes:     <><circle cx="12" cy="12" r="3"/><path d="M19.4 13a1.6 1.6 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.6 1.6 0 0 0-2.7 1.1V19a2 2 0 1 1-4 0 1.6 1.6 0 0 0-1-1.5 1.6 1.6 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.6 1.6 0 0 0-1.1-2.7H5a2 2 0 1 1 0-4 1.6 1.6 0 0 0 1.5-1 1.6 1.6 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.6 1.6 0 0 0 1.8.3H11a1.6 1.6 0 0 0 1-1.5V5a2 2 0 1 1 4 0 1.6 1.6 0 0 0 1 1.5 1.6 1.6 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.6 1.6 0 0 0-.3 1.8V11a1.6 1.6 0 0 0 1.5 1H19a2 2 0 1 1 0 4 1.6 1.6 0 0 0-1.5 1z"/></>,
   campana:     <><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></>,
+  compartida:  <><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16 6a3 3 0 0 1 0 6"/><path d="M17 14a6 6 0 0 1 4 6"/></>,
+  // Tipos de inversión
+  fondo:       <><path d="M3 9l9-5 9 5"/><path d="M5 9v9"/><path d="M9 9v9"/><path d="M15 9v9"/><path d="M19 9v9"/><path d="M3 18h18"/></>,
+  etf:         <><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="11" width="7" height="10" rx="1.5"/><rect x="3" y="15" width="7" height="6" rx="1.5"/></>,
+  accion:      <><path d="M3 17l6-6 4 4 7-8"/><path d="M16 7h5v5"/></>,
+  cripto:      <><circle cx="12" cy="12" r="8"/><path d="M9 8.5h4a2 2 0 0 1 0 4H9zM9 12.5h4.5a2 2 0 0 1 0 4H9zM9 6.5v11"/></>,
+  bono:        <><path d="M6 3h8l4 4v14H6z"/><path d="M14 3v4h4"/><path d="M9 12h6M9 16h6"/></>,
+  pension:     <><path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6z"/><path d="M9 12l2 2 4-4"/></>,
+  cohete:      <><path d="M5 15c-1 2.5-1 5-1 5s2.5 0 5-1"/><path d="M9 19a10 10 0 0 1 11-13 10 10 0 0 1-7 11z"/><circle cx="14.5" cy="9.5" r="1.6"/></>,
+  salvavidas:  <><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.6"/><path d="M5.6 5.6l3.9 3.9M14.5 14.5l3.9 3.9M18.4 5.6l-3.9 3.9M9.5 14.5l-3.9 3.9"/></>,
 };
 
 function Icono({ nombre, size = 20, color = "currentColor", stroke = 1.7 }) {
@@ -827,6 +856,15 @@ function Icono({ nombre, size = 20, color = "currentColor", stroke = 1.7 }) {
       style={{ display:"block", flexShrink:0 }}>
       {contenido}
     </svg>
+  );
+}
+
+// Icono en línea con el texto (hereda el color del contenedor)
+function IconoInline({ nombre, size = 14, color = "currentColor" }) {
+  return (
+    <span style={{ display:"inline-flex", verticalAlign:"middle", marginRight:5, position:"relative", top:"-1px" }}>
+      <Icono nombre={nombre} size={size} color={color}/>
+    </span>
   );
 }
 
@@ -1123,7 +1161,7 @@ function SelectorProposito({ value, onChange }) {
       <button onClick={(e) => { e.stopPropagation(); setAbierto(a => !a); }} style={{
         fontSize:11, padding:"2px 5px", borderRadius:4, border:"none", cursor:"pointer",
         background:V("--surface-2"), color:V("--text-mid"),
-      }}>{prop.icono} ▾</button>
+      }}><Icono nombre={prop.icono} size={14} color={V("--text-mid")}/> ▾</button>
       {abierto && (
         <>
           <div onClick={() => setAbierto(false)} style={{ position:"fixed", inset:0, zIndex:50 }}/>
@@ -1139,7 +1177,7 @@ function SelectorProposito({ value, onChange }) {
                 background: id === value ? "rgba(38,208,124,0.15)" : "transparent",
                 fontFamily:"'Inter',sans-serif", fontSize:11, color:V("--text-mid"), textAlign:"left",
               }}>
-                <span>{p.icono}</span> <span>{p.label}</span>
+                <span style={{display:"inline-flex"}}><Icono nombre={p.icono} size={14} color="currentColor"/></span> <span>{p.label}</span>
               </button>
             ))}
           </div>
@@ -1184,7 +1222,7 @@ function FilaGastoCatalogo({ gasto, onPagado, onImporte, onBanco, onEliminar }) 
         opacity: gasto.pagado ? 0.7 : 1,
         overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap",
       }}>
-        {esAuto && <span style={{ fontSize:10, marginRight:3 }}>🤖</span>}
+        {esAuto && <span style={{ marginRight:3, display:"inline-flex", verticalAlign:"middle" }}><Icono nombre="auto" size={12} color={V("--accent")}/></span>}
         {gasto.nombre}
       </span>
 
@@ -1201,7 +1239,7 @@ function FilaGastoCatalogo({ gasto, onPagado, onImporte, onBanco, onEliminar }) 
       )}
 
       {esAuto ? (
-        <span style={{ width:18, textAlign:"center", fontSize:11, color:V("--text-dim") }} title="Gasto automático">⚙</span>
+        <span style={{ width:18, display:"inline-flex", justifyContent:"center" }} title="Gasto automático"><Icono nombre="auto" size={13} color={V("--text-dim")}/></span>
       ) : (
         <button onClick={onEliminar} style={{ background:"none", border:"none",
           cursor:"pointer", color:"#FF475760", fontSize:14, padding:"0 2px" }}>×</button>
@@ -1346,7 +1384,7 @@ function BloqueBancos({ datos, onUpdateDatos }) {
               {totalCompartido.toLocaleString("es-ES",{minimumFractionDigits:0})}€
             </div>
             <div style={{ fontFamily:"'Inter',sans-serif", fontSize:8, color:V("--text-dim"), marginTop:2 }}>
-              🤝 50% ({saldoCompartido.toLocaleString("es-ES",{minimumFractionDigits:0})}€)
+              <IconoInline nombre="compartida"/>50% ({saldoCompartido.toLocaleString("es-ES",{minimumFractionDigits:0})}€)
             </div>
           </div>
           <div style={{ textAlign:"center", background:"rgba(255,107,53,0.08)", borderRadius:8, padding:"8px 4px" }}>
@@ -1396,7 +1434,7 @@ function BloqueBancos({ datos, onUpdateDatos }) {
                         {meta.label}
                       </div>
                       <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:V("--text-dim"), marginTop:1 }}>
-                        {esSuma ? "🧮 suma de cuentas" : "🎯 total manual + reservas"}
+                        {esSuma ? <><IconoInline nombre="formula"/>suma de cuentas</> : <><IconoInline nombre="objetivo"/>total manual + reservas</>}
                       </div>
                     </div>
                   </div>
@@ -1442,7 +1480,7 @@ function BloqueBancos({ datos, onUpdateDatos }) {
                       borderBottom:`1px solid ${V("--border")}`,
                       background: esCompartida ? "rgba(176,111,232,0.04)" : "transparent",
                     }}>
-                      <span style={{ fontSize:12, width:18, textAlign:"center" }}>{prop.icono}</span>
+                      <span style={{ width:18, display:"inline-flex", justifyContent:"center" }}><Icono nombre={prop.icono} size={13} color="currentColor"/></span>
                       {enEdicion ? (
                         <input value={c.nombre}
                           onChange={e => actualizarCuenta(c.id, { nombre: e.target.value })}
@@ -1457,7 +1495,7 @@ function BloqueBancos({ datos, onUpdateDatos }) {
                           flex:1, fontFamily:"'Inter',sans-serif", fontSize:12, color:V("--text-mid"),
                           cursor:"pointer", minWidth:0, overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap",
                         }}>
-                          {esCompartida && <span style={{ marginRight:4 }}>🤝</span>}
+                          {esCompartida && <span style={{ marginRight:4, display:"inline-flex", verticalAlign:"middle" }}><Icono nombre="compartida" size={12}/></span>}
                           {c.nombre}
                           <span style={{ fontSize:9, color:V("--text-dim"), marginLeft:5 }}>
                             {prop.label}{esCompartida ? " · 50%" : ""}
@@ -1469,7 +1507,7 @@ function BloqueBancos({ datos, onUpdateDatos }) {
                         fontSize:11, padding:"2px 5px", borderRadius:4, border:"none", cursor:"pointer",
                         background: esCompartida ? "rgba(176,111,232,0.2)" : V("--surface-2"),
                         color: esCompartida ? V("--c3") : V("--text-dim"),
-                      }}>🤝</button>
+                      }}><Icono nombre="compartida" size={14}/></button>
                       <SelectorProposito value={c.proposito} onChange={p => actualizarCuenta(c.id, { proposito: p })}/>
                       <InputMoneda valor={c.asignado} onChange={v => actualizarCuenta(c.id, { asignado: v })} compact ancho={55}/>
                       <button onClick={() => eliminarCuenta(c.id)} style={{ background:"none", border:"none",
@@ -1495,12 +1533,12 @@ function BloqueBancos({ datos, onUpdateDatos }) {
                         fontFamily:"'JetBrains Mono',monospace", fontSize:13, fontWeight:700,
                         color: libre >= 0 ? V("--accent") : V("--negative"),
                       }}>
-                        🔓 {libre >= 0 ? "+" : ""}{libre.toLocaleString("es-ES",{minimumFractionDigits:0})}€ libre
+                        <IconoInline nombre="candadoAbierto"/>{libre >= 0 ? "+" : ""}{libre.toLocaleString("es-ES",{minimumFractionDigits:0})}€ libre
                       </span>
                     </div>
                     {libre < 0 && (
                       <div style={{ fontFamily:"'Inter',sans-serif", fontSize:10, color:V("--warn"), marginTop:4 }}>
-                        ⚠ Has reservado más de lo que tienes en el banco
+                        <IconoInline nombre="alerta"/>Has reservado más de lo que tienes en el banco
                       </div>
                     )}
                   </div>
@@ -1619,7 +1657,7 @@ function FormularioAnadirCuenta({ onGuardar, onCancelar, colorAccion=V("--accent
             fontFamily:"'Inter',sans-serif", fontWeight:600,
             background: proposito === id ? colorAccion + "25" : V("--surface-2"),
             color: proposito === id ? colorAccion : V("--text-dim"),
-          }}>{p.icono} {p.label}</button>
+          }}><span style={{display:"inline-flex",verticalAlign:"middle",marginRight:5}}><Icono nombre={p.icono} size={13} color="currentColor"/></span>{p.label}</button>
         ))}
       </div>
 
@@ -1628,7 +1666,7 @@ function FormularioAnadirCuenta({ onGuardar, onCancelar, colorAccion=V("--accent
         padding:"6px 0", marginBottom:8 }}>
         <div>
           <div style={{ fontFamily:"'Inter',sans-serif", fontSize:11, color:V("--text-mid") }}>
-            🤝 Cuenta compartida
+            <IconoInline nombre="compartida"/>Cuenta compartida
           </div>
           <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:V("--text-dim"), marginTop:1 }}>
             no suma al banco · cuenta el 50% en patrimonio
@@ -1896,7 +1934,7 @@ function BloqueAportacionAnual({ datos, claveM, mesNum, onUpdateDatos }) {
         style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
           padding:"12px 14px", cursor:"pointer" }}>
         <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-          <span style={{ fontSize:16 }}>📐</span>
+          <Icono nombre="formula" size={16} color={V("--accent")}/>
           <div>
             <div style={{ fontFamily:"'Inter',sans-serif", fontSize:11, fontWeight:700, color:V("--text-mid") }}>
               A aportar el mes que viene
@@ -1971,7 +2009,7 @@ function BloqueAportacionAnual({ datos, claveM, mesNum, onUpdateDatos }) {
 
           <div style={{ marginTop:8, fontFamily:"'Inter',sans-serif", fontSize:9, color:V("--text-dim"),
             padding:"6px 8px", background:"rgba(0,163,224,0.05)", borderRadius:5, lineHeight:1.4 }}>
-            📐 (pendiente − reserva imp.{pct > 0 ? ` − ${pct.toFixed(2)}% del extra` : ""}) ÷ {Math.max(0, 10-mesNum)} aportaciones (hasta noviembre)
+            <IconoInline nombre="formula"/>(pendiente − reserva imp.{pct > 0 ? ` − ${pct.toFixed(2)}% del extra` : ""}) ÷ {Math.max(0, 10-mesNum)} aportaciones (hasta noviembre)
           </div>
 
           {/* Automatismo: crear gasto de ahorro con esta aportación (redondeada a 50€) */}
@@ -1979,7 +2017,7 @@ function BloqueAportacionAnual({ datos, claveM, mesNum, onUpdateDatos }) {
             marginTop:8, padding:"8px 10px", background:"rgba(38,208,124,0.06)", borderRadius:8 }}>
             <div style={{ flex:1 }}>
               <div style={{ fontFamily:"'Inter',sans-serif", fontSize:11, fontWeight:600, color:V("--text-mid") }}>
-                🤖 Crear gasto automático
+                <IconoInline nombre="auto"/>Crear gasto automático
               </div>
               <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:V("--text-dim"), marginTop:1 }}>
                 añade un ahorro = esta cifra redondeada a 50€
@@ -2067,7 +2105,7 @@ function VistaGastos({ datos, claveM, mesNum, onUpdateDatos }) {
         style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
           padding:"12px 14px", cursor:"pointer" }}>
         <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-          <span style={{ fontSize:16 }}>{icono}</span>
+          <Icono nombre={icono} size={17} color={V("--text-mid")}/>
           <span style={{ fontFamily:"'Inter',sans-serif", fontSize:12, fontWeight:700, color:V("--text-mid") }}>{titulo}</span>
         </div>
         <div style={{ display:"flex", alignItems:"center", gap:8 }}>
@@ -2089,8 +2127,8 @@ function VistaGastos({ datos, claveM, mesNum, onUpdateDatos }) {
         background:V("--surface"), borderRadius:12, padding:4,
         border:`1px solid ${V("--border")}` }}>
         {[
-          { id:"mensuales", icono:"📋", label:"Mensuales" },
-          { id:"anuales",   icono:"📆", label:"Anuales" },
+          { id:"mensuales", icono:"gastos", label:"Mensuales" },
+          { id:"anuales",   icono:"calendario", label:"Anuales" },
         ].map(s => (
           <button key={s.id} onClick={() => setSubGasto(s.id)} style={{
             flex:1, padding:"9px 6px", borderRadius:9, border:"none", cursor:"pointer",
@@ -2100,7 +2138,7 @@ function VistaGastos({ datos, claveM, mesNum, onUpdateDatos }) {
             color: subGasto === s.id ? V("--accent") : V("--text-dim"),
             transition:"all 0.2s",
           }}>
-            <span style={{ fontSize:15 }}>{s.icono}</span> {s.label}
+            <Icono nombre={s.icono} size={16} color="currentColor"/> {s.label}
           </button>
         ))}
       </div>
@@ -2136,7 +2174,7 @@ function VistaGastos({ datos, claveM, mesNum, onUpdateDatos }) {
       </div>
 
       {/* FIJOS */}
-      <Section id="fijos" titulo="Gastos Fijos" icono="🏠" total={tFijos}>
+      <Section id="fijos" titulo="Gastos Fijos" icono="inmueble" total={tFijos}>
         {fijos.length === 0 && (
           <div style={{ padding:"12px 0", textAlign:"center", fontFamily:"'Inter',sans-serif",
             fontSize:12, color:V("--text-dim"), fontStyle:"italic" }}>Sin gastos fijos activos</div>
@@ -2159,7 +2197,7 @@ function VistaGastos({ datos, claveM, mesNum, onUpdateDatos }) {
       </Section>
 
       {/* VARIABLES */}
-      <Section id="variables" titulo="Gastos Variables" icono="📱" total={tVars}>
+      <Section id="variables" titulo="Gastos Variables" icono="movil" total={tVars}>
         {variables.length === 0 && (
           <div style={{ padding:"12px 0", textAlign:"center", fontFamily:"'Inter',sans-serif",
             fontSize:12, color:V("--text-dim"), fontStyle:"italic" }}>Sin gastos variables activos</div>
@@ -2182,7 +2220,7 @@ function VistaGastos({ datos, claveM, mesNum, onUpdateDatos }) {
       </Section>
 
       {/* AHORRO */}
-      <Section id="ahorro" titulo="Ahorro" icono="💰" total={tAhorro}>
+      <Section id="ahorro" titulo="Ahorro" icono="ahorro" total={tAhorro}>
         {ahorro.length === 0 && (
           <div style={{ padding:"12px 0", textAlign:"center", fontFamily:"'Inter',sans-serif",
             fontSize:12, color:V("--text-dim"), fontStyle:"italic" }}>Sin partidas de ahorro activas</div>
@@ -2205,7 +2243,7 @@ function VistaGastos({ datos, claveM, mesNum, onUpdateDatos }) {
           background: datos.autoReservaAnual ? "rgba(38,208,124,0.06)" : "rgba(255,255,255,0.02)" }}>
           <div style={{ flex:1 }}>
             <div style={{ fontFamily:"'Inter',sans-serif", fontSize:11, fontWeight:600, color:V("--text-mid") }}>
-              🤖 Reserva anual automática
+              <IconoInline nombre="auto"/>Reserva anual automática
             </div>
             <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:V("--text-dim"), marginTop:1 }}>
               añade el prorrateo (redondeado a 50€) como ahorro
@@ -2229,7 +2267,7 @@ function VistaGastos({ datos, claveM, mesNum, onUpdateDatos }) {
       </Section>
 
       {/* PUNTUALES */}
-      <Section id="puntuales" titulo="Gastos Puntuales" icono="⚡" total={tPunt}>
+      <Section id="puntuales" titulo="Gastos Puntuales" icono="auto" total={tPunt}>
         {puntuales.length === 0 && (
           <div style={{ padding:"12px 0", textAlign:"center", fontFamily:"'Inter',sans-serif",
             fontSize:12, color:V("--text-dim"), fontStyle:"italic" }}>Sin gastos puntuales este mes</div>
@@ -2360,7 +2398,7 @@ function VistaAnuales({ datos, claveM, onUpdateDatos }) {
 
   const añadirBloque = (nombre) => {
     onUpdateDatos(d => {
-      d.anuales.catalogo[nombre] = { icono:"📁", conceptos:[] };
+      d.anuales.catalogo[nombre] = { icono:"carpeta", conceptos:[] };
     });
     setAnadiendoBloque(false);
   };
@@ -2427,7 +2465,7 @@ function VistaAnuales({ datos, claveM, onUpdateDatos }) {
               {/* Cabecera */}
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
                 <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                  <span style={{ fontSize:16 }}>{info.icono}</span>
+                  <Icono nombre={info.icono} size={16} color={info.color}/>
                   <span style={{ fontFamily:"'Inter',sans-serif", fontSize:12, fontWeight:700, color:V("--text-mid") }}>{cat}</span>
                 </div>
                 <div style={{ display:"flex", alignItems:"center", gap:6 }}>
@@ -2640,7 +2678,7 @@ function FilaInversion({ inv, onUpdate, onEliminar }) {
               fontFamily:"'JetBrains Mono',monospace", fontSize:9, fontWeight:700,
               color: tipo.color, background: tipo.color+"20",
               padding:"2px 6px", borderRadius:4,
-            }}>{tipo.icono} {tipo.label}</span>
+            }}><span style={{display:"inline-flex",verticalAlign:"middle",marginRight:4}}><Icono nombre={tipo.icono} size={13} color="currentColor"/></span>{tipo.label}</span>
             {inv.entidad && (
               <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10,
                 color:V("--text-dim"), fontWeight:600 }}>{inv.entidad}</span>
@@ -2670,7 +2708,7 @@ function FilaInversion({ inv, onUpdate, onEliminar }) {
           <button onClick={() => setEditandoMeta(m => !m)} style={{
             background:V("--border"), border:"none",
             color:V("--text-dim"), cursor:"pointer", fontSize:11, padding:"2px 6px", borderRadius:4,
-          }}>{editandoMeta ? "✓" : "✎"}</button>
+          }}>{editandoMeta ? <Icono nombre="check" size={14} color={V("--accent")}/> : <Icono nombre="lapiz" size={14} color={V("--text-dim")}/>}</button>
           <button onClick={onEliminar} style={{
             background:"none", border:"none", color:"#FF475760",
             cursor:"pointer", fontSize:16, padding:"0 2px",
@@ -2888,7 +2926,7 @@ function VistaInversiones({ datos, claveM, onUpdateDatos }) {
       }}>
         <div style={{ fontFamily:"'Inter',sans-serif", fontSize:10, fontWeight:700,
           color: ganando ? V("--accent") : V("--negative"), letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:6 }}>
-          📈 Cartera total
+          <IconoInline nombre="inversiones"/>Cartera total
         </div>
         <div style={{ fontFamily:SERIF, fontSize:34, fontWeight:700,
           color: ganando ? V("--accent") : V("--negative"), letterSpacing:"-0.02em" }}>
@@ -3035,7 +3073,7 @@ function VistaPatrimonio({ datos, claveM, onUpdateDatos }) {
         <div style={{ marginTop:10, display:"flex", flexDirection:"column", gap:4 }}>
           {[
             { label:"Líquido", v:liquido, c:V("--c2") },
-            ...(compartido > 0 ? [{ label:"🤝 Compartido (50%)", v:compartido, c:V("--c3") }] : []),
+            ...(compartido > 0 ? [{ label:"Compartido (50%)", v:compartido, c:V("--c3") }] : []),
             { label:"Inversiones", v:inversion, c:V("--c3") },
             { label:"Inmuebles", v:inmuebles, c:V("--accent") },
             { label:"− Deudas", v:-deudas, c:V("--negative") },
@@ -3178,7 +3216,7 @@ function FormularioAnadirDeuda({ onGuardar, onCancelar }) {
             padding:"8px 10px", marginBottom:10, borderRadius:8, background:"rgba(38,208,124,0.08)",
             border:"1px solid rgba(38,208,124,0.2)" }}>
             <span style={{ fontFamily:"'Inter',sans-serif", fontSize:11, color:V("--text-mid") }}>
-              📐 Cuota calculada
+              <IconoInline nombre="formula"/>Cuota calculada
             </span>
             <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:15, fontWeight:800, color:V("--accent") }}>
               {prev.cuota.toLocaleString("es-ES",{minimumFractionDigits:2, maximumFractionDigits:2})}€<span style={{ fontSize:9, color:V("--text-dim") }}>/mes</span>
@@ -3272,7 +3310,7 @@ function FilaDeuda({ deuda, claveM, onActualizar, onEliminar }) {
           </div>
           <div style={{ marginTop:8, fontFamily:"'Inter',sans-serif", fontSize:9, color:V("--text-dim"),
             padding:"6px 8px", background:"rgba(255,71,87,0.05)", borderRadius:5, lineHeight:1.4 }}>
-            💡 La cuota se calcula con el sistema francés (capital, interés y plazo). Compárala con tu recibo: si coincide, los datos son correctos. {deuda.tipoInteres === "variable" ? "Al revisar el euríbor, actualiza el TIN." : ""}
+            <IconoInline nombre="bombilla"/>La cuota se calcula con el sistema francés (capital, interés y plazo). Compárala con tu recibo: si coincide, los datos son correctos. {deuda.tipoInteres === "variable" ? "Al revisar el euríbor, actualiza el TIN." : ""}
           </div>
         </div>
       )}
@@ -3327,7 +3365,7 @@ function BloqueAlertas({ datos, claveM, mesNum }) {
   const { total: gastos } = calcularGastoMensualTotal(datos, claveM);
   const remanente = ingresos - gastos;
   if (remanente < 0) {
-    alertas.push({ tipo:"error", icono:"⚠️",
+    alertas.push({ tipo:"error",
       texto:`Gastas ${Math.abs(remanente).toLocaleString("es-ES",{minimumFractionDigits:0})}€ más de lo que ingresas este mes` });
   }
 
@@ -3335,15 +3373,15 @@ function BloqueAlertas({ datos, claveM, mesNum }) {
   const reserva = calcularReservaEfectiva(dEf);
   const pendienteAnual = totalAnualesPendiente(dEf);
   if (pendienteAnual > 0 && reserva < pendienteAnual * 0.5 && mesNum >= 6) {
-    alertas.push({ tipo:"warn", icono:"🟠",
+    alertas.push({ tipo:"warn",
       texto:`Tu reserva (${reserva.toLocaleString("es-ES",{minimumFractionDigits:0})}€) cubre menos de la mitad de los anuales pendientes` });
   }
 
   // 3. Objetivos atrasados o vencidos
   (dEf.objetivos || []).forEach(o => {
     const ev = evaluarObjetivo(o, dEf.cuentas, claveM);
-    if (ev.vencido) alertas.push({ tipo:"error", icono:"🔴", texto:`Objetivo "${o.nombre}" venció sin completarse` });
-    else if (ev.ritmo === "atrasado") alertas.push({ tipo:"warn", icono:"🟠", texto:`Objetivo "${o.nombre}" va atrasado` });
+    if (ev.vencido) alertas.push({ tipo:"error", texto:`Objetivo "${o.nombre}" venció sin completarse` });
+    else if (ev.ritmo === "atrasado") alertas.push({ tipo:"warn", texto:`Objetivo "${o.nombre}" va atrasado` });
   });
 
   // 4. Deudas que se saldan pronto (buena noticia)
@@ -3351,7 +3389,7 @@ function BloqueAlertas({ datos, claveM, mesNum }) {
     const saldo = saldoDeudaEnMes(deuda, claveM);
     if (saldo > 0 && deuda.cuotaMensual > 0) {
       const meses = Math.ceil(saldo / deuda.cuotaMensual);
-      if (meses <= 3) alertas.push({ tipo:"ok", icono:"🎉", texto:`"${deuda.nombre}" se salda en ~${meses} ${meses===1?"mes":"meses"}` });
+      if (meses <= 3) alertas.push({ tipo:"ok", texto:`"${deuda.nombre}" se salda en ~${meses} ${meses===1?"mes":"meses"}` });
     }
   });
 
@@ -3366,7 +3404,7 @@ function BloqueAlertas({ datos, claveM, mesNum }) {
           background: colorTipo[a.tipo] + "12", borderRadius:10,
           border:`1px solid ${colorTipo[a.tipo]}30`,
         }}>
-          <span style={{ fontSize:14 }}>{a.icono}</span>
+          <Icono nombre={a.tipo === "ok" ? "check" : "alerta"} size={16} color={colorTipo[a.tipo]}/>
           <span style={{ fontFamily:"'Inter',sans-serif", fontSize:11, color:V("--text-mid"), lineHeight:1.4 }}>
             {a.texto}
           </span>
@@ -3491,7 +3529,7 @@ function VistaAnalisis({ datos, claveM, mesNum, onUpdateDatos }) {
           </span>
           {liquidezCompartida > 0 && (
             <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:V("--c3") }}>
-              🤝 {liquidezCompartida.toLocaleString("es-ES",{minimumFractionDigits:0})}€
+              <IconoInline nombre="compartida"/>{liquidezCompartida.toLocaleString("es-ES",{minimumFractionDigits:0})}€
             </span>
           )}
           <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:V("--c3") }}>
@@ -3499,7 +3537,7 @@ function VistaAnalisis({ datos, claveM, mesNum, onUpdateDatos }) {
           </span>
           {inmueblesTotal > 0 && (
             <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:V("--accent") }}>
-              🏡 {inmueblesTotal.toLocaleString("es-ES",{minimumFractionDigits:0})}€
+              <IconoInline nombre="inmueble"/>{inmueblesTotal.toLocaleString("es-ES",{minimumFractionDigits:0})}€
             </span>
           )}
           {deudasTotal > 0 && (
@@ -3528,7 +3566,7 @@ function VistaAnalisis({ datos, claveM, mesNum, onUpdateDatos }) {
             <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:18, fontWeight:700, color, marginBottom:3 }}>{v}</div>
             <div style={{ fontFamily:"'Inter',sans-serif", fontSize:10, color:V("--text-dim"), lineHeight:1.4 }}>{sub}</div>
             <div style={{ marginTop:6, fontFamily:"'Inter',sans-serif", fontSize:10,
-              color: ok ? V("--accent") : V("--warn") }}>{ok ? "✅ en objetivo" : "⚠ revisar"}</div>
+              color: ok ? V("--accent") : V("--warn") }}>{ok ? "en objetivo" : "revisar"}</div>
           </div>
         ))}
       </div>
@@ -3690,7 +3728,7 @@ function GraficaPatrimonio({ datos, claveM }) {
       <div style={{ background:V("--surface"), borderRadius:18, padding:"16px 18px",
         border:`1px solid ${V("--border")}`, marginBottom:12 }}>
         <div style={{ fontFamily:SERIF, fontSize:15, fontWeight:600, color:V("--text-mid"), letterSpacing:"0", marginBottom:8 }}>
-          📈 Evolución del patrimonio
+          <IconoInline nombre="inversiones"/>Evolución del patrimonio
         </div>
         <div style={{ fontFamily:"'Inter',sans-serif", fontSize:11, color:V("--text-dim"),
           fontStyle:"italic", textAlign:"center", padding:"10px 0" }}>
@@ -3726,7 +3764,7 @@ function GraficaPatrimonio({ datos, claveM }) {
       border:`1px solid ${V("--border")}`, marginBottom:12 }}>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
         <div style={{ fontFamily:SERIF, fontSize:15, fontWeight:600, color:V("--text-mid"), letterSpacing:"0" }}>
-          📈 Evolución del patrimonio
+          <IconoInline nombre="inversiones"/>Evolución del patrimonio
         </div>
         <div style={{
           fontFamily:"'JetBrains Mono',monospace", fontSize:11, fontWeight:700,
@@ -3817,7 +3855,7 @@ function BloqueObjetivos({ objetivos, cuentas, claveM, onUpdateDatos, autoObjeti
               fontFamily:"'JetBrains Mono',monospace", fontWeight:700,
               background: autoObjetivos ? "rgba(38,208,124,0.25)" : V("--surface-2"),
               color: autoObjetivos ? V("--accent") : V("--text-dim"),
-            }}>🤖 {autoObjetivos ? "ON" : "OFF"}</button>
+            }}><span style={{display:"inline-flex",verticalAlign:"middle",marginRight:4}}><Icono nombre="auto" size={12}/></span>{autoObjetivos ? "ON" : "OFF"}</button>
         )}
       </div>
 
@@ -3855,12 +3893,12 @@ function FilaObjetivo({ objetivo, cuentas, claveM, onActualizar, onEliminar }) {
   const fechaLabel = `${MESES[mLim-1]} ${yLim}`;
 
   // Color y etiqueta del estado
-  let estadoColor = V("--accent"), estadoLabel = "🟢 En ritmo";
-  if (ev.completado)       { estadoColor = V("--accent"); estadoLabel = "✅ Completado"; }
-  else if (ev.vencido)     { estadoColor = V("--warn"); estadoLabel = "🔴 Plazo vencido"; }
-  else if (ev.ritmo === "adelantado") { estadoColor = V("--accent"); estadoLabel = "🚀 Adelantado"; }
-  else if (ev.ritmo === "atrasado")   { estadoColor = V("--warn"); estadoLabel = "🟠 Atrasado"; }
-  else if (ev.ritmo === "alDia")      { estadoColor = V("--c2"); estadoLabel = "🟢 Al día"; }
+  let estadoColor = V("--accent"), estadoLabel = "En ritmo";
+  if (ev.completado)       { estadoColor = V("--accent"); estadoLabel = "Completado"; }
+  else if (ev.vencido)     { estadoColor = V("--warn"); estadoLabel = "Plazo vencido"; }
+  else if (ev.ritmo === "adelantado") { estadoColor = V("--accent"); estadoLabel = "Adelantado"; }
+  else if (ev.ritmo === "atrasado")   { estadoColor = V("--warn"); estadoLabel = "Atrasado"; }
+  else if (ev.ritmo === "alDia")      { estadoColor = V("--c2"); estadoLabel = "Al día"; }
 
   return (
     <div style={{ background:"rgba(255,255,255,0.02)", borderRadius:12, padding:"12px 14px",
@@ -3875,7 +3913,7 @@ function FilaObjetivo({ objetivo, cuentas, claveM, onActualizar, onEliminar }) {
           <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:V("--text-dim"), marginTop:2 }}>
             límite {fechaLabel}
             {!ev.completado && !ev.vencido && ` · ${ev.mesesRestantes} ${ev.mesesRestantes === 1 ? "mes" : "meses"}`}
-            {ev.cuenta && ` · 🔗 ${ev.cuenta.nombre}`}
+            {ev.cuenta && ` · ${ev.cuenta.nombre}`}
           </div>
         </div>
         <button onClick={onEliminar} style={{ background:"none", border:"none",
@@ -4050,7 +4088,7 @@ function BloqueTeoriasAhorro({ gastos, totalIngresos, onReclasificar }) {
       {/* Cabecera */}
       <div style={{ padding:"14px 16px" }}>
         <div style={{ fontFamily:SERIF, fontSize:15, fontWeight:600, color:V("--text-mid"), letterSpacing:"0", marginBottom:8 }}>
-          📐 Teoría del ahorro
+          <IconoInline nombre="formula"/>Teoría del ahorro
         </div>
 
         {/* Selector de teoría */}
@@ -4234,7 +4272,7 @@ function BotonAjustes({ tema, setTema }) {
           width: 32, height: 32, borderRadius: 8,
           display: "flex", alignItems: "center", justifyContent: "center",
         }
-      }, "⚙"),
+      }, React.createElement(Icono, { nombre: "ajustes", size: 17, color: V("--text-dim") })),
       abierto && React.createElement(React.Fragment, null,
         React.createElement("div", {
           onClick: () => setAbierto(false),
@@ -4256,7 +4294,7 @@ function BotonAjustes({ tema, setTema }) {
               background: "transparent", fontFamily: "'Inter',sans-serif",
               fontSize: 12, color: V("--text-mid"), textAlign: "left",
             }
-          }, "💾 Exportar backup"),
+          }, React.createElement(Icono, { nombre:"exportar", size:15, color:"currentColor" }), " Exportar backup"),
           React.createElement("button", {
             onClick: () => fileRef.current?.click(),
             style: {
@@ -4265,7 +4303,7 @@ function BotonAjustes({ tema, setTema }) {
               background: "transparent", fontFamily: "'Inter',sans-serif",
               fontSize: 12, color: V("--text-mid"), textAlign: "left",
             }
-          }, "📂 Importar backup"),
+          }, React.createElement(Icono, { nombre:"importar", size:15, color:"currentColor" }), " Importar backup"),
           React.createElement("input", {
             ref: fileRef, type: "file", accept: "application/json",
             onChange: handleImport, style: { display: "none" }
@@ -4280,7 +4318,7 @@ function BotonAjustes({ tema, setTema }) {
               fontSize: 10, fontWeight: 700, color: V("--text-dim"),
               letterSpacing: "0.08em", textTransform: "uppercase",
             }
-          }, "🎨 Tema"),
+          }, React.createElement(Icono, { nombre:"paleta", size:15, color:"currentColor" }), " Tema"),
           React.createElement("div", {
             style: { display: "flex", flexWrap: "wrap", gap: 4, padding: "0 8px 6px" }
           },
@@ -4305,7 +4343,7 @@ function BotonAjustes({ tema, setTema }) {
                     display: "inline-block", flexShrink: 0,
                   }
                 }),
-                `${t.emoji} ${t.nombre}`
+                ` ${t.nombre}`
               )
             )
           ),
@@ -4320,7 +4358,7 @@ function BotonAjustes({ tema, setTema }) {
               background: "transparent", fontFamily: "'Inter',sans-serif",
               fontSize: 12, color: V("--c2"), textAlign: "left",
             }
-          }, "🔄 Forzar actualización"),
+          }, React.createElement(Icono, { nombre:"refresh", size:15, color:"currentColor" }), " Forzar actualización"),
           React.createElement("div", {
             style: { height: 1, background: V("--border"), margin: "4px 0" }
           }),
@@ -4332,7 +4370,7 @@ function BotonAjustes({ tema, setTema }) {
               background: "transparent", fontFamily: "'Inter',sans-serif",
               fontSize: 12, color: V("--warn"), textAlign: "left",
             }
-          }, "🗑 Reiniciar todo")
+          }, React.createElement(Icono, { nombre:"papelera", size:15, color:"currentColor" }), " Reiniciar todo")
         )
       )
     )
@@ -4497,10 +4535,10 @@ function App() {
   );
 
   const VISTAS = [
-    { id:"inicio",   icono:"💶", label:"Ingresos" },
-    { id:"gastos",   icono:"📋", label:"Gastos" },
-    { id:"cartera",  icono:"🏦", label:"Cartera" },
-    { id:"analisis", icono:"📊", label:"Análisis" },
+    { id:"inicio",   label:"Ingresos" },
+    { id:"gastos",   label:"Gastos" },
+    { id:"cartera",  label:"Cartera" },
+    { id:"analisis", label:"Análisis" },
   ];
 
   // Mantener BANCO_META en sincronía con los bancos del usuario (antes de renderizar hijos)
@@ -4542,7 +4580,7 @@ function App() {
               color: cerrado ? V("--warn") : V("--text-dim"),
               cursor:"pointer", fontSize:16, width:34, height:34, borderRadius:8,
               display:"flex", alignItems:"center", justifyContent:"center",
-            }}>{cerrado ? "🔒" : "🔓"}</button>
+            }}>{cerrado ? <Icono nombre="candado" size={15} color={V("--warn")}/> : <Icono nombre="candadoAbierto" size={15} color={V("--text-dim")}/>}</button>
           </div>
           <div style={{ display:"flex", alignItems:"center", gap:6 }}>
             <button onClick={()=>irMes(1)} style={{ background:V("--border"), border:"none",
@@ -4577,7 +4615,7 @@ function App() {
           margin:"12px 16px 0", padding:"10px 14px",
           display:"flex", alignItems:"center", gap:10,
         }}>
-          <span style={{ fontSize:18 }}>🔒</span>
+          <Icono nombre="candado" size={18} color={V("--warn")}/>
           <div style={{ flex:1 }}>
             <div style={{ fontFamily:"'Inter',sans-serif", fontSize:12, fontWeight:700, color:V("--warn") }}>
               Mes cerrado · sólo lectura

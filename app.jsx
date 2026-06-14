@@ -966,7 +966,7 @@ function BarraProgreso({ valor, maximo, color=V("--c2"), altura=6 }) {
         width:`${pct}%`, height:"100%", borderRadius:99,
         background: excede ? V("--warn") : color,
         transition: "width 0.5s cubic-bezier(0.4,0,0.2,1)",
-        boxShadow: excede ? "0 0 8px #FF475780" : `0 0 6px ${color}60`,
+        boxShadow: excede ? `0 0 8px ${mix(V("--negative"),"80")}` : `0 0 6px ${mix(color,"60")}`,
       }}/>
     </div>
   );
@@ -1242,7 +1242,7 @@ function FilaGastoCatalogo({ gasto, onPagado, onImporte, onBanco, onEliminar }) 
         <span style={{ width:18, display:"inline-flex", justifyContent:"center" }} title="Gasto automático"><Icono nombre="auto" size={13} color={V("--text-dim")}/></span>
       ) : (
         <button onClick={onEliminar} style={{ background:"none", border:"none",
-          cursor:"pointer", color:"#FF475760", fontSize:14, padding:"0 2px" }}>×</button>
+          cursor:"pointer", color:mix(V("--negative"),"60"), fontSize:14, padding:"0 2px" }}>×</button>
       )}
     </div>
   );
@@ -1367,7 +1367,7 @@ function BloqueBancos({ datos, onUpdateDatos }) {
         style={{ padding:"14px 16px", cursor:"pointer",
           borderBottom: abierto ? "1px solid rgba(255,255,255,0.06)" : "none" }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:abierto ? 10 : 0 }}>
-          <div style={{ display:"flex", alignItems:"center", gap:7, fontFamily:SERIF, fontSize:15, fontWeight:600, color:V("--text-mid") }}><Icono nombre="banco" size={17} color={V("--text-mid")}/> Bancos y cuentas</div>
+          <div style={{ display:"flex", alignItems:"center", gap:8, fontFamily:UI, fontSize:13, fontWeight:700, color:V("--text-mid") }}><Icono nombre="banco" size={17} color={V("--text-mid")}/> Bancos y cuentas</div>
           <span style={{ color:V("--text-dim"), fontSize:14 }}>{abierto ? "▲" : "▼"}</span>
         </div>
 
@@ -1511,7 +1511,7 @@ function BloqueBancos({ datos, onUpdateDatos }) {
                       <SelectorProposito value={c.proposito} onChange={p => actualizarCuenta(c.id, { proposito: p })}/>
                       <InputMoneda valor={c.asignado} onChange={v => actualizarCuenta(c.id, { asignado: v })} compact ancho={55}/>
                       <button onClick={() => eliminarCuenta(c.id)} style={{ background:"none", border:"none",
-                        cursor:"pointer", color:"#FF475760", fontSize:13, padding:"0 2px" }}>×</button>
+                        cursor:"pointer", color:mix(V("--negative"),"60"), fontSize:13, padding:"0 2px" }}>×</button>
                     </div>
                   );
                 })}
@@ -1521,7 +1521,7 @@ function BloqueBancos({ datos, onUpdateDatos }) {
                   <div style={{
                     marginTop:8, padding:"8px 10px", borderRadius:8,
                     background: libre >= 0 ? "rgba(38,208,124,0.06)" : "rgba(255,71,87,0.08)",
-                    border: `1px solid ${libre >= 0 ? "#26D07C25" : "#FF475730"}`,
+                    border: `1px solid ${libre >= 0 ? mix(V("--accent"),"25") : mix(V("--negative"),"30")}`,
                   }}>
                     <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
                       <span style={{ fontFamily:"'Inter',sans-serif", fontSize:11, color:V("--text-dim") }}>
@@ -1760,7 +1760,7 @@ function VistaInicio({ datos, claveM, mesNum, onUpdateDatos }) {
       <div style={{ background:V("--surface"), borderRadius:18, padding:"16px 18px", marginBottom:12,
         border:`1px solid ${V("--border")}` }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
-          <div style={{ fontFamily:SERIF, fontSize:15, fontWeight:600, color:V("--text-mid"), letterSpacing:"0" }}>Ingresos del mes</div>
+          <div style={{ fontFamily:UI, fontSize:13, fontWeight:700, color:V("--text-mid") }}>Ingresos del mes</div>
           <Num v={totalIngresos} decimals={0} color={V("--accent")} size={14}/>
         </div>
 
@@ -1865,7 +1865,7 @@ function FilaIngreso({ fuente, onNombre, onImporte, onEliminar, soloMes=false })
       )}
       <InputMoneda valor={fuente.importe} onChange={onImporte} compact />
       <button onClick={onEliminar} style={{ background:"none", border:"none",
-        cursor:"pointer", color:"#FF475760", fontSize:14, padding:"0 2px" }}>×</button>
+        cursor:"pointer", color:mix(V("--negative"),"60"), fontSize:14, padding:"0 2px" }}>×</button>
     </div>
   );
 }
@@ -1927,7 +1927,7 @@ function BloqueAportacionAnual({ datos, claveM, mesNum, onUpdateDatos }) {
 
   return (
     <div style={{ background:"linear-gradient(135deg, rgba(38,208,124,0.10), rgba(0,163,224,0.06))",
-      borderRadius:12, border:"1px solid rgba(38,208,124,0.25)", marginBottom:12, overflow:"hidden" }}>
+      borderRadius:12, border:`1px solid ${mix(V("--accent"),"40")}`, marginBottom:12, overflow:"hidden" }}>
 
       {/* Barra compacta clicable */}
       <div onClick={() => setAbierto(a => !a)}
@@ -2106,7 +2106,7 @@ function VistaGastos({ datos, claveM, mesNum, onUpdateDatos }) {
           padding:"12px 14px", cursor:"pointer" }}>
         <div style={{ display:"flex", alignItems:"center", gap:8 }}>
           <Icono nombre={icono} size={17} color={V("--text-mid")}/>
-          <span style={{ fontFamily:"'Inter',sans-serif", fontSize:12, fontWeight:700, color:V("--text-mid") }}>{titulo}</span>
+          <span style={{ fontFamily:UI, fontSize:13, fontWeight:700, color:V("--text-mid") }}>{titulo}</span>
         </div>
         <div style={{ display:"flex", alignItems:"center", gap:8 }}>
           <Num v={total} decimals={2} color={V("--c3")} size={13}/>
@@ -2424,13 +2424,13 @@ function VistaAnuales({ datos, claveM, onUpdateDatos }) {
       <div style={{ background:V("--surface"), borderRadius:18, padding:"16px 18px",
         border:`1px solid ${V("--border")}`, marginBottom:14 }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
-          <div style={{ fontFamily:SERIF, fontSize:15, fontWeight:600, color:V("--text-mid"), letterSpacing:"0" }}>
+          <div style={{ fontFamily:UI, fontSize:13, fontWeight:700, color:V("--text-mid") }}>
             Gastos anuales {añoCatalogo}
           </div>
           {añoCatalogo < añoAhora && (
             <button onClick={reiniciarAño} style={{
-              padding:"4px 10px", borderRadius:6, border:"1px solid #FF8C4250",
-              background:"#FF8C4215", color:V("--warn"), cursor:"pointer", fontSize:10,
+              padding:"4px 10px", borderRadius:6, border:`1px solid ${mix(V("--warn"),"50")}`,
+              background:mix(V("--warn"),"15"), color:V("--warn"), cursor:"pointer", fontSize:10,
               fontFamily:"'Inter',sans-serif", fontWeight:600,
             }}>⟳ Reiniciar a {añoAhora}</button>
           )}
@@ -2466,13 +2466,13 @@ function VistaAnuales({ datos, claveM, onUpdateDatos }) {
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
                 <div style={{ display:"flex", alignItems:"center", gap:8 }}>
                   <Icono nombre={info.icono} size={16} color={info.color}/>
-                  <span style={{ fontFamily:"'Inter',sans-serif", fontSize:12, fontWeight:700, color:V("--text-mid") }}>{cat}</span>
+                  <span style={{ fontFamily:UI, fontSize:13, fontWeight:700, color:V("--text-mid") }}>{cat}</span>
                 </div>
                 <div style={{ display:"flex", alignItems:"center", gap:6 }}>
                   <Num v={total} decimals={0} color={V("--text-mid")} size={13}/>
                   <button onClick={() => {
                     if (confirm(`¿Eliminar el bloque "${cat}" entero?`)) eliminarBloque(cat);
-                  }} style={{ background:"none", border:"none", color:"#FF475760",
+                  }} style={{ background:"none", border:"none", color:mix(V("--negative"),"60"),
                     cursor:"pointer", fontSize:14 }}>×</button>
                 </div>
               </div>
@@ -2574,7 +2574,7 @@ function FilaConcepto({ concepto, onCerrado, onPagadoImporte, onNombre, onImport
         )}
         <InputMoneda valor={importe} onChange={onImporte} compact ancho={45}/>
         <button onClick={onEliminar} style={{ background:"none", border:"none",
-          cursor:"pointer", color:"#FF475760", fontSize:13, padding:"0 4px" }}>×</button>
+          cursor:"pointer", color:mix(V("--negative"),"60"), fontSize:13, padding:"0 4px" }}>×</button>
       </div>
 
       {/* Sub-fila: pagado parcial + barra de progreso (solo si no está cerrado) */}
@@ -2710,7 +2710,7 @@ function FilaInversion({ inv, onUpdate, onEliminar }) {
             color:V("--text-dim"), cursor:"pointer", fontSize:11, padding:"2px 6px", borderRadius:4,
           }}>{editandoMeta ? <Icono nombre="check" size={14} color={V("--accent")}/> : <Icono nombre="lapiz" size={14} color={V("--text-dim")}/>}</button>
           <button onClick={onEliminar} style={{
-            background:"none", border:"none", color:"#FF475760",
+            background:"none", border:"none", color:mix(V("--negative"),"60"),
             cursor:"pointer", fontSize:16, padding:"0 2px",
           }}>×</button>
         </div>
@@ -2777,7 +2777,7 @@ function FilaInversion({ inv, onUpdate, onEliminar }) {
             display:"flex", justifyContent:"space-between", alignItems:"center",
             padding:"8px 10px", borderRadius:6,
             background: ganando ? "rgba(38,208,124,0.08)" : "rgba(255,71,87,0.08)",
-            border: `1px solid ${ganando ? "#26D07C20" : "#FF475720"}`,
+            border: `1px solid ${ganando ? mix(V("--accent"),"20") : mix(V("--negative"),"20")}`,
           }}>
             <span style={{ fontFamily:"'Inter',sans-serif", fontSize:11, color:V("--text-dim") }}>
               plusvalía
@@ -2919,13 +2919,13 @@ function VistaInversiones({ datos, claveM, onUpdateDatos }) {
     <div className="slide-in">
       <div style={{
         background: ganando
-          ? "linear-gradient(135deg, #26D07C20, #00A3E015)"
-          : "linear-gradient(135deg, #FF475720, #FF6B3515)",
-        border: `1px solid ${ganando ? "#26D07C30" : "#FF475730"}`,
+          ? `linear-gradient(135deg, ${mix(V("--accent"),"20")}, ${mix(V("--c2"),"15")})`
+          : `linear-gradient(135deg, ${mix(V("--negative"),"20")}, ${mix(V("--negative"),"15")})`,
+        border: `1px solid ${ganando ? mix(V("--accent"),"30") : mix(V("--negative"),"30")}`,
         borderRadius:18, padding:"18px 20px", marginBottom:14,
       }}>
         <div style={{ fontFamily:"'Inter',sans-serif", fontSize:10, fontWeight:700,
-          color: ganando ? V("--accent") : V("--negative"), letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:6 }}>
+          color: ganando ? V("--accent") : V("--negative"), letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:6 }}>
           <IconoInline nombre="inversiones"/>Cartera total
         </div>
         <div style={{ fontFamily:SERIF, fontSize:34, fontWeight:700,
@@ -2939,7 +2939,7 @@ function VistaInversiones({ datos, claveM, onUpdateDatos }) {
           <div style={{
             fontFamily:"'JetBrains Mono',monospace", fontSize:13, fontWeight:700,
             color: ganando ? V("--accent") : V("--negative"),
-            background: ganando ? "#26D07C20" : "#FF475720",
+            background: ganando ? mix(V("--accent"),"20") : mix(V("--negative"),"20"),
             padding:"4px 10px", borderRadius:6,
           }}>
             {ganando ? "+" : ""}{total.plusvalia.toLocaleString("es-ES",{minimumFractionDigits:2})}€ · {ganando ? "+" : ""}{pctTotal.toFixed(2)}%
@@ -2950,7 +2950,7 @@ function VistaInversiones({ datos, claveM, onUpdateDatos }) {
       {inversiones.length > 0 && (
         <div style={{ background:V("--surface"), borderRadius:18, padding:"16px 18px",
           border:`1px solid ${V("--border")}`, marginBottom:14 }}>
-          <div style={{ fontFamily:SERIF, fontSize:15, fontWeight:600, color:V("--text-mid"), letterSpacing:"0", marginBottom:12 }}>Distribución por tipo</div>
+          <div style={{ fontFamily:UI, fontSize:13, fontWeight:700, color:V("--text-mid"), marginBottom:12 }}>Distribución por tipo</div>
           {Object.entries(porTipo)
             .filter(([_, v]) => v.valorActual > 0)
             .sort((a,b) => b[1].valorActual - a[1].valorActual)
@@ -2974,7 +2974,7 @@ function VistaInversiones({ datos, claveM, onUpdateDatos }) {
         </div>
       )}
 
-      <div style={{ fontFamily:SERIF, fontSize:15, fontWeight:600, color:V("--text-mid"), letterSpacing:"0", marginBottom:10 }}>
+      <div style={{ fontFamily:UI, fontSize:13, fontWeight:700, color:V("--text-mid"), marginBottom:10 }}>
         Posiciones ({inversiones.length})
       </div>
 
@@ -3060,10 +3060,10 @@ function VistaPatrimonio({ datos, claveM, onUpdateDatos }) {
   return (
     <div>
       {/* Resumen patrimonio neto */}
-      <div style={{ background:"linear-gradient(135deg, rgba(38,208,124,0.12), rgba(0,163,224,0.06))",
-        border:"1px solid rgba(38,208,124,0.25)", borderRadius:18, padding:"18px 20px", marginBottom:14 }}>
-        <div style={{ fontFamily:"'Inter',sans-serif", fontSize:10, fontWeight:700, color:V("--accent"),
-          letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:6 }}>
+      <div style={{ background:`linear-gradient(135deg, ${mix(V("--accent"),"20")}, ${mix(V("--c1"),"10")})`,
+        border:`1px solid ${mix(V("--accent"),"40")}`, borderRadius:18, padding:"18px 20px", marginBottom:14 }}>
+        <div style={{ fontFamily:"'Inter',sans-serif", fontSize:10, fontWeight:600, color:V("--accent"),
+          letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:6 }}>
           Patrimonio neto
         </div>
         <div style={{ fontFamily:SERIF, fontSize:34, fontWeight:700,
@@ -3091,7 +3091,7 @@ function VistaPatrimonio({ datos, claveM, onUpdateDatos }) {
       {/* INMUEBLES */}
       <div style={{ background:V("--surface"), borderRadius:18, padding:"16px 18px",
         border:`1px solid ${V("--border")}`, marginBottom:12 }}>
-        <div style={{ display:"flex", alignItems:"center", gap:7, fontFamily:SERIF, fontSize:15, fontWeight:600, color:V("--text-mid"), marginBottom:10 }}><Icono nombre="inmueble" size={17} color={V("--text-mid")}/> Inmuebles</div>
+        <div style={{ display:"flex", alignItems:"center", gap:7, fontFamily:UI, fontSize:13, fontWeight:700, color:V("--text-mid"), marginBottom:10 }}><Icono nombre="inmueble" size={17} color={V("--text-mid")}/> Inmuebles</div>
         {(dEf.inmuebles || []).map(inm => {
           const valorHoy = valorInmuebleEnMes(inm, claveM);
           return (
@@ -3104,7 +3104,7 @@ function VistaPatrimonio({ datos, claveM, onUpdateDatos }) {
                   {valorHoy.toLocaleString("es-ES",{minimumFractionDigits:0})}€
                 </span>
                 <button onClick={() => { if(confirm(`¿Eliminar "${inm.nombre}"?`)) eliminarInmueble(inm.id); }}
-                  style={{ background:"none", border:"none", cursor:"pointer", color:"#FF475760", fontSize:14, padding:"0 0 0 8px" }}>×</button>
+                  style={{ background:"none", border:"none", cursor:"pointer", color:mix(V("--negative"),"60"), fontSize:14, padding:"0 0 0 8px" }}>×</button>
               </div>
               <div style={{ display:"flex", gap:8, alignItems:"center" }}>
                 <span style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:V("--text-dim") }}>valor base</span>
@@ -3123,7 +3123,7 @@ function VistaPatrimonio({ datos, claveM, onUpdateDatos }) {
       {/* DEUDAS */}
       <div style={{ background:V("--surface"), borderRadius:18, padding:"16px 18px",
         border:`1px solid ${V("--border")}`, marginBottom:12 }}>
-        <div style={{ display:"flex", alignItems:"center", gap:7, fontFamily:SERIF, fontSize:15, fontWeight:600, color:V("--text-mid"), marginBottom:10 }}><Icono nombre="deuda" size={17} color={V("--text-mid")}/> Deudas</div>
+        <div style={{ display:"flex", alignItems:"center", gap:7, fontFamily:UI, fontSize:13, fontWeight:700, color:V("--text-mid"), marginBottom:10 }}><Icono nombre="deuda" size={17} color={V("--text-mid")}/> Deudas</div>
         {(dEf.deudas || []).map(deuda => (
           <FilaDeuda key={deuda.id} deuda={deuda} claveM={claveM}
             onActualizar={cambios => actualizarDeuda(deuda.id, cambios)}
@@ -3269,7 +3269,7 @@ function FilaDeuda({ deuda, claveM, onActualizar, onEliminar }) {
           </div>
         </div>
         <button onClick={onEliminar} style={{ background:"none", border:"none", cursor:"pointer",
-          color:"#FF475760", fontSize:14, padding:"0 0 0 8px" }}>×</button>
+          color:mix(V("--negative"),"60"), fontSize:14, padding:"0 0 0 8px" }}>×</button>
       </div>
 
       {/* Progreso amortización */}
@@ -3503,10 +3503,10 @@ function VistaAnalisis({ datos, claveM, mesNum, onUpdateDatos }) {
       <BloqueAlertas datos={datos} claveM={claveM} mesNum={mesNum}/>
 
       {/* Patrimonio */}
-      <div style={{ background:"linear-gradient(135deg, #00A3E020, #B06FE815)",
-        border:"1px solid #00A3E030", borderRadius:18, padding:"18px 20px", marginBottom:14 }}>
-        <div style={{ fontFamily:"'Inter',sans-serif", fontSize:10, fontWeight:700, color:V("--c2"),
-          letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:6 }}>
+      <div style={{ background:`linear-gradient(135deg, ${mix(V("--accent"),"20")}, ${mix(V("--c1"),"12")})`,
+        border:`1px solid ${mix(V("--accent"),"30")}`, borderRadius:18, padding:"18px 20px", marginBottom:14 }}>
+        <div style={{ fontFamily:"'Inter',sans-serif", fontSize:10, fontWeight:600, color:V("--c2"),
+          letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:6 }}>
           Patrimonio neto
         </div>
         <div style={{ fontFamily:SERIF, fontSize:34, fontWeight:700,
@@ -3562,7 +3562,7 @@ function VistaAnalisis({ datos, claveM, mesNum, onUpdateDatos }) {
           <div key={label} style={{ background:V("--surface"), borderRadius:14, padding:"14px 12px",
             border:`1px solid ${color}25` }}>
             <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:V("--text-dim"),
-              letterSpacing:"0.08em", textTransform:"uppercase", marginBottom:6 }}>{label}</div>
+              letterSpacing:"0.1em", textTransform:"uppercase", marginBottom:6 }}>{label}</div>
             <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:18, fontWeight:700, color, marginBottom:3 }}>{v}</div>
             <div style={{ fontFamily:"'Inter',sans-serif", fontSize:10, color:V("--text-dim"), lineHeight:1.4 }}>{sub}</div>
             <div style={{ marginTop:6, fontFamily:"'Inter',sans-serif", fontSize:10,
@@ -3574,7 +3574,7 @@ function VistaAnalisis({ datos, claveM, mesNum, onUpdateDatos }) {
       {/* Distribución de gastos (por tipo) */}
       <div style={{ background:V("--surface"), borderRadius:18, padding:"16px 18px",
         border:`1px solid ${V("--border")}`, marginBottom:12 }}>
-        <div style={{ fontFamily:SERIF, fontSize:15, fontWeight:600, color:V("--text-mid"), letterSpacing:"0", marginBottom:14 }}>
+        <div style={{ fontFamily:UI, fontSize:13, fontWeight:700, color:V("--text-mid"), marginBottom:14 }}>
           Distribución de gastos
         </div>
         <DonutChart segmentos={[
@@ -3588,7 +3588,7 @@ function VistaAnalisis({ datos, claveM, mesNum, onUpdateDatos }) {
       {/* Flujo por banco */}
       <div style={{ background:V("--surface"), borderRadius:18, padding:"16px 18px",
         border:`1px solid ${V("--border")}` }}>
-        <div style={{ fontFamily:SERIF, fontSize:15, fontWeight:600, color:V("--text-mid"), letterSpacing:"0", marginBottom:12 }}>
+        <div style={{ fontFamily:UI, fontSize:13, fontWeight:700, color:V("--text-mid"), marginBottom:12 }}>
           Flujo de gastos por banco
         </div>
         {Object.entries(BANCO_META).map(([banco, meta]) => {
@@ -3727,7 +3727,7 @@ function GraficaPatrimonio({ datos, claveM }) {
     return (
       <div style={{ background:V("--surface"), borderRadius:18, padding:"16px 18px",
         border:`1px solid ${V("--border")}`, marginBottom:12 }}>
-        <div style={{ fontFamily:SERIF, fontSize:15, fontWeight:600, color:V("--text-mid"), letterSpacing:"0", marginBottom:8 }}>
+        <div style={{ fontFamily:UI, fontSize:13, fontWeight:700, color:V("--text-mid"), marginBottom:8 }}>
           <IconoInline nombre="inversiones"/>Evolución del patrimonio
         </div>
         <div style={{ fontFamily:"'Inter',sans-serif", fontSize:11, color:V("--text-dim"),
@@ -3763,7 +3763,7 @@ function GraficaPatrimonio({ datos, claveM }) {
     <div style={{ background:V("--surface"), borderRadius:18, padding:"16px 18px",
       border:`1px solid ${V("--border")}`, marginBottom:12 }}>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
-        <div style={{ fontFamily:SERIF, fontSize:15, fontWeight:600, color:V("--text-mid"), letterSpacing:"0" }}>
+        <div style={{ fontFamily:UI, fontSize:13, fontWeight:700, color:V("--text-mid") }}>
           <IconoInline nombre="inversiones"/>Evolución del patrimonio
         </div>
         <div style={{
@@ -3845,7 +3845,7 @@ function BloqueObjetivos({ objetivos, cuentas, claveM, onUpdateDatos, autoObjeti
     <div style={{ background:V("--surface"), borderRadius:14,
       border:`1px solid ${V("--border")}`, marginBottom:12, padding:"14px 16px" }}>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
-        <div style={{ fontFamily:SERIF, fontSize:15, fontWeight:600, color:V("--text-mid"), letterSpacing:"0" }}>
+        <div style={{ fontFamily:UI, fontSize:13, fontWeight:700, color:V("--text-mid") }}>
           Objetivos de ahorro
         </div>
         {objetivos.length > 0 && (
@@ -3917,7 +3917,7 @@ function FilaObjetivo({ objetivo, cuentas, claveM, onActualizar, onEliminar }) {
           </div>
         </div>
         <button onClick={onEliminar} style={{ background:"none", border:"none",
-          cursor:"pointer", color:"#FF475760", fontSize:15, padding:"0 2px" }}>×</button>
+          cursor:"pointer", color:mix(V("--negative"),"60"), fontSize:15, padding:"0 2px" }}>×</button>
       </div>
 
       {/* Barra de progreso */}
@@ -4087,7 +4087,7 @@ function BloqueTeoriasAhorro({ gastos, totalIngresos, onReclasificar }) {
 
       {/* Cabecera */}
       <div style={{ padding:"14px 16px" }}>
-        <div style={{ fontFamily:SERIF, fontSize:15, fontWeight:600, color:V("--text-mid"), letterSpacing:"0", marginBottom:8 }}>
+        <div style={{ fontFamily:UI, fontSize:13, fontWeight:700, color:V("--text-mid"), marginBottom:8 }}>
           <IconoInline nombre="formula"/>Teoría del ahorro
         </div>
 
@@ -4315,8 +4315,8 @@ function BotonAjustes({ tema, setTema }) {
           React.createElement("div", {
             style: {
               padding: "6px 10px", fontFamily: "'Inter',sans-serif",
-              fontSize: 10, fontWeight: 700, color: V("--text-dim"),
-              letterSpacing: "0.08em", textTransform: "uppercase",
+              fontSize: 10, fontWeight: 600, color: V("--text-dim"),
+              letterSpacing: "0.1em", textTransform: "uppercase",
             }
           }, React.createElement(Icono, { nombre:"paleta", size:15, color:"currentColor" }), " Tema"),
           React.createElement("div", {
@@ -4568,7 +4568,7 @@ function App() {
           <div style={{ textAlign:"center", display:"flex", alignItems:"center", gap:8 }}>
             <div>
               <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:V("--text-dim"),
-                letterSpacing:"0.12em", textTransform:"uppercase" }}>control mensual</div>
+                letterSpacing:"0.1em", textTransform:"uppercase" }}>control mensual</div>
               <div style={{ fontFamily:"'Inter',sans-serif", fontSize:20, fontWeight:800, letterSpacing:"-0.02em" }}>
                 {MESES[nav.mes]} <span style={{ color:V("--text-dim"), fontWeight:400, fontSize:16 }}>{nav.año}</span>
               </div>
@@ -4576,7 +4576,7 @@ function App() {
             {/* Candado: indicador clicable de mes cerrado/abierto */}
             <button onClick={cerrado ? reabrirMes : cerrarMes} title={cerrado ? "Reabrir mes" : "Cerrar mes"} style={{
               background: cerrado ? "rgba(255,140,66,0.18)" : V("--border"),
-              border: cerrado ? "1px solid #FF8C4250" : "1px solid transparent",
+              border: cerrado ? `1px solid ${mix(V("--warn"),"50")}` : "1px solid transparent",
               color: cerrado ? V("--warn") : V("--text-dim"),
               cursor:"pointer", fontSize:16, width:34, height:34, borderRadius:8,
               display:"flex", alignItems:"center", justifyContent:"center",

@@ -795,6 +795,41 @@ const SERIF = "'DM Serif Display', Georgia, serif";
 const UI = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
 
 // Logo de barras ascendentes (icono de la marca). Color por degradado hacia el acento.
+// ── Set de iconografía de línea (estilo moodboard: stroke fino, redondeado) ──
+const ICONOS = {
+  // Navegación principal
+  ingresos:    <><path d="M12 4v10"/><path d="M8 11l4 4 4-4"/><path d="M5 20h14"/></>,
+  gastos:      <><path d="M6 3h12v18l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4V3z"/><path d="M9 8h6"/><path d="M9 12h6"/></>,
+  cartera:     <><path d="M3 9l9-5 9 5"/><path d="M5 9v9"/><path d="M9 9v9"/><path d="M15 9v9"/><path d="M19 9v9"/><path d="M3 18h18"/></>,
+  analisis:    <><path d="M4 4v16h16"/><path d="M7 14l3-4 3 2 4-6"/></>,
+  // Secciones
+  banco:       <><path d="M3 9l9-5 9 5"/><path d="M5 9v9"/><path d="M9 9v9"/><path d="M15 9v9"/><path d="M19 9v9"/><path d="M3 18h18"/></>,
+  inversiones: <><path d="M3 17l6-6 4 4 7-8"/><path d="M16 7h5v5"/></>,
+  patrimonio:  <><path d="M6 3h12l3 5-9 13L3 8z"/><path d="M3 8h18"/><path d="M9 3l3 18 3-18"/></>,
+  inmueble:    <><path d="M4 11l8-6 8 6"/><path d="M6 10v9h12v-9"/><path d="M10 19v-5h4v5"/></>,
+  deuda:       <><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/><path d="M7 15h4"/></>,
+  objetivo:    <><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1.2" fill="currentColor"/></>,
+  ahorro:      <><circle cx="12" cy="12" r="8"/><path d="M14.5 9.5a3 3 0 1 0 0 5"/><path d="M8 11h4"/><path d="M8 13.2h4"/></>,
+  resumen:     <><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="11" width="7" height="10" rx="1.5"/><rect x="3" y="15" width="7" height="6" rx="1.5"/></>,
+  teorias:     <><circle cx="12" cy="12" r="8"/><path d="M12 4v8h8"/></>,
+  anuales:     <><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18"/><path d="M8 3v4"/><path d="M16 3v4"/></>,
+  fila:        <><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></>,
+  ajustes:     <><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.13-1.3l1.9-1.4-2-3.46-2.25.9A7 7 0 0 0 14 4.6L13.6 2.2h-3.2L10 4.6a7 7 0 0 0-2.42 1.4l-2.25-.9-2 3.46 1.9 1.4A7 7 0 0 0 5 12c0 .44.05.87.13 1.3l-1.9 1.4 2 3.46 2.25-.9A7 7 0 0 0 10 19.4l.4 2.4h3.2l.4-2.4a7 7 0 0 0 2.42-1.4l2.25.9 2-3.46-1.9-1.4c.08-.43.13-.86.13-1.3z"/></>,
+  campana:     <><path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.7 21a2 2 0 0 1-3.4 0"/></>,
+};
+
+function Icono({ nombre, size = 20, color = "currentColor", stroke = 1.7 }) {
+  const contenido = ICONOS[nombre];
+  if (!contenido) return null;
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none"
+      stroke={color} strokeWidth={stroke} strokeLinecap="round" strokeLinejoin="round"
+      style={{ display:"block", flexShrink:0 }}>
+      {contenido}
+    </svg>
+  );
+}
+
 function LogoBarras({ size = 28 }) {
   const u = size / 28;
   const gid = "logograd" + size;
@@ -1294,7 +1329,7 @@ function BloqueBancos({ datos, onUpdateDatos }) {
         style={{ padding:"14px 16px", cursor:"pointer",
           borderBottom: abierto ? "1px solid rgba(255,255,255,0.06)" : "none" }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:abierto ? 10 : 0 }}>
-          <div style={{ fontFamily:SERIF, fontSize:15, fontWeight:600, color:V("--text-mid"), letterSpacing:"0" }}>🏦 Bancos y cuentas</div>
+          <div style={{ display:"flex", alignItems:"center", gap:7, fontFamily:SERIF, fontSize:15, fontWeight:600, color:V("--text-mid") }}><Icono nombre="banco" size={17} color={V("--text-mid")}/> Bancos y cuentas</div>
           <span style={{ color:V("--text-dim"), fontSize:14 }}>{abierto ? "▲" : "▼"}</span>
         </div>
 
@@ -2991,7 +3026,7 @@ function VistaPatrimonio({ datos, claveM, onUpdateDatos }) {
         border:"1px solid rgba(38,208,124,0.25)", borderRadius:18, padding:"18px 20px", marginBottom:14 }}>
         <div style={{ fontFamily:"'Inter',sans-serif", fontSize:10, fontWeight:700, color:V("--accent"),
           letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:6 }}>
-          💎 Patrimonio neto
+          Patrimonio neto
         </div>
         <div style={{ fontFamily:SERIF, fontSize:34, fontWeight:700,
           color:V("--text"), letterSpacing:"-0.02em" }}>
@@ -3018,7 +3053,7 @@ function VistaPatrimonio({ datos, claveM, onUpdateDatos }) {
       {/* INMUEBLES */}
       <div style={{ background:V("--surface"), borderRadius:18, padding:"16px 18px",
         border:`1px solid ${V("--border")}`, marginBottom:12 }}>
-        <div style={{ fontFamily:SERIF, fontSize:15, fontWeight:600, color:V("--text-mid"), letterSpacing:"0", marginBottom:10 }}>🏡 Inmuebles</div>
+        <div style={{ display:"flex", alignItems:"center", gap:7, fontFamily:SERIF, fontSize:15, fontWeight:600, color:V("--text-mid"), marginBottom:10 }}><Icono nombre="inmueble" size={17} color={V("--text-mid")}/> Inmuebles</div>
         {(dEf.inmuebles || []).map(inm => {
           const valorHoy = valorInmuebleEnMes(inm, claveM);
           return (
@@ -3050,7 +3085,7 @@ function VistaPatrimonio({ datos, claveM, onUpdateDatos }) {
       {/* DEUDAS */}
       <div style={{ background:V("--surface"), borderRadius:18, padding:"16px 18px",
         border:`1px solid ${V("--border")}`, marginBottom:12 }}>
-        <div style={{ fontFamily:SERIF, fontSize:15, fontWeight:600, color:V("--text-mid"), letterSpacing:"0", marginBottom:10 }}>💳 Deudas</div>
+        <div style={{ display:"flex", alignItems:"center", gap:7, fontFamily:SERIF, fontSize:15, fontWeight:600, color:V("--text-mid"), marginBottom:10 }}><Icono nombre="deuda" size={17} color={V("--text-mid")}/> Deudas</div>
         {(dEf.deudas || []).map(deuda => (
           <FilaDeuda key={deuda.id} deuda={deuda} claveM={claveM}
             onActualizar={cambios => actualizarDeuda(deuda.id, cambios)}
@@ -3256,19 +3291,19 @@ function VistaCartera({ datos, claveM, onUpdateDatos }) {
         background:V("--surface"), borderRadius:12, padding:4,
         border:`1px solid ${V("--border")}` }}>
         {[
-          { id:"bancos", icono:"🏦", label:"Bancos" },
-          { id:"inversiones", icono:"📈", label:"Inversiones" },
-          { id:"patrimonio", icono:"💎", label:"Patrimonio" },
+          { id:"bancos", ic:"banco", label:"Bancos" },
+          { id:"inversiones", ic:"inversiones", label:"Inversiones" },
+          { id:"patrimonio", ic:"patrimonio", label:"Patrimonio" },
         ].map(s => (
           <button key={s.id} onClick={() => setSub(s.id)} style={{
             flex:1, padding:"9px 4px", borderRadius:9, border:"none", cursor:"pointer",
-            display:"flex", alignItems:"center", justifyContent:"center", gap:4,
+            display:"flex", alignItems:"center", justifyContent:"center", gap:5,
             background: sub === s.id ? mix(V("--accent"), "20") : "transparent",
             fontFamily:"'Inter',sans-serif", fontSize:12, fontWeight:700,
             color: sub === s.id ? V("--accent") : V("--text-dim"),
             transition:"all 0.2s",
           }}>
-            <span style={{ fontSize:14 }}>{s.icono}</span> {s.label}
+            <Icono nombre={s.ic} size={16} color={sub === s.id ? V("--accent") : V("--text-dim")}/> {s.label}
           </button>
         ))}
       </div>
@@ -3408,9 +3443,9 @@ function VistaAnalisis({ datos, claveM, mesNum, onUpdateDatos }) {
         background:V("--surface"), borderRadius:12, padding:4,
         border:`1px solid ${V("--border")}` }}>
         {[
-          { id:"resumen",   icono:"📊", label:"Resumen" },
-          { id:"teorias",   icono:"📐", label:"Teorías" },
-          { id:"objetivos", icono:"🎯", label:"Objetivos" },
+          { id:"resumen",   ic:"resumen", label:"Resumen" },
+          { id:"teorias",   ic:"teorias", label:"Teorías" },
+          { id:"objetivos", ic:"objetivo", label:"Objetivos" },
         ].map(s => (
           <button key={s.id} onClick={() => setSubAna(s.id)} style={{
             flex:1, padding:"9px 4px", borderRadius:9, border:"none", cursor:"pointer",
@@ -3420,7 +3455,7 @@ function VistaAnalisis({ datos, claveM, mesNum, onUpdateDatos }) {
             color: subAna === s.id ? V("--accent") : V("--text-dim"),
             transition:"all 0.2s",
           }}>
-            <span style={{ fontSize:14 }}>{s.icono}</span> {s.label}
+            <Icono nombre={s.ic} size={16} color={subAna === s.id ? V("--accent") : V("--text-dim")}/> {s.label}
           </button>
         ))}
       </div>
@@ -3434,7 +3469,7 @@ function VistaAnalisis({ datos, claveM, mesNum, onUpdateDatos }) {
         border:"1px solid #00A3E030", borderRadius:18, padding:"18px 20px", marginBottom:14 }}>
         <div style={{ fontFamily:"'Inter',sans-serif", fontSize:10, fontWeight:700, color:V("--c2"),
           letterSpacing:"0.12em", textTransform:"uppercase", marginBottom:6 }}>
-          💎 Patrimonio neto
+          Patrimonio neto
         </div>
         <div style={{ fontFamily:SERIF, fontSize:34, fontWeight:700,
           color:V("--text"), letterSpacing:"-0.02em" }}>
@@ -3773,7 +3808,7 @@ function BloqueObjetivos({ objetivos, cuentas, claveM, onUpdateDatos, autoObjeti
       border:`1px solid ${V("--border")}`, marginBottom:12, padding:"14px 16px" }}>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
         <div style={{ fontFamily:SERIF, fontSize:15, fontWeight:600, color:V("--text-mid"), letterSpacing:"0" }}>
-          🎯 Objetivos de ahorro
+          Objetivos de ahorro
         </div>
         {objetivos.length > 0 && (
           <button onClick={() => onUpdateDatos(d => { d.autoObjetivos = !d.autoObjetivos; })} title="Crear gasto de ahorro automático con la suma de cuotas"
@@ -4519,15 +4554,16 @@ function App() {
         <div style={{ display:"flex", gap:3, paddingBottom:14 }}>
           {VISTAS.map(v => (
             <button key={v.id} onClick={() => setVista(v.id)} style={{
-              flex:1, padding:"7px 2px", borderRadius:10, border:"none", cursor:"pointer",
-              display:"flex", flexDirection:"column", alignItems:"center", gap:2,
-              background: vista===v.id ? "rgba(38,208,124,0.12)" : "transparent",
-              borderBottom: vista===v.id ? "2px solid #26D07C" : "2px solid transparent",
+              flex:1, padding:"8px 2px", borderRadius:10, border:"none", cursor:"pointer",
+              display:"flex", flexDirection:"column", alignItems:"center", gap:4,
+              background: vista===v.id ? mix(V("--accent"), "20") : "transparent",
+              borderBottom: vista===v.id ? `2px solid ${V("--accent")}` : "2px solid transparent",
               transition:"all 0.2s",
             }}>
-              <span style={{ fontSize:14 }}>{v.icono}</span>
-              <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:8, fontWeight:600,
-                color: vista===v.id ? V("--accent") : V("--text-dim"), letterSpacing:"0.05em" }}>{v.label}</span>
+              <Icono nombre={v.id === "inicio" ? "ingresos" : v.id}
+                size={20} color={vista===v.id ? V("--accent") : V("--text-dim")}/>
+              <span style={{ fontFamily:UI, fontSize:9, fontWeight:600,
+                color: vista===v.id ? V("--accent") : V("--text-dim"), letterSpacing:"0.02em" }}>{v.label}</span>
             </button>
           ))}
         </div>

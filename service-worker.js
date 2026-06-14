@@ -1,6 +1,6 @@
 // Service Worker para Finanzas Personales
 // Estrategia: network-first para la app shell, cache-first para CDNs
-const VERSION = "v28";
+const VERSION = "v29";
 const APP_CACHE = `finanzas-app-${VERSION}`;
 const CDN_CACHE = `finanzas-cdn-${VERSION}`;
 

@@ -785,8 +785,11 @@ function V(nombre) { return `var(${nombre})`; }
 
 // Mezcla un color (var o hex) con transparencia. alpha en hex de 2 chars ("20") o número 0-255.
 function mix(color, alpha) {
-  const n = typeof alpha === "string" ? parseInt(alpha, 16) : alpha;
-  const pct = Math.max(0, Math.min(100, Math.round((n / 255) * 100)));
+  let pct;
+  if (typeof alpha === "string") pct = (parseInt(alpha, 16) / 255) * 100;
+  else if (alpha <= 1) pct = alpha * 100;        // 0.08 → 8%
+  else pct = (alpha / 255) * 100;                // 20 → ~8%
+  pct = Math.max(0, Math.min(100, Math.round(pct)));
   return `color-mix(in srgb, ${color} ${pct}%, transparent)`;
 }
 
@@ -938,7 +941,7 @@ function PantallaBienvenida({ onEntrar }) {
         background:V("--accent"), color:V("--bg"), border:"none", borderRadius:999,
         padding:"16px 56px", fontFamily:UI, fontWeight:800, fontSize:16,
         cursor:"pointer", letterSpacing:"0.01em", marginBottom:14,
-        boxShadow:"0 0 40px rgba(116,198,157,0.16)",
+        boxShadow:`0 0 40px ${mix(V("--accent"),0.16)}`,
       }}>Continuar</button>
       <div style={{ fontFamily:UI, fontSize:12, color:V("--text-dim") }}>Tu dinero, bajo control.</div>
     </div>
@@ -1174,7 +1177,7 @@ function SelectorProposito({ value, onChange }) {
               <button key={id} onClick={() => { onChange(id); setAbierto(false); }} style={{
                 display:"flex", alignItems:"center", gap:6, width:"100%",
                 padding:"5px 8px", borderRadius:5, border:"none", cursor:"pointer",
-                background: id === value ? "rgba(38,208,124,0.15)" : "transparent",
+                background: id === value ? mix(V("--accent"),0.15) : "transparent",
                 fontFamily:"'Inter',sans-serif", fontSize:11, color:V("--text-mid"), textAlign:"left",
               }}>
                 <span style={{display:"inline-flex"}}><Icono nombre={p.icono} size={14} color="currentColor"/></span> <span>{p.label}</span>
@@ -1204,7 +1207,7 @@ function FilaGastoCatalogo({ gasto, onPagado, onImporte, onBanco, onEliminar }) 
     <div style={{
       display:"flex", alignItems:"center", gap:8, padding:"9px 0",
       borderBottom:`1px solid ${V("--border")}`,
-      background: esAuto ? "rgba(38,208,124,0.04)" : "transparent",
+      background: esAuto ? mix(V("--accent"),0.04) : "transparent",
     }}>
       <button onClick={onPagado} style={{
         width:20, height:20, borderRadius:5, flexShrink:0, cursor:"pointer",
@@ -1367,19 +1370,19 @@ function BloqueBancos({ datos, onUpdateDatos }) {
         style={{ padding:"14px 16px", cursor:"pointer",
           borderBottom: abierto ? "1px solid rgba(255,255,255,0.06)" : "none" }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:abierto ? 10 : 0 }}>
-          <div style={{ display:"flex", alignItems:"center", gap:8, fontFamily:UI, fontSize:13, fontWeight:700, color:V("--text-mid") }}><Icono nombre="banco" size={17} color={V("--text-mid")}/> Bancos y cuentas</div>
+          <div style={{ display:"flex", alignItems:"center", gap:8, fontFamily:UI, fontSize:12, fontWeight:700, color:V("--text-mid"), letterSpacing:"0.06em", textTransform:"uppercase" }}><Icono nombre="banco" size={17} color={V("--text-mid")}/> Bancos y cuentas</div>
           <span style={{ color:V("--text-dim"), fontSize:14 }}>{abierto ? "▲" : "▼"}</span>
         </div>
 
         {/* Resumen siempre visible */}
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr 1fr", gap:6 }}>
-          <div style={{ textAlign:"center", background:"rgba(0,163,224,0.08)", borderRadius:8, padding:"8px 4px" }}>
+          <div style={{ textAlign:"center", background:mix(V("--c2"),0.08), borderRadius:8, padding:"8px 4px" }}>
             <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:12, fontWeight:700, color:V("--c2") }}>
               {totalLiquido.toLocaleString("es-ES",{minimumFractionDigits:0})}€
             </div>
             <div style={{ fontFamily:"'Inter',sans-serif", fontSize:8, color:V("--text-dim"), marginTop:2 }}>Líquido</div>
           </div>
-          <div style={{ textAlign:"center", background:"rgba(176,111,232,0.08)", borderRadius:8, padding:"8px 4px" }}>
+          <div style={{ textAlign:"center", background:mix(V("--c3"),0.08), borderRadius:8, padding:"8px 4px" }}>
             <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:12, fontWeight:700, color:V("--c3") }}>
               {totalCompartido.toLocaleString("es-ES",{minimumFractionDigits:0})}€
             </div>
@@ -1387,14 +1390,14 @@ function BloqueBancos({ datos, onUpdateDatos }) {
               <IconoInline nombre="compartida"/>50% ({saldoCompartido.toLocaleString("es-ES",{minimumFractionDigits:0})}€)
             </div>
           </div>
-          <div style={{ textAlign:"center", background:"rgba(255,107,53,0.08)", borderRadius:8, padding:"8px 4px" }}>
+          <div style={{ textAlign:"center", background:mix(V("--c4"),0.08), borderRadius:8, padding:"8px 4px" }}>
             <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:12, fontWeight:700, color:V("--c4") }}>
               {totalAsignado.toLocaleString("es-ES",{minimumFractionDigits:0})}€
             </div>
             <div style={{ fontFamily:"'Inter',sans-serif", fontSize:8, color:V("--text-dim"), marginTop:2 }}>Asignado</div>
           </div>
           <div style={{ textAlign:"center",
-            background: libreTotal >= 0 ? "rgba(38,208,124,0.08)" : "rgba(255,71,87,0.08)",
+            background: libreTotal >= 0 ? mix(V("--accent"),0.08) : mix(V("--negative"),0.08),
             borderRadius:8, padding:"8px 4px" }}>
             <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:12, fontWeight:700,
               color: libreTotal >= 0 ? V("--accent") : V("--negative") }}>
@@ -1478,7 +1481,7 @@ function BloqueBancos({ datos, onUpdateDatos }) {
                     <div key={c.id} style={{
                       display:"flex", alignItems:"center", gap:6, padding:"6px 0",
                       borderBottom:`1px solid ${V("--border")}`,
-                      background: esCompartida ? "rgba(176,111,232,0.04)" : "transparent",
+                      background: esCompartida ? mix(V("--c3"),0.04) : "transparent",
                     }}>
                       <span style={{ width:18, display:"inline-flex", justifyContent:"center" }}><Icono nombre={prop.icono} size={13} color="currentColor"/></span>
                       {enEdicion ? (
@@ -1505,7 +1508,7 @@ function BloqueBancos({ datos, onUpdateDatos }) {
                       {/* Botón pequeño para alternar compartida */}
                       <button onClick={() => actualizarCuenta(c.id, { compartida: !esCompartida })} title={esCompartida ? "Quitar compartida" : "Marcar compartida"} style={{
                         fontSize:11, padding:"2px 5px", borderRadius:4, border:"none", cursor:"pointer",
-                        background: esCompartida ? "rgba(176,111,232,0.2)" : V("--surface-2"),
+                        background: esCompartida ? mix(V("--c3"),0.2) : V("--surface-2"),
                         color: esCompartida ? V("--c3") : V("--text-dim"),
                       }}><Icono nombre="compartida" size={14}/></button>
                       <SelectorProposito value={c.proposito} onChange={p => actualizarCuenta(c.id, { proposito: p })}/>
@@ -1520,7 +1523,7 @@ function BloqueBancos({ datos, onUpdateDatos }) {
                 {!esSuma && cuentasBanco.length > 0 && (
                   <div style={{
                     marginTop:8, padding:"8px 10px", borderRadius:8,
-                    background: libre >= 0 ? "rgba(38,208,124,0.06)" : "rgba(255,71,87,0.08)",
+                    background: libre >= 0 ? mix(V("--accent"),0.06) : mix(V("--negative"),0.08),
                     border: `1px solid ${libre >= 0 ? mix(V("--accent"),"25") : mix(V("--negative"),"30")}`,
                   }}>
                     <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center" }}>
@@ -1675,7 +1678,7 @@ function FormularioAnadirCuenta({ onGuardar, onCancelar, colorAccion=V("--accent
         <button onClick={() => setCompartida(c => !c)} style={{
           padding:"3px 10px", borderRadius:16, border:"none", cursor:"pointer", fontSize:10,
           fontFamily:"'JetBrains Mono',monospace", fontWeight:600,
-          background: compartida ? "rgba(176,111,232,0.2)" : V("--border"),
+          background: compartida ? mix(V("--c3"),0.2) : V("--border"),
           color: compartida ? V("--c3") : V("--text-dim"),
         }}>{compartida ? "SÍ" : "NO"}</button>
       </div>
@@ -1760,7 +1763,7 @@ function VistaInicio({ datos, claveM, mesNum, onUpdateDatos }) {
       <div style={{ background:V("--surface"), borderRadius:18, padding:"16px 18px", marginBottom:12,
         border:`1px solid ${V("--border")}` }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
-          <div style={{ fontFamily:UI, fontSize:13, fontWeight:700, color:V("--text-mid") }}>Ingresos del mes</div>
+          <div style={{ fontFamily:UI, fontSize:12, fontWeight:700, color:V("--text-mid"), letterSpacing:"0.06em", textTransform:"uppercase" }}>Ingresos del mes</div>
           <Num v={totalIngresos} decimals={0} color={V("--accent")} size={14}/>
         </div>
 
@@ -1802,7 +1805,7 @@ function VistaInicio({ datos, claveM, mesNum, onUpdateDatos }) {
           ) : (
             <button onClick={() => setAnadiendoIngresoMes(true)} style={{
               width:"100%", padding:"6px", borderRadius:6, border:"none", cursor:"pointer",
-              background:"rgba(255,140,66,0.06)", color:V("--warn"),
+              background:mix(V("--warn"),0.06), color:V("--warn"),
               fontFamily:"'Inter',sans-serif", fontSize:11, fontWeight:600, marginTop:4,
             }}>+ Añadir ingreso solo de este mes</button>
           )}
@@ -1815,7 +1818,7 @@ function VistaInicio({ datos, claveM, mesNum, onUpdateDatos }) {
               <div style={{ fontFamily:"'Inter',sans-serif", fontSize:13, color:V("--text-mid") }}>
                 Km coche trabajo
                 <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:8, color:V("--warn"),
-                  background:"rgba(255,140,66,0.12)", padding:"1px 5px", borderRadius:3, marginLeft:5 }}>SOLO MES</span>
+                  background:mix(V("--warn"),0.12), padding:"1px 5px", borderRadius:3, marginLeft:5 }}>SOLO MES</span>
               </div>
               <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:V("--text-dim"), marginTop:2 }}>
                 {TARIFA_KM.toFixed(2).replace(".",",")}€/km · <span style={{ color:V("--accent") }}>+{ingresoKm.toLocaleString("es-ES",{minimumFractionDigits:2})}€</span>
@@ -1859,7 +1862,7 @@ function FilaIngreso({ fuente, onNombre, onImporte, onEliminar, soloMes=false })
           {fuente.nombre}
           {soloMes && (
             <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:8, color:V("--warn"),
-              background:"rgba(255,140,66,0.12)", padding:"1px 5px", borderRadius:3, marginLeft:5 }}>SOLO MES</span>
+              background:mix(V("--warn"),0.12), padding:"1px 5px", borderRadius:3, marginLeft:5 }}>SOLO MES</span>
           )}
         </span>
       )}
@@ -1926,7 +1929,7 @@ function BloqueAportacionAnual({ datos, claveM, mesNum, onUpdateDatos }) {
   });
 
   return (
-    <div style={{ background:"linear-gradient(135deg, rgba(38,208,124,0.10), rgba(0,163,224,0.06))",
+    <div style={{ background:`linear-gradient(135deg, ${mix(V("--accent"),0.10)}, ${mix(V("--c2"),0.06)})`,
       borderRadius:12, border:`1px solid ${mix(V("--accent"),"40")}`, marginBottom:12, overflow:"hidden" }}>
 
       {/* Barra compacta clicable */}
@@ -2008,13 +2011,13 @@ function BloqueAportacionAnual({ datos, claveM, mesNum, onUpdateDatos }) {
           </div>
 
           <div style={{ marginTop:8, fontFamily:"'Inter',sans-serif", fontSize:9, color:V("--text-dim"),
-            padding:"6px 8px", background:"rgba(0,163,224,0.05)", borderRadius:5, lineHeight:1.4 }}>
+            padding:"6px 8px", background:mix(V("--c2"),0.05), borderRadius:5, lineHeight:1.4 }}>
             <IconoInline nombre="formula"/>(pendiente − reserva imp.{pct > 0 ? ` − ${pct.toFixed(2)}% del extra` : ""}) ÷ {Math.max(0, 10-mesNum)} aportaciones (hasta noviembre)
           </div>
 
           {/* Automatismo: crear gasto de ahorro con esta aportación (redondeada a 50€) */}
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
-            marginTop:8, padding:"8px 10px", background:"rgba(38,208,124,0.06)", borderRadius:8 }}>
+            marginTop:8, padding:"8px 10px", background:mix(V("--accent"),0.06), borderRadius:8 }}>
             <div style={{ flex:1 }}>
               <div style={{ fontFamily:"'Inter',sans-serif", fontSize:11, fontWeight:600, color:V("--text-mid") }}>
                 <IconoInline nombre="auto"/>Crear gasto automático
@@ -2026,7 +2029,7 @@ function BloqueAportacionAnual({ datos, claveM, mesNum, onUpdateDatos }) {
             <button onClick={() => onUpdateDatos(d => { d.autoReservaAnual = !d.autoReservaAnual; })} style={{
               padding:"4px 12px", borderRadius:16, border:"none", cursor:"pointer", fontSize:11,
               fontFamily:"'JetBrains Mono',monospace", fontWeight:700,
-              background: datos.autoReservaAnual ? "rgba(38,208,124,0.25)" : V("--surface-2"),
+              background: datos.autoReservaAnual ? mix(V("--accent"),0.25) : V("--surface-2"),
               color: datos.autoReservaAnual ? V("--accent") : V("--text-dim"),
             }}>{datos.autoReservaAnual ? "ON" : "OFF"}</button>
           </div>
@@ -2106,7 +2109,7 @@ function VistaGastos({ datos, claveM, mesNum, onUpdateDatos }) {
           padding:"12px 14px", cursor:"pointer" }}>
         <div style={{ display:"flex", alignItems:"center", gap:8 }}>
           <Icono nombre={icono} size={17} color={V("--text-mid")}/>
-          <span style={{ fontFamily:UI, fontSize:13, fontWeight:700, color:V("--text-mid") }}>{titulo}</span>
+          <span style={{ fontFamily:UI, fontSize:12, fontWeight:700, color:V("--text-mid"), letterSpacing:"0.06em", textTransform:"uppercase" }}>{titulo}</span>
         </div>
         <div style={{ display:"flex", alignItems:"center", gap:8 }}>
           <Num v={total} decimals={2} color={V("--c3")} size={13}/>
@@ -2147,13 +2150,17 @@ function VistaGastos({ datos, claveM, mesNum, onUpdateDatos }) {
       {/* Resumen */}
       <div style={{ background:V("--surface"), borderRadius:18, padding:"16px 18px",
         border:`1px solid ${V("--border")}`, marginBottom:14 }}>
+        <div style={{ display:"flex", alignItems:"center", gap:8, marginBottom:12 }}>
+          <Icono nombre="resumen" size={17} color={V("--text-mid")}/>
+          <span style={{ fontFamily:UI, fontSize:12, fontWeight:700, color:V("--text-mid"), letterSpacing:"0.06em", textTransform:"uppercase" }}>Resumen del mes</span>
+        </div>
         <div style={{ display:"grid", gridTemplateColumns:"1fr 1fr 1fr", gap:8, marginBottom:12 }}>
           {[
             { label:"Gastos", v:tGastos,    color:V("--c3") },
             { label:"Pagado", v:totalPagado,color:V("--accent") },
             { label:"Remanente", v:remanente,color: remanente >= 0 ? V("--accent") : V("--negative") },
           ].map(({ label, v, color }) => (
-            <div key={label} style={{ textAlign:"center", background:"rgba(255,255,255,0.03)", borderRadius:10, padding:"10px 4px" }}>
+            <div key={label} style={{ textAlign:"center", background:V("--surface-2"), borderRadius:10, padding:"10px 4px" }}>
               <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:14, fontWeight:600, color }}>
                 {v.toLocaleString("es-ES",{minimumFractionDigits:0})}€
               </div>
@@ -2167,7 +2174,7 @@ function VistaGastos({ datos, claveM, mesNum, onUpdateDatos }) {
         </div>
       </div>
 
-      <div style={{ background:"rgba(255,140,66,0.05)", border:"1px solid rgba(255,140,66,0.15)",
+      <div style={{ background:mix(V("--warn"),0.05), border:`1px solid ${mix(V("--warn"),0.15)}`,
         borderRadius:10, padding:"8px 12px", marginBottom:10,
         fontFamily:"'Inter',sans-serif", fontSize:10, color:V("--warn"), lineHeight:1.5 }}>
         ℹ️ Editar importe/banco cambia el catálogo global. Los checks de pagado son del mes y quedan registrados como histórico.
@@ -2240,7 +2247,7 @@ function VistaGastos({ datos, claveM, mesNum, onUpdateDatos }) {
         {/* Control del automatismo de reserva anual */}
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
           marginTop:8, padding:"8px 10px", borderRadius:8,
-          background: datos.autoReservaAnual ? "rgba(38,208,124,0.06)" : "rgba(255,255,255,0.02)" }}>
+          background: datos.autoReservaAnual ? mix(V("--accent"),0.06) : "rgba(255,255,255,0.02)" }}>
           <div style={{ flex:1 }}>
             <div style={{ fontFamily:"'Inter',sans-serif", fontSize:11, fontWeight:600, color:V("--text-mid") }}>
               <IconoInline nombre="auto"/>Reserva anual automática
@@ -2252,7 +2259,7 @@ function VistaGastos({ datos, claveM, mesNum, onUpdateDatos }) {
           <button onClick={() => onUpdateDatos(d => { d.autoReservaAnual = !d.autoReservaAnual; })} style={{
             padding:"4px 12px", borderRadius:16, border:"none", cursor:"pointer", fontSize:11,
             fontFamily:"'JetBrains Mono',monospace", fontWeight:700,
-            background: datos.autoReservaAnual ? "rgba(38,208,124,0.25)" : V("--surface-2"),
+            background: datos.autoReservaAnual ? mix(V("--accent"),0.25) : V("--surface-2"),
             color: datos.autoReservaAnual ? V("--accent") : V("--text-dim"),
           }}>{datos.autoReservaAnual ? "ON" : "OFF"}</button>
         </div>
@@ -2424,7 +2431,7 @@ function VistaAnuales({ datos, claveM, onUpdateDatos }) {
       <div style={{ background:V("--surface"), borderRadius:18, padding:"16px 18px",
         border:`1px solid ${V("--border")}`, marginBottom:14 }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
-          <div style={{ fontFamily:UI, fontSize:13, fontWeight:700, color:V("--text-mid") }}>
+          <div style={{ fontFamily:UI, fontSize:12, fontWeight:700, color:V("--text-mid"), letterSpacing:"0.06em", textTransform:"uppercase" }}>
             Gastos anuales {añoCatalogo}
           </div>
           {añoCatalogo < añoAhora && (
@@ -2441,7 +2448,7 @@ function VistaAnuales({ datos, claveM, onUpdateDatos }) {
             { label:"Pagado",    v:totalPagado,    color:V("--accent") },
             { label:"Pendiente", v:totalPendiente, color:V("--c4") },
           ].map(({ label, v, color }) => (
-            <div key={label} style={{ textAlign:"center", background:"rgba(255,255,255,0.03)", borderRadius:10, padding:"10px 4px" }}>
+            <div key={label} style={{ textAlign:"center", background:V("--surface-2"), borderRadius:10, padding:"10px 4px" }}>
               <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:14, fontWeight:600, color }}>
                 {v.toLocaleString("es-ES",{minimumFractionDigits:0})}€
               </div>
@@ -2465,8 +2472,8 @@ function VistaAnuales({ datos, claveM, onUpdateDatos }) {
               {/* Cabecera */}
               <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:8 }}>
                 <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-                  <Icono nombre={info.icono} size={16} color={info.color}/>
-                  <span style={{ fontFamily:UI, fontSize:13, fontWeight:700, color:V("--text-mid") }}>{cat}</span>
+                  <Icono nombre={info.icono} size={16} color={V("--text-mid")}/>
+                  <span style={{ fontFamily:UI, fontSize:12, fontWeight:700, color:V("--text-mid"), letterSpacing:"0.06em", textTransform:"uppercase" }}>{cat}</span>
                 </div>
                 <div style={{ display:"flex", alignItems:"center", gap:6 }}>
                   <Num v={total} decimals={0} color={V("--text-mid")} size={13}/>
@@ -2776,7 +2783,7 @@ function FilaInversion({ inv, onUpdate, onEliminar }) {
           <div style={{
             display:"flex", justifyContent:"space-between", alignItems:"center",
             padding:"8px 10px", borderRadius:6,
-            background: ganando ? "rgba(38,208,124,0.08)" : "rgba(255,71,87,0.08)",
+            background: ganando ? mix(V("--accent"),0.08) : mix(V("--negative"),0.08),
             border: `1px solid ${ganando ? mix(V("--accent"),"20") : mix(V("--negative"),"20")}`,
           }}>
             <span style={{ fontFamily:"'Inter',sans-serif", fontSize:11, color:V("--text-dim") }}>
@@ -2950,7 +2957,7 @@ function VistaInversiones({ datos, claveM, onUpdateDatos }) {
       {inversiones.length > 0 && (
         <div style={{ background:V("--surface"), borderRadius:18, padding:"16px 18px",
           border:`1px solid ${V("--border")}`, marginBottom:14 }}>
-          <div style={{ fontFamily:UI, fontSize:13, fontWeight:700, color:V("--text-mid"), marginBottom:12 }}>Distribución por tipo</div>
+          <div style={{ fontFamily:UI, fontSize:12, fontWeight:700, color:V("--text-mid"), letterSpacing:"0.06em", textTransform:"uppercase", marginBottom:12 }}>Distribución por tipo</div>
           {Object.entries(porTipo)
             .filter(([_, v]) => v.valorActual > 0)
             .sort((a,b) => b[1].valorActual - a[1].valorActual)
@@ -2974,7 +2981,7 @@ function VistaInversiones({ datos, claveM, onUpdateDatos }) {
         </div>
       )}
 
-      <div style={{ fontFamily:UI, fontSize:13, fontWeight:700, color:V("--text-mid"), marginBottom:10 }}>
+      <div style={{ fontFamily:UI, fontSize:12, fontWeight:700, color:V("--text-mid"), letterSpacing:"0.06em", textTransform:"uppercase", marginBottom:10 }}>
         Posiciones ({inversiones.length})
       </div>
 
@@ -3091,7 +3098,7 @@ function VistaPatrimonio({ datos, claveM, onUpdateDatos }) {
       {/* INMUEBLES */}
       <div style={{ background:V("--surface"), borderRadius:18, padding:"16px 18px",
         border:`1px solid ${V("--border")}`, marginBottom:12 }}>
-        <div style={{ display:"flex", alignItems:"center", gap:7, fontFamily:UI, fontSize:13, fontWeight:700, color:V("--text-mid"), marginBottom:10 }}><Icono nombre="inmueble" size={17} color={V("--text-mid")}/> Inmuebles</div>
+        <div style={{ display:"flex", alignItems:"center", gap:7, fontFamily:UI, fontSize:12, fontWeight:700, color:V("--text-mid"), letterSpacing:"0.06em", textTransform:"uppercase", marginBottom:10 }}><Icono nombre="inmueble" size={17} color={V("--text-mid")}/> Inmuebles</div>
         {(dEf.inmuebles || []).map(inm => {
           const valorHoy = valorInmuebleEnMes(inm, claveM);
           return (
@@ -3123,7 +3130,7 @@ function VistaPatrimonio({ datos, claveM, onUpdateDatos }) {
       {/* DEUDAS */}
       <div style={{ background:V("--surface"), borderRadius:18, padding:"16px 18px",
         border:`1px solid ${V("--border")}`, marginBottom:12 }}>
-        <div style={{ display:"flex", alignItems:"center", gap:7, fontFamily:UI, fontSize:13, fontWeight:700, color:V("--text-mid"), marginBottom:10 }}><Icono nombre="deuda" size={17} color={V("--text-mid")}/> Deudas</div>
+        <div style={{ display:"flex", alignItems:"center", gap:7, fontFamily:UI, fontSize:12, fontWeight:700, color:V("--text-mid"), letterSpacing:"0.06em", textTransform:"uppercase", marginBottom:10 }}><Icono nombre="deuda" size={17} color={V("--text-mid")}/> Deudas</div>
         {(dEf.deudas || []).map(deuda => (
           <FilaDeuda key={deuda.id} deuda={deuda} claveM={claveM}
             onActualizar={cambios => actualizarDeuda(deuda.id, cambios)}
@@ -3213,8 +3220,8 @@ function FormularioAnadirDeuda({ onGuardar, onCancelar }) {
         const prev = analizarDeuda({ capitalInicial, saldoActual, tin, plazoAnios });
         return (
           <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
-            padding:"8px 10px", marginBottom:10, borderRadius:8, background:"rgba(38,208,124,0.08)",
-            border:"1px solid rgba(38,208,124,0.2)" }}>
+            padding:"8px 10px", marginBottom:10, borderRadius:8, background:mix(V("--accent"),0.08),
+            border:`1px solid ${mix(V("--accent"),0.2)}` }}>
             <span style={{ fontFamily:"'Inter',sans-serif", fontSize:11, color:V("--text-mid") }}>
               <IconoInline nombre="formula"/>Cuota calculada
             </span>
@@ -3254,7 +3261,7 @@ function FilaDeuda({ deuda, claveM, onActualizar, onEliminar }) {
             {deuda.nombre}
           </span>
           <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:8, color:V("--text-dim"),
-            background: deuda.tipoInteres === "variable" ? "rgba(255,140,66,0.15)" : "rgba(38,208,124,0.12)",
+            background: deuda.tipoInteres === "variable" ? mix(V("--warn"),0.15) : mix(V("--accent"),0.12),
             color: deuda.tipoInteres === "variable" ? V("--warn") : V("--accent"),
             padding:"1px 5px", borderRadius:3, marginLeft:6 }}>
             {deuda.tipoInteres === "variable" ? "VAR" : "FIJO"} {deuda.tin}%
@@ -3309,7 +3316,7 @@ function FilaDeuda({ deuda, claveM, onActualizar, onEliminar }) {
             </div>
           </div>
           <div style={{ marginTop:8, fontFamily:"'Inter',sans-serif", fontSize:9, color:V("--text-dim"),
-            padding:"6px 8px", background:"rgba(255,71,87,0.05)", borderRadius:5, lineHeight:1.4 }}>
+            padding:"6px 8px", background:mix(V("--negative"),0.05), borderRadius:5, lineHeight:1.4 }}>
             <IconoInline nombre="bombilla"/>La cuota se calcula con el sistema francés (capital, interés y plazo). Compárala con tu recibo: si coincide, los datos son correctos. {deuda.tipoInteres === "variable" ? "Al revisar el euríbor, actualiza el TIN." : ""}
           </div>
         </div>
@@ -3574,7 +3581,7 @@ function VistaAnalisis({ datos, claveM, mesNum, onUpdateDatos }) {
       {/* Distribución de gastos (por tipo) */}
       <div style={{ background:V("--surface"), borderRadius:18, padding:"16px 18px",
         border:`1px solid ${V("--border")}`, marginBottom:12 }}>
-        <div style={{ fontFamily:UI, fontSize:13, fontWeight:700, color:V("--text-mid"), marginBottom:14 }}>
+        <div style={{ fontFamily:UI, fontSize:12, fontWeight:700, color:V("--text-mid"), letterSpacing:"0.06em", textTransform:"uppercase", marginBottom:14 }}>
           Distribución de gastos
         </div>
         <DonutChart segmentos={[
@@ -3588,7 +3595,7 @@ function VistaAnalisis({ datos, claveM, mesNum, onUpdateDatos }) {
       {/* Flujo por banco */}
       <div style={{ background:V("--surface"), borderRadius:18, padding:"16px 18px",
         border:`1px solid ${V("--border")}` }}>
-        <div style={{ fontFamily:UI, fontSize:13, fontWeight:700, color:V("--text-mid"), marginBottom:12 }}>
+        <div style={{ fontFamily:UI, fontSize:12, fontWeight:700, color:V("--text-mid"), letterSpacing:"0.06em", textTransform:"uppercase", marginBottom:12 }}>
           Flujo de gastos por banco
         </div>
         {Object.entries(BANCO_META).map(([banco, meta]) => {
@@ -3727,7 +3734,7 @@ function GraficaPatrimonio({ datos, claveM }) {
     return (
       <div style={{ background:V("--surface"), borderRadius:18, padding:"16px 18px",
         border:`1px solid ${V("--border")}`, marginBottom:12 }}>
-        <div style={{ fontFamily:UI, fontSize:13, fontWeight:700, color:V("--text-mid"), marginBottom:8 }}>
+        <div style={{ fontFamily:UI, fontSize:12, fontWeight:700, color:V("--text-mid"), letterSpacing:"0.06em", textTransform:"uppercase", marginBottom:8 }}>
           <IconoInline nombre="inversiones"/>Evolución del patrimonio
         </div>
         <div style={{ fontFamily:"'Inter',sans-serif", fontSize:11, color:V("--text-dim"),
@@ -3763,7 +3770,7 @@ function GraficaPatrimonio({ datos, claveM }) {
     <div style={{ background:V("--surface"), borderRadius:18, padding:"16px 18px",
       border:`1px solid ${V("--border")}`, marginBottom:12 }}>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:10 }}>
-        <div style={{ fontFamily:UI, fontSize:13, fontWeight:700, color:V("--text-mid") }}>
+        <div style={{ fontFamily:UI, fontSize:12, fontWeight:700, color:V("--text-mid"), letterSpacing:"0.06em", textTransform:"uppercase" }}>
           <IconoInline nombre="inversiones"/>Evolución del patrimonio
         </div>
         <div style={{
@@ -3845,7 +3852,7 @@ function BloqueObjetivos({ objetivos, cuentas, claveM, onUpdateDatos, autoObjeti
     <div style={{ background:V("--surface"), borderRadius:14,
       border:`1px solid ${V("--border")}`, marginBottom:12, padding:"14px 16px" }}>
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:12 }}>
-        <div style={{ fontFamily:UI, fontSize:13, fontWeight:700, color:V("--text-mid") }}>
+        <div style={{ fontFamily:UI, fontSize:12, fontWeight:700, color:V("--text-mid"), letterSpacing:"0.06em", textTransform:"uppercase" }}>
           Objetivos de ahorro
         </div>
         {objetivos.length > 0 && (
@@ -3853,7 +3860,7 @@ function BloqueObjetivos({ objetivos, cuentas, claveM, onUpdateDatos, autoObjeti
             style={{
               padding:"3px 10px", borderRadius:14, border:"none", cursor:"pointer", fontSize:9,
               fontFamily:"'JetBrains Mono',monospace", fontWeight:700,
-              background: autoObjetivos ? "rgba(38,208,124,0.25)" : V("--surface-2"),
+              background: autoObjetivos ? mix(V("--accent"),0.25) : V("--surface-2"),
               color: autoObjetivos ? V("--accent") : V("--text-dim"),
             }}><span style={{display:"inline-flex",verticalAlign:"middle",marginRight:4}}><Icono nombre="auto" size={12}/></span>{autoObjetivos ? "ON" : "OFF"}</button>
         )}
@@ -4087,7 +4094,7 @@ function BloqueTeoriasAhorro({ gastos, totalIngresos, onReclasificar }) {
 
       {/* Cabecera */}
       <div style={{ padding:"14px 16px" }}>
-        <div style={{ fontFamily:UI, fontSize:13, fontWeight:700, color:V("--text-mid"), marginBottom:8 }}>
+        <div style={{ fontFamily:UI, fontSize:12, fontWeight:700, color:V("--text-mid"), letterSpacing:"0.06em", textTransform:"uppercase", marginBottom:8 }}>
           <IconoInline nombre="formula"/>Teoría del ahorro
         </div>
 
@@ -4097,7 +4104,7 @@ function BloqueTeoriasAhorro({ gastos, totalIngresos, onReclasificar }) {
             <button key={id} onClick={() => setTeoriaSel(id)} style={{
               padding:"4px 10px", borderRadius:6, border:"none", cursor:"pointer", fontSize:11,
               fontFamily:"'Inter',sans-serif", fontWeight:600,
-              background: teoriaSel === id ? "rgba(38,208,124,0.2)" : V("--surface-2"),
+              background: teoriaSel === id ? mix(V("--accent"),0.2) : V("--surface-2"),
               color: teoriaSel === id ? V("--accent") : V("--text-dim"),
             }}>{t.nombre}</button>
           ))}
@@ -4575,7 +4582,7 @@ function App() {
             </div>
             {/* Candado: indicador clicable de mes cerrado/abierto */}
             <button onClick={cerrado ? reabrirMes : cerrarMes} title={cerrado ? "Reabrir mes" : "Cerrar mes"} style={{
-              background: cerrado ? "rgba(255,140,66,0.18)" : V("--border"),
+              background: cerrado ? mix(V("--warn"),0.18) : V("--border"),
               border: cerrado ? `1px solid ${mix(V("--warn"),"50")}` : "1px solid transparent",
               color: cerrado ? V("--warn") : V("--text-dim"),
               cursor:"pointer", fontSize:16, width:34, height:34, borderRadius:8,
@@ -4610,8 +4617,8 @@ function App() {
       {/* Banner de mes cerrado */}
       {cerrado && (
         <div style={{
-          background:"linear-gradient(90deg, rgba(255,140,66,0.15), rgba(255,140,66,0.06))",
-          border:"1px solid rgba(255,140,66,0.3)", borderRadius:10,
+          background:`linear-gradient(90deg, ${mix(V("--warn"),0.15)}, ${mix(V("--warn"),0.06)})`,
+          border:`1px solid ${mix(V("--warn"),0.3)}`, borderRadius:10,
           margin:"12px 16px 0", padding:"10px 14px",
           display:"flex", alignItems:"center", gap:10,
         }}>

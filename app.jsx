@@ -1,9 +1,9 @@
 const { useState, useEffect, useCallback } = React;
 
 
-// ═══════════════════════════════════════════════════════
+// =======================================================
 // CONSTANTES Y DATOS BASE
-// ═══════════════════════════════════════════════════════
+// =======================================================
 
 const MESES = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
 
@@ -26,9 +26,9 @@ function sincronizarBancoMeta(bancosConfig) {
 
 const TARIFA_KM = 0.20;
 
-// ═══════════════════════════════════════════════════════
+// =======================================================
 // TEMAS ESTÉTICOS
-// ═══════════════════════════════════════════════════════
+// =======================================================
 const TEMAS = {
   midnight: {
     nombre: "Bosque",
@@ -169,9 +169,9 @@ const TIPOS_ACTIVO = {
   pension: { label:"Plan/Pensión", color:V("--text-dim"), icono:"pension", soloValor:true },
 };
 
-// ─────────────────────────────────────────────────────
+// -----------------------------------------------------
 // Datos iniciales (solo se cargan si no hay storage)
-// ─────────────────────────────────────────────────────
+// -----------------------------------------------------
 
 const GASTOS_FIJOS_DEFAULT = [];
 
@@ -183,9 +183,9 @@ const ANUALES_DEFAULT = {};
 
 const CUENTAS_DEFAULT = [];
 
-// ═══════════════════════════════════════════════════════
+// =======================================================
 // STORAGE Y ESTADO
-// ═══════════════════════════════════════════════════════
+// =======================================================
 
 const STORAGE_KEY = "finanzas-v9";
 const TEMA_KEY = "finanzas-tema";
@@ -201,7 +201,7 @@ const INGRESOS_BASE_DEFAULT = [{ id:"nomina", nombre:"Nómina", importe:0 }];
 
 function datosVacios() {
   return {
-    // ─── Estado actual (no por mes) ───
+    // --- Estado actual (no por mes) ---
     catalogoFijos:     GASTOS_FIJOS_DEFAULT.map(g => ({...g})),
     catalogoVariables: GASTOS_VARIABLES_DEFAULT.map(g => ({...g})),
     catalogoAhorro:    GASTOS_AHORRO_DEFAULT.map(g => ({...g})),
@@ -218,14 +218,15 @@ function datosVacios() {
     autoReservaBanco:  null,   // banco al que va ese gasto automático (null = primero disponible)
     autoObjetivos:     false,  // inyecta gasto de ahorro = suma cuotas de objetivos redondeada a 50€
     autoObjetivosBanco:null,   // banco al que va el gasto automático de objetivos
+    previsiones:       [],     // [{id,nombre,articulos:[{id,nombre,unidades,precioUnidad}],imprevistos,notas,creadoEn,incorporado}]
 
-    // ─── Por año: gastos anuales del año en curso ───
+    // --- Por año: gastos anuales del año en curso ---
     anuales: {
       año: añoActual(),
       catalogo: JSON.parse(JSON.stringify(ANUALES_DEFAULT)),
     },
 
-    // ─── Por mes ───
+    // --- Por mes ---
     meses: {},  // { "2026-04": { km, ingresosMes, puntuales, pagos... } }
   };
 }
@@ -264,7 +265,7 @@ async function guardarDatos(data) {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); } catch (e) { console.error("Error guardando:", e); }
 }
 
-// ─── Exportar / Importar JSON para backup ───
+// --- Exportar / Importar JSON para backup ---
 function descargarBackup() {
   const data = localStorage.getItem(STORAGE_KEY);
   if (!data) return alert("No hay datos para exportar todavía");
@@ -306,9 +307,9 @@ function claveMesAnterior(claveM) {
   return `${y}-${String(m).padStart(2, "0")}`;
 }
 
-// ═══════════════════════════════════════════════════════
+// =======================================================
 // CIERRE / REAPERTURA DE MES
-// ═══════════════════════════════════════════════════════
+// =======================================================
 
 // Un mes está "cerrado/congelado" si tiene snapshot guardado.
 // Esto puede ser por cierre manual del usuario (con candado) o por auto-congelación
@@ -380,9 +381,9 @@ function congelarMesesAnteriores(d, claveActual) {
   });
 }
 
-// ═══════════════════════════════════════════════════════
+// =======================================================
 // CÁLCULOS
-// ═══════════════════════════════════════════════════════
+// =======================================================
 
 function getMes(datos, claveM) {
   return datos.meses[claveM] || estadoMesVacio();
@@ -505,8 +506,8 @@ function calcularAportacionAnual(datos, mesNum, claveM) {
   const reserva = calcularReservaEfectiva(d);
   // El número en pantalla del mes M es lo que se aportará en M+1.
   // La última aportación es la de noviembre (para tener todo a primeros de diciembre).
-  // Aportaciones que quedan estando en el mes M: M+1, M+2, …, noviembre = (10 - mesNum).
-  // (mesNum: 0=enero … 11=diciembre; noviembre=10)
+  // Aportaciones que quedan estando en el mes M: M+1, M+2, ..., noviembre = (10 - mesNum).
+  // (mesNum: 0=enero ... 11=diciembre; noviembre=10)
   const aportacionesRestantes = 10 - mesNum;
   const nominaRef = (d.ingresosBase && d.ingresosBase[0]) ? (d.ingresosBase[0].importe || 0) : 0;
   const pct = (d.porcentajeExtra || 0) / 100;
@@ -557,9 +558,9 @@ function clasificacionGasto(gasto, tipoOrigen) {
   return CLASIF_DEFAULT_POR_TIPO[tipoOrigen] || "deseo";
 }
 
-// ═══════════════════════════════════════════════════════
+// =======================================================
 // OBJETIVOS DE AHORRO
-// ═══════════════════════════════════════════════════════
+// =======================================================
 
 // Meses entre dos claves "YYYY-MM" (b - a). Puede ser negativo si b < a.
 function mesesEntre(claveA, claveB) {
@@ -601,9 +602,9 @@ function evaluarObjetivo(objetivo, cuentas, claveM) {
   return { cuenta, ahorrado, restante, pctAhorrado, mesesRestantes, completado, vencido, cuotaMensual, ritmo };
 }
 
-// ═══════════════════════════════════════════════════════
+// =======================================================
 // PATRIMONIO: INMUEBLES, DEUDAS Y AUTOMATISMOS
-// ═══════════════════════════════════════════════════════
+// =======================================================
 
 // Redondeo hacia arriba al múltiplo de 50 más cercano
 function redondear50(x) {
@@ -663,7 +664,7 @@ function analizarDeuda(deuda) {
 }
 
 // Saldo de una deuda en un mes dado, amortizando desde saldoActual con la cuota francesa.
-// saldo(t) = S·(1+i)^t − cuota·((1+i)^t − 1)/i, acotado a [0, ...]. t = meses desde mesBase.
+// saldo(t) = S.(1+i)^t − cuota.((1+i)^t − 1)/i, acotado a [0, ...]. t = meses desde mesBase.
 function saldoDeudaEnMes(deuda, claveM) {
   // Compatibilidad con el modelo antiguo (saldoBase + cuotaMensual)
   if (deuda.saldoActual === undefined && deuda.saldoBase !== undefined) {
@@ -761,9 +762,9 @@ function calcularTotalCartera(inversiones) {
   }, { invertido: 0, valorActual: 0, plusvalia: 0 });
 }
 
-// ═══════════════════════════════════════════════════════
+// =======================================================
 // COMPONENTES UI BASE
-// ═══════════════════════════════════════════════════════
+// =======================================================
 
 const css = `
   @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
@@ -798,7 +799,7 @@ const SERIF = "'DM Serif Display', Georgia, serif";
 const UI = "'Inter', -apple-system, BlinkMacSystemFont, sans-serif";
 
 // Logo de barras ascendentes (icono de la marca). Color por degradado hacia el acento.
-// ── Set de iconografía de línea (estilo moodboard: stroke fino, redondeado) ──
+// -- Set de iconografía de línea (estilo moodboard: stroke fino, redondeado) --
 const ICONOS = {
   // Navegación principal
   ingresos:    <><path d="M12 4v10"/><path d="M8 11l4 4 4-4"/><path d="M5 20h14"/></>,
@@ -848,6 +849,8 @@ const ICONOS = {
   pension:     <><path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6z"/><path d="M9 12l2 2 4-4"/></>,
   cohete:      <><path d="M5 15c-1 2.5-1 5-1 5s2.5 0 5-1"/><path d="M9 19a10 10 0 0 1 11-13 10 10 0 0 1-7 11z"/><circle cx="14.5" cy="9.5" r="1.6"/></>,
   salvavidas:  <><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.6"/><path d="M5.6 5.6l3.9 3.9M14.5 14.5l3.9 3.9M18.4 5.6l-3.9 3.9M9.5 14.5l-3.9 3.9"/></>,
+  compras:     <><circle cx="9" cy="20" r="1.4"/><circle cx="17" cy="20" r="1.4"/><path d="M2 4h2.2l2.3 11.4a1 1 0 0 0 1 .8h8.4a1 1 0 0 0 1-.78L20 7H5.2"/></>,
+  prevision:   <><circle cx="9" cy="20" r="1.4"/><circle cx="17" cy="20" r="1.4"/><path d="M2 4h2.2l2.3 11.4a1 1 0 0 0 1 .8h8.4a1 1 0 0 0 1-.78L20 7H5.2"/></>,
 };
 
 function Icono({ nombre, size = 20, color = "currentColor", stroke = 1.7 }) {
@@ -896,7 +899,7 @@ function LogoBarras({ size = 28 }) {
   );
 }
 
-// Marca tipográfica "economízalo." — economíza en Inter, lo en serif, punto en acento
+// Marca tipográfica "economízalo." - economíza en Inter, lo en serif, punto en acento
 function MarcaLO({ serifSize = 24, sansSize = 18, conIso = true, isoSize = 22 }) {
   return (
     <div style={{ display:"flex", alignItems:"center", gap:10 }}>
@@ -1124,7 +1127,7 @@ function SelectorCuenta({ value, cuentas, onChange, placeholder="Sin asignar" })
               border:"none", cursor:"pointer", background:"transparent",
               fontFamily:"'Inter',sans-serif", fontSize:12, color:V("--text-dim"),
               textAlign:"left", fontStyle:"italic",
-            }}>— Sin asignar —</button>
+            }}>- Sin asignar -</button>
             {cuentas.map(c => {
               const m = BANCO_META[c.banco];
               return (
@@ -1295,9 +1298,9 @@ function FormularioAnadirGasto({ tipo, onGuardar, onCancelar, colorAccion=V("--a
   );
 }
 
-// ═══════════════════════════════════════════════════════
+// =======================================================
 // BLOQUE BANCOS (en Inicio)
-// ═══════════════════════════════════════════════════════
+// =======================================================
 
 function BloqueBancos({ datos, onUpdateDatos }) {
   const [abierto, setAbierto] = useState(true);  // abierto por defecto, es lo principal
@@ -1371,7 +1374,7 @@ function BloqueBancos({ datos, onUpdateDatos }) {
           borderBottom: abierto ? "1px solid rgba(255,255,255,0.06)" : "none" }}>
         <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:abierto ? 10 : 0 }}>
           <div style={{ display:"flex", alignItems:"center", gap:8, fontFamily:UI, fontSize:12, fontWeight:700, color:V("--text-mid"), letterSpacing:"0.06em", textTransform:"uppercase" }}><Icono nombre="banco" size={17} color={V("--text-mid")}/> Bancos y cuentas</div>
-          <span style={{ color:V("--text-dim"), fontSize:14 }}>{abierto ? "▲" : "▼"}</span>
+          <span style={{ color:V("--text-dim"), fontSize:14 }}>{abierto ? "^" : "v"}</span>
         </div>
 
         {/* Resumen siempre visible */}
@@ -1501,7 +1504,7 @@ function BloqueBancos({ datos, onUpdateDatos }) {
                           {esCompartida && <span style={{ marginRight:4, display:"inline-flex", verticalAlign:"middle" }}><Icono nombre="compartida" size={12}/></span>}
                           {c.nombre}
                           <span style={{ fontSize:9, color:V("--text-dim"), marginLeft:5 }}>
-                            {prop.label}{esCompartida ? " · 50%" : ""}
+                            {prop.label}{esCompartida ? " . 50%" : ""}
                           </span>
                         </span>
                       )}
@@ -1672,7 +1675,7 @@ function FormularioAnadirCuenta({ onGuardar, onCancelar, colorAccion=V("--accent
             <IconoInline nombre="compartida"/>Cuenta compartida
           </div>
           <div style={{ fontFamily:"'Inter',sans-serif", fontSize:9, color:V("--text-dim"), marginTop:1 }}>
-            no suma al banco · cuenta el 50% en patrimonio
+            no suma al banco . cuenta el 50% en patrimonio
           </div>
         </div>
         <button onClick={() => setCompartida(c => !c)} style={{
@@ -1698,9 +1701,9 @@ function FormularioAnadirCuenta({ onGuardar, onCancelar, colorAccion=V("--accent
   );
 }
 
-// ═══════════════════════════════════════════════════════
+// =======================================================
 // VISTA INICIO
-// ═══════════════════════════════════════════════════════
+// =======================================================
 
 function VistaInicio({ datos, claveM, mesNum, onUpdateDatos }) {
   // Datos efectivos del mes (si cerrado, usa snapshot)
@@ -1821,7 +1824,7 @@ function VistaInicio({ datos, claveM, mesNum, onUpdateDatos }) {
                   background:mix(V("--warn"),0.12), padding:"1px 5px", borderRadius:3, marginLeft:5 }}>SOLO MES</span>
               </div>
               <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:V("--text-dim"), marginTop:2 }}>
-                {TARIFA_KM.toFixed(2).replace(".",",")}€/km · <span style={{ color:V("--accent") }}>+{ingresoKm.toLocaleString("es-ES",{minimumFractionDigits:2})}€</span>
+                {TARIFA_KM.toFixed(2).replace(".",",")}€/km . <span style={{ color:V("--accent") }}>+{ingresoKm.toLocaleString("es-ES",{minimumFractionDigits:2})}€</span>
               </div>
             </div>
             <InputNumero valor={mes.km} onChange={setKm} sufijo="km" compact />
@@ -1906,13 +1909,13 @@ function FormularioAnadirIngreso({ onGuardar, onCancelar }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════
+// =======================================================
 // VISTA GASTOS MENSUALES
-// ═══════════════════════════════════════════════════════
+// =======================================================
 
-// ═══════════════════════════════════════════════════════
-// BLOQUE APORTACIÓN ANUAL (prorrateo) — compacto desplegable
-// ═══════════════════════════════════════════════════════
+// =======================================================
+// BLOQUE APORTACIÓN ANUAL (prorrateo) - compacto desplegable
+// =======================================================
 function BloqueAportacionAnual({ datos, claveM, mesNum, onUpdateDatos }) {
   const [abierto, setAbierto] = useState(false);
   const dEf = datosEfectivosMes(datos, claveM);
@@ -1953,7 +1956,7 @@ function BloqueAportacionAnual({ datos, claveM, mesNum, onUpdateDatos }) {
               {Math.max(0, aportacion).toFixed(0)}€<span style={{ fontSize:10, color:V("--text-dim"), marginLeft:2 }}>/mes</span>
             </div>
           </div>
-          <span style={{ color:V("--text-dim"), fontSize:13 }}>{abierto ? "▲" : "▼"}</span>
+          <span style={{ color:V("--text-dim"), fontSize:13 }}>{abierto ? "^" : "v"}</span>
         </div>
       </div>
 
@@ -2054,7 +2057,7 @@ function VistaGastos({ datos, claveM, mesNum, onUpdateDatos }) {
   const totalIngresos = calcularIngresosMes(datos, claveM);
   const remanente = totalIngresos - tGastos;
 
-  // ─── HANDLERS ───
+  // --- HANDLERS ---
   // Pagado solo afecta al mes
   const togglePagado = (campoPagos, gastoId) => onUpdateDatos(d => {
     if (!d.meses[claveM]) d.meses[claveM] = estadoMesVacio();
@@ -2080,7 +2083,7 @@ function VistaGastos({ datos, claveM, mesNum, onUpdateDatos }) {
     setAnadiendo(null);
   };
 
-  // Puntuales — solo del mes
+  // Puntuales - solo del mes
   const togglePuntual = (idx) => onUpdateDatos(d => {
     if (!d.meses[claveM]) d.meses[claveM] = estadoMesVacio();
     d.meses[claveM].puntuales[idx].pagado = !d.meses[claveM].puntuales[idx].pagado;
@@ -2113,7 +2116,7 @@ function VistaGastos({ datos, claveM, mesNum, onUpdateDatos }) {
         </div>
         <div style={{ display:"flex", alignItems:"center", gap:8 }}>
           <Num v={total} decimals={2} color={V("--c3")} size={13}/>
-          <span style={{ color:V("--text-dim"), fontSize:12 }}>{seccionAbierta[id] ? "▲" : "▼"}</span>
+          <span style={{ color:V("--text-dim"), fontSize:12 }}>{seccionAbierta[id] ? "^" : "v"}</span>
         </div>
       </div>
       {seccionAbierta[id] && <div style={{ padding:"0 14px 12px" }}>{children}</div>}
@@ -2122,7 +2125,7 @@ function VistaGastos({ datos, claveM, mesNum, onUpdateDatos }) {
 
   return (
     <div className="slide-in">
-      {/* Prorrateo de gastos anuales — fijo arriba en ambas sub-pestañas */}
+      {/* Prorrateo de gastos anuales - fijo arriba en ambas sub-pestañas */}
       <BloqueAportacionAnual datos={datos} claveM={claveM} mesNum={mesNum} onUpdateDatos={onUpdateDatos}/>
 
       {/* Sub-pestañas Mensuales / Anuales */}
@@ -2132,6 +2135,7 @@ function VistaGastos({ datos, claveM, mesNum, onUpdateDatos }) {
         {[
           { id:"mensuales", icono:"gastos", label:"Mensuales" },
           { id:"anuales",   icono:"calendario", label:"Anuales" },
+          { id:"prevision", icono:"compras", label:"Previsión" },
         ].map(s => (
           <button key={s.id} onClick={() => setSubGasto(s.id)} style={{
             flex:1, padding:"9px 6px", borderRadius:9, border:"none", cursor:"pointer",
@@ -2170,7 +2174,7 @@ function VistaGastos({ datos, claveM, mesNum, onUpdateDatos }) {
         </div>
         <BarraProgreso valor={totalPagado} maximo={tGastos||1} color={V("--accent")} altura={6}/>
         <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:V("--text-dim"), marginTop:6, textAlign:"center" }}>
-          {tGastos > 0 ? ((totalPagado/tGastos)*100).toFixed(0) : 0}% pagado · ingresos {totalIngresos.toLocaleString("es-ES",{minimumFractionDigits:0})}€
+          {tGastos > 0 ? ((totalPagado/tGastos)*100).toFixed(0) : 0}% pagado . ingresos {totalIngresos.toLocaleString("es-ES",{minimumFractionDigits:0})}€
         </div>
       </div>
 
@@ -2299,13 +2303,302 @@ function VistaGastos({ datos, claveM, mesNum, onUpdateDatos }) {
       {subGasto === "anuales" && <div>
         <VistaAnuales datos={datos} claveM={claveM} onUpdateDatos={onUpdateDatos}/>
       </div>}
+
+      {subGasto === "prevision" && <div>
+        <VistaPrevision datos={datos} claveM={claveM} onUpdateDatos={onUpdateDatos}/>
+      </div>}
     </div>
   );
 }
 
-// ═══════════════════════════════════════════════════════
-// VISTA ANUALES — por bloques, conceptos editables
-// ═══════════════════════════════════════════════════════
+// =======================================================
+// VISTA PREVISIÓN DE COMPRAS (planificador de presupuestos)
+// =======================================================
+function totalPrevision(p) {
+  const base = (p.articulos || []).reduce((a, x) => a + (x.unidades || 0) * (x.precioUnidad || 0), 0);
+  const conImprevistos = base * (1 + (p.imprevistos || 0) / 100);
+  return { base, conImprevistos, extra: conImprevistos - base };
+}
+
+function VistaPrevision({ datos, claveM, onUpdateDatos }) {
+  const [anadiendo, setAnadiendo] = useState(false);
+  const [expandido, setExpandido] = useState(null);
+  const previsiones = datos.previsiones || [];
+
+  const crear = (nombre) => {
+    const id = `prev-${Date.now()}`;
+    onUpdateDatos(d => {
+      if (!d.previsiones) d.previsiones = [];
+      d.previsiones.push({ id, nombre, articulos: [], imprevistos: 0, notas: "", creadoEn: claveM, incorporado: false });
+    });
+    setAnadiendo(false);
+    setExpandido(id);
+  };
+  const actualizar = (id, cambios) => onUpdateDatos(d => {
+    d.previsiones = (d.previsiones || []).map(p => p.id === id ? { ...p, ...cambios } : p);
+  });
+  const eliminar = (id) => onUpdateDatos(d => {
+    d.previsiones = (d.previsiones || []).filter(p => p.id !== id);
+  });
+  const duplicar = (p) => {
+    const id = `prev-${Date.now()}`;
+    onUpdateDatos(d => {
+      d.previsiones.push({
+        ...JSON.parse(JSON.stringify(p)), id, nombre: `${p.nombre} (copia)`,
+        incorporado: false, creadoEn: claveM,
+      });
+    });
+  };
+
+  // Artículos
+  const addArticulo = (pid) => {
+    const aid = `art-${Date.now()}`;
+    onUpdateDatos(d => {
+      const p = d.previsiones.find(x => x.id === pid);
+      if (p) p.articulos.push({ id: aid, nombre: "", unidades: 1, precioUnidad: 0 });
+    });
+  };
+  const setArticulo = (pid, aid, campo, valor) => onUpdateDatos(d => {
+    const p = d.previsiones.find(x => x.id === pid);
+    if (p) p.articulos = p.articulos.map(a => a.id === aid ? { ...a, [campo]: valor } : a);
+  });
+  const delArticulo = (pid, aid) => onUpdateDatos(d => {
+    const p = d.previsiones.find(x => x.id === pid);
+    if (p) p.articulos = p.articulos.filter(a => a.id !== aid);
+  });
+
+  // Incorporar a gastos anuales: añade un concepto con el total en la categoría elegida
+  const incorporar = (p, categoria) => {
+    const { conImprevistos } = totalPrevision(p);
+    const cid = `concepto-${Date.now()}`;
+    onUpdateDatos(d => {
+      if (!d.anuales.catalogo[categoria]) d.anuales.catalogo[categoria] = { icono:"carpeta", conceptos:[] };
+      d.anuales.catalogo[categoria].conceptos.push({
+        nombre: p.nombre, importe: Math.round(conImprevistos), id: cid, pagado: 0, cerrado: false,
+      });
+      const pp = d.previsiones.find(x => x.id === p.id);
+      if (pp) pp.incorporado = true;
+    });
+  };
+
+  return (
+    <div className="slide-in">
+      {/* Intro */}
+      <div style={{ background:V("--surface"), borderRadius:14, padding:"12px 16px", marginBottom:12,
+        border:`1px solid ${V("--border")}` }}>
+        <div style={{ fontFamily:UI, fontSize:11, color:V("--text-dim"), lineHeight:1.5 }}>
+          Planifica una compra (mobiliario, reforma, electrodomésticos...) línea a línea con sus unidades y precio.
+          Cuando lo tengas claro, incorpóralo a tus gastos anuales con un toque.
+        </div>
+      </div>
+
+      {previsiones.length === 0 && !anadiendo && (
+        <div style={{ padding:"20px 8px", textAlign:"center" }}>
+          <div style={{ display:"flex", justifyContent:"center", marginBottom:8 }}>
+            <Icono nombre="compras" size={32} color={V("--text-dim")}/>
+          </div>
+          <div style={{ fontFamily:UI, fontSize:13, color:V("--text-mid"), marginBottom:2 }}>
+            Sin previsiones todavía
+          </div>
+          <div style={{ fontFamily:UI, fontSize:11, color:V("--text-dim") }}>
+            Crea tu primer presupuesto de compra.
+          </div>
+        </div>
+      )}
+
+      {previsiones.map(p => {
+        const { base, conImprevistos, extra } = totalPrevision(p);
+        const abierto = expandido === p.id;
+        return (
+          <div key={p.id} style={{ background:V("--surface"), borderRadius:16, marginBottom:12,
+            border:`1px solid ${V("--border")}`, overflow:"hidden" }}>
+            {/* Cabecera */}
+            <div onClick={() => setExpandido(abierto ? null : p.id)}
+              style={{ display:"flex", alignItems:"center", gap:10, padding:"14px 16px", cursor:"pointer" }}>
+              <Icono nombre="compras" size={18} color={V("--accent")}/>
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ fontFamily:UI, fontSize:14, fontWeight:700, color:V("--text"),
+                  overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                  {p.nombre}
+                  {p.incorporado && <span style={{ fontFamily:UI, fontSize:8, fontWeight:700, color:V("--accent"),
+                    background:mix(V("--accent"),0.15), padding:"1px 6px", borderRadius:4, marginLeft:6,
+                    textTransform:"uppercase", letterSpacing:"0.05em" }}>Incorporado</span>}
+                </div>
+                <div style={{ fontFamily:UI, fontSize:10, color:V("--text-dim"), marginTop:1 }}>
+                  {p.articulos.length} {p.articulos.length === 1 ? "artículo" : "artículos"}
+                </div>
+              </div>
+              <div style={{ textAlign:"right" }}>
+                <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:15, fontWeight:700, color:V("--accent") }}>
+                  {conImprevistos.toLocaleString("es-ES",{minimumFractionDigits:2,maximumFractionDigits:2})}€
+                </div>
+                <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:V("--text-dim") }}>
+                  {abierto ? "^" : "v"}
+                </div>
+              </div>
+            </div>
+
+            {abierto && (
+              <div style={{ padding:"0 16px 16px" }}>
+                {/* Cabecera de columnas */}
+                {p.articulos.length > 0 && (
+                  <div style={{ display:"flex", gap:8, padding:"0 0 6px", fontFamily:UI, fontSize:9,
+                    color:V("--text-dim"), textTransform:"uppercase", letterSpacing:"0.05em" }}>
+                    <span style={{ flex:1 }}>Artículo</span>
+                    <span style={{ width:42, textAlign:"center" }}>Uds</span>
+                    <span style={{ width:70, textAlign:"right" }}>Precio/ud</span>
+                    <span style={{ width:70, textAlign:"right" }}>Total</span>
+                    <span style={{ width:18 }}/>
+                  </div>
+                )}
+                {/* Líneas */}
+                {p.articulos.map(a => (
+                  <div key={a.id} style={{ display:"flex", gap:8, alignItems:"center", marginBottom:7 }}>
+                    <input value={a.nombre} placeholder="Concepto"
+                      onChange={e => setArticulo(p.id, a.id, "nombre", e.target.value)}
+                      style={{ flex:1, minWidth:0, background:V("--surface-2"), border:`1px solid ${V("--border")}`,
+                        borderRadius:8, padding:"7px 9px", color:V("--text"), fontSize:12, outline:"none", fontFamily:UI }}/>
+                    <div style={{ width:42 }}><InputNumero valor={a.unidades} onChange={v => setArticulo(p.id, a.id, "unidades", v)}/></div>
+                    <div style={{ width:70 }}><InputMoneda valor={a.precioUnidad} onChange={v => setArticulo(p.id, a.id, "precioUnidad", v)}/></div>
+                    <span style={{ width:70, textAlign:"right", fontFamily:"'JetBrains Mono',monospace", fontSize:12, fontWeight:600, color:V("--text-mid") }}>
+                      {((a.unidades||0)*(a.precioUnidad||0)).toLocaleString("es-ES",{minimumFractionDigits:0})}€
+                    </span>
+                    <button onClick={() => delArticulo(p.id, a.id)} style={{ width:18, background:"none", border:"none",
+                      cursor:"pointer", color:mix(V("--negative"),0.6), fontSize:14, padding:0 }}>×</button>
+                  </div>
+                ))}
+                <button onClick={() => addArticulo(p.id)} style={{ width:"100%", marginTop:4, background:"none",
+                  border:`1px dashed ${mix(V("--accent"),0.4)}`, borderRadius:8, padding:"9px", cursor:"pointer",
+                  color:V("--accent"), fontFamily:UI, fontSize:12, fontWeight:600 }}>+ Añadir línea</button>
+
+                {/* Imprevistos + totales */}
+                <div style={{ display:"flex", alignItems:"center", gap:8, marginTop:12, paddingTop:10,
+                  borderTop:`1px solid ${V("--border")}` }}>
+                  <span style={{ fontFamily:UI, fontSize:11, color:V("--text-dim"), flex:1 }}>Margen de imprevistos (%)</span>
+                  <div style={{ width:56 }}><InputNumero valor={p.imprevistos} onChange={v => actualizar(p.id, { imprevistos: v })}/></div>
+                </div>
+                <div style={{ display:"flex", justifyContent:"space-between", marginTop:8 }}>
+                  <span style={{ fontFamily:UI, fontSize:11, color:V("--text-dim") }}>Subtotal</span>
+                  <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:12, color:V("--text-mid") }}>
+                    {base.toLocaleString("es-ES",{minimumFractionDigits:2,maximumFractionDigits:2})}€
+                  </span>
+                </div>
+                {extra > 0 && (
+                  <div style={{ display:"flex", justifyContent:"space-between", marginTop:3 }}>
+                    <span style={{ fontFamily:UI, fontSize:11, color:V("--text-dim") }}>Imprevistos ({p.imprevistos}%)</span>
+                    <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:12, color:V("--text-dim") }}>
+                      +{extra.toLocaleString("es-ES",{minimumFractionDigits:2,maximumFractionDigits:2})}€
+                    </span>
+                  </div>
+                )}
+                <div style={{ display:"flex", justifyContent:"space-between", marginTop:6, paddingTop:6,
+                  borderTop:`1px solid ${V("--border")}` }}>
+                  <span style={{ fontFamily:UI, fontSize:13, fontWeight:700, color:V("--text") }}>Total estimado</span>
+                  <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:15, fontWeight:700, color:V("--accent") }}>
+                    {conImprevistos.toLocaleString("es-ES",{minimumFractionDigits:2,maximumFractionDigits:2})}€
+                  </span>
+                </div>
+
+                {/* Notas */}
+                <textarea value={p.notas || ""} placeholder="Notas (tienda, enlaces, plazos...)"
+                  onChange={e => actualizar(p.id, { notas: e.target.value })}
+                  style={{ width:"100%", marginTop:10, background:V("--surface-2"), border:`1px solid ${V("--border")}`,
+                    borderRadius:8, padding:"8px 10px", color:V("--text"), fontSize:12, outline:"none", fontFamily:UI,
+                    resize:"vertical", minHeight:38, boxSizing:"border-box" }}/>
+
+                {/* Incorporar a anuales */}
+                <IncorporarAnual datos={datos} onIncorporar={cat => incorporar(p, cat)} incorporado={p.incorporado}/>
+
+                {/* Acciones */}
+                <div style={{ display:"flex", gap:8, marginTop:10 }}>
+                  <button onClick={() => duplicar(p)} style={{ flex:1, background:V("--surface-2"), color:V("--text-mid"),
+                    border:`1px solid ${V("--border")}`, borderRadius:8, padding:"8px", cursor:"pointer",
+                    fontFamily:UI, fontSize:11, fontWeight:600 }}>Duplicar</button>
+                  <button onClick={() => { if (confirm(`¿Eliminar "${p.nombre}"?`)) eliminar(p.id); }}
+                    style={{ flex:1, background:mix(V("--negative"),0.1), color:V("--negative"),
+                    border:`1px solid ${mix(V("--negative"),0.25)}`, borderRadius:8, padding:"8px", cursor:"pointer",
+                    fontFamily:UI, fontSize:11, fontWeight:600 }}>Eliminar</button>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
+
+      {anadiendo
+        ? <FormularioNuevaPrevision onGuardar={crear} onCancelar={() => setAnadiendo(false)}/>
+        : <button onClick={() => setAnadiendo(true)} style={{ width:"100%", marginTop:4, background:mix(V("--accent"),0.12),
+            border:`1px solid ${mix(V("--accent"),0.3)}`, borderRadius:12, padding:"13px", cursor:"pointer",
+            color:V("--accent"), fontFamily:UI, fontSize:13, fontWeight:700 }}>+ Nuevo presupuesto</button>}
+    </div>
+  );
+}
+
+function FormularioNuevaPrevision({ onGuardar, onCancelar }) {
+  const [nombre, setNombre] = useState("");
+  return (
+    <div style={{ marginTop:8, padding:"12px", background:V("--surface-2"), borderRadius:12,
+      border:`1px solid ${V("--border")}` }}>
+      <input placeholder="Nombre (ej. Mobiliario de exterior)" value={nombre} autoFocus
+        onChange={e => setNombre(e.target.value)}
+        onKeyDown={e => { if (e.key === "Enter" && nombre.trim()) onGuardar(nombre.trim()); }}
+        style={{ width:"100%", background:V("--surface"), border:`1px solid ${V("--border")}`,
+          borderRadius:10, padding:"10px 12px", color:V("--text"), fontSize:14, outline:"none",
+          fontFamily:UI, marginBottom:10, boxSizing:"border-box" }}/>
+      <div style={{ display:"flex", gap:8 }}>
+        <button onClick={() => { if (nombre.trim()) onGuardar(nombre.trim()); }}
+          style={{ flex:1, background:V("--accent"), color:V("--bg"), border:"none", borderRadius:999,
+            fontFamily:UI, fontWeight:800, fontSize:14, cursor:"pointer", padding:"12px" }}>Crear</button>
+        <button onClick={onCancelar} style={{ padding:"0 16px", background:V("--surface"), color:V("--text-dim"),
+          border:"none", borderRadius:999, cursor:"pointer", fontSize:14 }}>✕</button>
+      </div>
+    </div>
+  );
+}
+
+function IncorporarAnual({ datos, onIncorporar, incorporado }) {
+  const [abierto, setAbierto] = useState(false);
+  const categorias = Object.keys(datos.anuales.catalogo || {});
+  return (
+    <div style={{ marginTop:10 }}>
+      {!abierto ? (
+        <button onClick={() => setAbierto(true)} style={{
+          width:"100%", background:mix(V("--accent"),0.12), color:V("--accent"),
+          border:`1px solid ${mix(V("--accent"),0.3)}`, borderRadius:10, padding:"10px", cursor:"pointer",
+          fontFamily:UI, fontSize:12, fontWeight:700, display:"flex", alignItems:"center",
+          justifyContent:"center", gap:6 }}>
+          <Icono nombre="calendario" size={15} color={V("--accent")}/>
+          {incorporado ? "Volver a incorporar a gastos anuales" : "Incorporar a gastos anuales"}
+        </button>
+      ) : (
+        <div style={{ background:V("--surface-2"), borderRadius:10, padding:"10px" }}>
+          <div style={{ fontFamily:UI, fontSize:10, fontWeight:600, color:V("--text-dim"),
+            textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:8 }}>Elige la categoría anual</div>
+          {categorias.length === 0 && (
+            <div style={{ fontFamily:UI, fontSize:11, color:V("--text-dim"), marginBottom:8 }}>
+              No tienes categorías anuales. Crea una primero en la pestaña Anuales.
+            </div>
+          )}
+          <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
+            {categorias.map(cat => (
+              <button key={cat} onClick={() => { onIncorporar(cat); setAbierto(false); }} style={{
+                background:V("--surface"), color:V("--text-mid"), border:`1px solid ${V("--border")}`,
+                borderRadius:8, padding:"7px 11px", cursor:"pointer", fontFamily:UI, fontSize:12, fontWeight:600 }}>
+                {cat}
+              </button>
+            ))}
+          </div>
+          <button onClick={() => setAbierto(false)} style={{ marginTop:8, width:"100%", background:"none",
+            border:"none", color:V("--text-dim"), cursor:"pointer", fontFamily:UI, fontSize:11 }}>Cancelar</button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// =======================================================
+// VISTA ANUALES - por bloques, conceptos editables
+// =======================================================
 
 function VistaAnuales({ datos, claveM, onUpdateDatos }) {
   const [anadiendoConceptoEn, setAnadiendoConceptoEn] = useState(null);  // categoria id
@@ -2659,9 +2952,9 @@ function FormularioAnadirBloque({ onGuardar, onCancelar }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════
+// =======================================================
 // VISTA INVERSIONES
-// ═══════════════════════════════════════════════════════
+// =======================================================
 
 function FilaInversion({ inv, onUpdate, onEliminar }) {
   const { invertido, valorActual, plusvalia, pctPlusvalia, soloValor } = calcularPosicion(inv);
@@ -2836,7 +3129,7 @@ function FormularioAnadirInversion({ onGuardar, onCancelar }) {
         style={{ width:"100%", background:V("--border"), border:"1px solid rgba(255,255,255,0.1)",
           borderRadius:8, padding:"8px 10px", color:V("--text"), fontSize:13, outline:"none",
           fontFamily:"'Inter',sans-serif", marginBottom:8 }}/>
-      <input placeholder="Entidad (ej. HNA, MyInvestor, Trade…)" value={entidad}
+      <input placeholder="Entidad (ej. HNA, MyInvestor, Trade...)" value={entidad}
         onChange={e => setEntidad(e.target.value)}
         style={{ width:"100%", background:V("--border"), border:"1px solid rgba(255,255,255,0.1)",
           borderRadius:8, padding:"8px 10px", color:V("--text"), fontSize:13, outline:"none",
@@ -2949,7 +3242,7 @@ function VistaInversiones({ datos, claveM, onUpdateDatos }) {
             background: ganando ? mix(V("--accent"),"20") : mix(V("--negative"),"20"),
             padding:"4px 10px", borderRadius:6,
           }}>
-            {ganando ? "+" : ""}{total.plusvalia.toLocaleString("es-ES",{minimumFractionDigits:2})}€ · {ganando ? "+" : ""}{pctTotal.toFixed(2)}%
+            {ganando ? "+" : ""}{total.plusvalia.toLocaleString("es-ES",{minimumFractionDigits:2})}€ . {ganando ? "+" : ""}{pctTotal.toFixed(2)}%
           </div>
         </div>
       </div>
@@ -2971,7 +3264,7 @@ function VistaInversiones({ datos, claveM, onUpdateDatos }) {
                       {t.icono} {t.label}
                     </span>
                     <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:12, color: t.color }}>
-                      {v.valorActual.toLocaleString("es-ES",{minimumFractionDigits:0})}€ · {pct.toFixed(0)}%
+                      {v.valorActual.toLocaleString("es-ES",{minimumFractionDigits:0})}€ . {pct.toFixed(0)}%
                     </span>
                   </div>
                   <BarraProgreso valor={v.valorActual} maximo={total.valorActual||1} color={t.color} altura={5}/>
@@ -3011,13 +3304,13 @@ function VistaInversiones({ datos, claveM, onUpdateDatos }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════
+// =======================================================
 // VISTA ANÁLISIS
-// ═══════════════════════════════════════════════════════
+// =======================================================
 
-// ═══════════════════════════════════════════════════════
+// =======================================================
 // VISTA PATRIMONIO (inmuebles + deudas + neto)
-// ═══════════════════════════════════════════════════════
+// =======================================================
 function VistaPatrimonio({ datos, claveM, onUpdateDatos }) {
   const dEf = datosEfectivosMes(datos, claveM);
   const [anadiendoInm, setAnadiendoInm] = useState(false);
@@ -3283,7 +3576,7 @@ function FilaDeuda({ deuda, claveM, onActualizar, onEliminar }) {
       <BarraProgreso valor={a.pctPagado} maximo={100} color={V("--warn")} altura={5}/>
       <div style={{ display:"flex", justifyContent:"space-between", marginTop:3 }}>
         <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:V("--text-dim") }}>
-          pagado {fmtTiempo(a.pagado)} · {a.pctPagado.toFixed(0)}%
+          pagado {fmtTiempo(a.pagado)} . {a.pctPagado.toFixed(0)}%
         </span>
         <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:V("--text-dim") }}>
           quedan {fmtTiempo(a.restante)}
@@ -3360,9 +3653,9 @@ function VistaCartera({ datos, claveM, onUpdateDatos }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════
+// =======================================================
 // BLOQUE ALERTAS / SEMÁFOROS
-// ═══════════════════════════════════════════════════════
+// =======================================================
 function BloqueAlertas({ datos, claveM, mesNum }) {
   const dEf = datosEfectivosMes(datos, claveM);
   const alertas = [];
@@ -3456,7 +3749,7 @@ function VistaAnalisis({ datos, claveM, mesNum, onUpdateDatos }) {
     if (totalGastosBanco[g.banco] !== undefined) totalGastosBanco[g.banco] += g.importe || 0;
   });
 
-  // ─── Clasificación de gastos para teorías del ahorro ───
+  // --- Clasificación de gastos para teorías del ahorro ---
   // Acumula los gastos por clasificación (necesidad/deseo/ahorro/etc.)
   const porClasificacion = {};
   const todosLosGastos = [];
@@ -3607,7 +3900,7 @@ function VistaAnalisis({ datos, claveM, mesNum, onUpdateDatos }) {
               <div style={{ display:"flex", justifyContent:"space-between", marginBottom:4 }}>
                 <span style={{ fontFamily:"'Inter',sans-serif", fontSize:12, color:V("--text-mid") }}>{meta.label}</span>
                 <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:12, color:meta.color }}>
-                  {v.toLocaleString("es-ES",{minimumFractionDigits:0})}€ · {pct.toFixed(0)}%
+                  {v.toLocaleString("es-ES",{minimumFractionDigits:0})}€ . {pct.toFixed(0)}%
                 </span>
               </div>
               <BarraProgreso valor={v} maximo={totalGastos||1} color={meta.color} altura={5}/>
@@ -3645,9 +3938,9 @@ function VistaAnalisis({ datos, claveM, mesNum, onUpdateDatos }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════
+// =======================================================
 // GRÁFICA DE EVOLUCIÓN DEL PATRIMONIO
-// ═══════════════════════════════════════════════════════
+// =======================================================
 
 // Patrimonio total de un mes: líquido + 50% compartido + inversiones,
 // usando el snapshot del mes si lo tiene (o el estado global si no).
@@ -3826,9 +4119,9 @@ function GraficaPatrimonio({ datos, claveM }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════
+// =======================================================
 // BLOQUE OBJETIVOS DE AHORRO
-// ═══════════════════════════════════════════════════════
+// =======================================================
 
 function BloqueObjetivos({ objetivos, cuentas, claveM, onUpdateDatos, autoObjetivos }) {
   const [anadiendo, setAnadiendo] = useState(false);
@@ -3871,7 +4164,7 @@ function BloqueObjetivos({ objetivos, cuentas, claveM, onUpdateDatos, autoObjeti
           fontSize:12, color:V("--text-dim"), fontStyle:"italic",
           background:"rgba(255,255,255,0.02)", borderRadius:10,
           border:"1px dashed rgba(255,255,255,0.06)", marginBottom:8 }}>
-          Define un objetivo (viaje, coche, entrada de casa…) y te diré cuánto apartar al mes.
+          Define un objetivo (viaje, coche, entrada de casa...) y te diré cuánto apartar al mes.
         </div>
       )}
 
@@ -3919,8 +4212,8 @@ function FilaObjetivo({ objetivo, cuentas, claveM, onActualizar, onEliminar }) {
           </div>
           <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:V("--text-dim"), marginTop:2 }}>
             límite {fechaLabel}
-            {!ev.completado && !ev.vencido && ` · ${ev.mesesRestantes} ${ev.mesesRestantes === 1 ? "mes" : "meses"}`}
-            {ev.cuenta && ` · ${ev.cuenta.nombre}`}
+            {!ev.completado && !ev.vencido && ` . ${ev.mesesRestantes} ${ev.mesesRestantes === 1 ? "mes" : "meses"}`}
+            {ev.cuenta && ` . ${ev.cuenta.nombre}`}
           </div>
         </div>
         <button onClick={onEliminar} style={{ background:"none", border:"none",
@@ -3931,7 +4224,7 @@ function FilaObjetivo({ objetivo, cuentas, claveM, onActualizar, onEliminar }) {
       <BarraProgreso valor={ev.ahorrado} maximo={objetivo.importe || 1} color={estadoColor} altura={7}/>
       <div style={{ display:"flex", justifyContent:"space-between", marginTop:4, marginBottom:8 }}>
         <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:estadoColor }}>
-          {ev.ahorrado.toLocaleString("es-ES",{minimumFractionDigits:0})}€ · {ev.pctAhorrado.toFixed(0)}%
+          {ev.ahorrado.toLocaleString("es-ES",{minimumFractionDigits:0})}€ . {ev.pctAhorrado.toFixed(0)}%
         </span>
         <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:10, color:V("--text-dim") }}>
           de {(objetivo.importe||0).toLocaleString("es-ES",{minimumFractionDigits:0})}€
@@ -4034,7 +4327,7 @@ function FormularioAnadirObjetivo({ cuentas, claveM, onGuardar, onCancelar }) {
         <div>
           <div style={{ fontFamily:"'Inter',sans-serif", fontSize:11, color:V("--text-mid") }}>Cuenta vinculada</div>
           <div style={{ fontFamily:"'Inter',sans-serif", fontSize:8, color:V("--text-dim"), marginTop:1 }}>
-            el saldo de la cuenta será tu progreso · opcional
+            el saldo de la cuenta será tu progreso . opcional
           </div>
         </div>
         <SelectorCuenta value={cuentaId} cuentas={cuentas} onChange={setCuentaId}/>
@@ -4054,9 +4347,9 @@ function FormularioAnadirObjetivo({ cuentas, claveM, onGuardar, onCancelar }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════
+// =======================================================
 // BLOQUE TEORÍAS DEL AHORRO
-// ═══════════════════════════════════════════════════════
+// =======================================================
 
 const CLASIFICACIONES_DISPONIBLES = [
   { id:"necesidad", label:"Necesidad", color:V("--c2") },
@@ -4114,7 +4407,7 @@ function BloqueTeoriasAhorro({ gastos, totalIngresos, onReclasificar }) {
         <div style={{ fontFamily:"'Inter',sans-serif", fontSize:11, color:V("--text-dim"),
           marginBottom:12, lineHeight:1.5, fontStyle:"italic" }}>
           {teoria.descripcion}
-          <span style={{ fontSize:9, color:V("--text-dim"), marginLeft:5 }}>— {teoria.autor}</span>
+          <span style={{ fontSize:9, color:V("--text-dim"), marginLeft:5 }}>- {teoria.autor}</span>
         </div>
 
         {/* Categorías con barras */}
@@ -4159,7 +4452,7 @@ function BloqueTeoriasAhorro({ gastos, totalIngresos, onReclasificar }) {
           background:"rgba(255,255,255,0.04)", color:V("--text-dim"),
           fontFamily:"'Inter',sans-serif", fontSize:11, fontWeight:600,
         }}>
-          {mostrarDetalle ? "▲ Ocultar clasificación de gastos" : "▼ Ver / re-clasificar gastos"}
+          {mostrarDetalle ? "^ Ocultar clasificación de gastos" : "v Ver / re-clasificar gastos"}
         </button>
 
         {/* Detalle: cada gasto con su clasificación editable */}
@@ -4229,9 +4522,9 @@ function SelectorClasificacion({ value, onChange }) {
   );
 }
 
-// ═══════════════════════════════════════════════════════
+// =======================================================
 // APP PRINCIPAL
-// ═══════════════════════════════════════════════════════
+// =======================================================
 
 
 function BotonAjustes({ tema, setTema }) {
@@ -4318,7 +4611,7 @@ function BotonAjustes({ tema, setTema }) {
           React.createElement("div", {
             style: { height: 1, background: V("--border"), margin: "4px 0" }
           }),
-          // ─── Selector de tema ───
+          // --- Selector de tema ---
           React.createElement("div", {
             style: {
               padding: "6px 10px", fontFamily: "'Inter',sans-serif",
@@ -4426,7 +4719,7 @@ function App() {
   // 2. Aplica el cambio al catálogo global Y a `copia.meses` (donde viven
   //    pagos/puntuales/km del mes). Esto cubre el "presente" y futuros sin snapshot.
   // 3. Para meses POSTERIORES a M que tengan snapshot, replica SOLO los cambios
-  //    de catálogos/bancos/etc. en su snapshot — NO las modificaciones en meses[]
+  //    de catálogos/bancos/etc. en su snapshot - NO las modificaciones en meses[]
   //    (que son propias del mes M y no se deben aplicar dos veces).
   //    Excepción: si el mes está cerrado manualmente (`cerrado: true`), se respeta.
   const onUpdateDatosMes = useCallback((fn) => {
@@ -4536,7 +4829,7 @@ function App() {
   if (!datos) return (
     <div style={{ background:V("--bg"), minHeight:"100vh", display:"flex", alignItems:"center", justifyContent:"center" }}>
       <div className="pulse" style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:13, color:V("--accent") }}>
-        cargando…
+        cargando...
       </div>
     </div>
   );
@@ -4625,7 +4918,7 @@ function App() {
           <Icono nombre="candado" size={18} color={V("--warn")}/>
           <div style={{ flex:1 }}>
             <div style={{ fontFamily:"'Inter',sans-serif", fontSize:12, fontWeight:700, color:V("--warn") }}>
-              Mes cerrado · sólo lectura
+              Mes cerrado . sólo lectura
             </div>
             <div style={{ fontFamily:"'Inter',sans-serif", fontSize:10, color:V("--text-dim"), marginTop:2 }}>
               Pulsa el candado de arriba para reabrir y editar
@@ -4650,6 +4943,7 @@ function App() {
 }
 
 
-// ─── Montaje en el DOM ───
+// --- Montaje en el DOM ---
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(React.createElement(App));
+if (typeof window !== "undefined") window.__appMontada = true;

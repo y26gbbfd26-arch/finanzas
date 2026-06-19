@@ -27,8 +27,47 @@
 </head>
 <body>
   <div id="root">
-    <div class="loader">cargando…</div>
+    <div class="loader" id="loader">cargando…</div>
   </div>
+
+  <!-- Diagnóstico: si algo falla, mostrarlo en pantalla en vez de quedarse en "cargando…" -->
+  <script>
+    (function () {
+      function mostrarError(titulo, detalle) {
+        var root = document.getElementById("root");
+        if (!root) return;
+        root.innerHTML =
+          '<div style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;' +
+          'padding:24px;color:#E8F3EC;font-family:system-ui,sans-serif;text-align:center;gap:12px;background:#0A1410">' +
+          '<div style="font-size:15px;font-weight:700;color:#E8765A">' + titulo + '</div>' +
+          '<div style="font-size:12px;color:#B7D4C0;max-width:340px;line-height:1.5">' + detalle + '</div>' +
+          '<button onclick="location.reload()" style="margin-top:8px;background:#74C69D;color:#0A1410;border:none;' +
+          'border-radius:999px;padding:12px 32px;font-size:14px;font-weight:700;cursor:pointer">Reintentar</button>' +
+          '</div>';
+      }
+      // Captura errores de ejecución de la app
+      window.addEventListener("error", function (e) {
+        if (e && e.message && /Script error/i.test(e.message)) return;
+        mostrarError("La app no pudo cargar", (e && e.message ? e.message : "Error desconocido") +
+          ". Prueba a reintentar; si persiste, desinstala y reinstala la app.");
+      });
+      window.addEventListener("unhandledrejection", function (e) {
+        mostrarError("La app no pudo cargar", (e && e.reason && e.reason.message ? e.reason.message : "Error de carga") + ".");
+      });
+      // Si pasados unos segundos seguimos en "cargando…", diagnosticar la causa
+      window.__appMontada = false;
+      setTimeout(function () {
+        if (window.__appMontada) return;
+        if (typeof React === "undefined" || typeof ReactDOM === "undefined" || typeof Babel === "undefined") {
+          mostrarError("No se pudieron cargar las librerías",
+            "Parece que no hay conexión o el CDN está bloqueado. Conéctate a internet la primera vez y reintenta.");
+        } else {
+          mostrarError("La app tardó demasiado en cargar",
+            "Puede ser un despliegue de GitHub en curso o la caché. Espera 1-2 min y reintenta, o reinstala la app.");
+        }
+      }, 9000);
+    })();
+  </script>
 
   <!-- React desde CDN -->
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
@@ -36,8 +75,37 @@
   <!-- Babel para compilar JSX directamente en el navegador -->
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-  <!-- La app -->
-  <script type="text/babel" data-type="module" src="./app.jsx"></script>
+  <!-- Cargador de la app: lee app.jsx forzando UTF-8 (no depende de la cabecera del servidor) -->
+  <script>
+    (async function () {
+      function fallo(titulo, detalle) {
+        var ev = new ErrorEvent("error", { message: titulo + " — " + detalle });
+        window.dispatchEvent(ev);
+      }
+      try {
+        if (typeof Babel === "undefined" || typeof React === "undefined") {
+          fallo("No se pudieron cargar las librerías", "Sin conexión o CDN bloqueado");
+          return;
+        }
+        // Descargar el código y decodificarlo SIEMPRE como UTF-8
+        var resp = await fetch("./app.jsx", { cache: "no-store" });
+        if (!resp.ok) { fallo("No se pudo descargar app.jsx", "HTTP " + resp.status); return; }
+        var buf = await resp.arrayBuffer();
+        var fuente = new TextDecoder("utf-8").decode(buf);
+        // Transformar JSX -> JS con Babel
+        var salida = Babel.transform(fuente, {
+          presets: [["react", { runtime: "classic" }]],
+          filename: "app.jsx",
+        }).code;
+        // Ejecutar
+        var s = document.createElement("script");
+        s.textContent = salida;
+        document.body.appendChild(s);
+      } catch (err) {
+        fallo("Error al iniciar la app", (err && err.message) ? err.message : String(err));
+      }
+    })();
+  </script>
 
   <!-- Registrar service worker y detectar actualizaciones -->
   <script>

@@ -218,6 +218,7 @@ function datosVacios() {
     autoReservaBanco:  null,   // banco al que va ese gasto automático (null = primero disponible)
     autoObjetivos:     false,  // inyecta gasto de ahorro = suma cuotas de objetivos redondeada a 50€
     autoObjetivosBanco:null,   // banco al que va el gasto automático de objetivos
+    previsiones:       [],     // [{id,nombre,articulos:[{id,nombre,unidades,precioUnidad}],imprevistos,notas,creadoEn,incorporado}]
 
     // ─── Por año: gastos anuales del año en curso ───
     anuales: {
@@ -848,6 +849,8 @@ const ICONOS = {
   pension:     <><path d="M12 3l7 3v6c0 4-3 7-7 9-4-2-7-5-7-9V6z"/><path d="M9 12l2 2 4-4"/></>,
   cohete:      <><path d="M5 15c-1 2.5-1 5-1 5s2.5 0 5-1"/><path d="M9 19a10 10 0 0 1 11-13 10 10 0 0 1-7 11z"/><circle cx="14.5" cy="9.5" r="1.6"/></>,
   salvavidas:  <><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.6"/><path d="M5.6 5.6l3.9 3.9M14.5 14.5l3.9 3.9M18.4 5.6l-3.9 3.9M9.5 14.5l-3.9 3.9"/></>,
+  compras:     <><circle cx="9" cy="20" r="1.4"/><circle cx="17" cy="20" r="1.4"/><path d="M2 4h2.2l2.3 11.4a1 1 0 0 0 1 .8h8.4a1 1 0 0 0 1-.78L20 7H5.2"/></>,
+  prevision:   <><circle cx="9" cy="20" r="1.4"/><circle cx="17" cy="20" r="1.4"/><path d="M2 4h2.2l2.3 11.4a1 1 0 0 0 1 .8h8.4a1 1 0 0 0 1-.78L20 7H5.2"/></>,
 };
 
 function Icono({ nombre, size = 20, color = "currentColor", stroke = 1.7 }) {
@@ -2132,6 +2135,7 @@ function VistaGastos({ datos, claveM, mesNum, onUpdateDatos }) {
         {[
           { id:"mensuales", icono:"gastos", label:"Mensuales" },
           { id:"anuales",   icono:"calendario", label:"Anuales" },
+          { id:"prevision", icono:"compras", label:"Previsión" },
         ].map(s => (
           <button key={s.id} onClick={() => setSubGasto(s.id)} style={{
             flex:1, padding:"9px 6px", borderRadius:9, border:"none", cursor:"pointer",
@@ -2299,6 +2303,295 @@ function VistaGastos({ datos, claveM, mesNum, onUpdateDatos }) {
       {subGasto === "anuales" && <div>
         <VistaAnuales datos={datos} claveM={claveM} onUpdateDatos={onUpdateDatos}/>
       </div>}
+
+      {subGasto === "prevision" && <div>
+        <VistaPrevision datos={datos} claveM={claveM} onUpdateDatos={onUpdateDatos}/>
+      </div>}
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════════
+// VISTA PREVISIÓN DE COMPRAS (planificador de presupuestos)
+// ═══════════════════════════════════════════════════════
+function totalPrevision(p) {
+  const base = (p.articulos || []).reduce((a, x) => a + (x.unidades || 0) * (x.precioUnidad || 0), 0);
+  const conImprevistos = base * (1 + (p.imprevistos || 0) / 100);
+  return { base, conImprevistos, extra: conImprevistos - base };
+}
+
+function VistaPrevision({ datos, claveM, onUpdateDatos }) {
+  const [anadiendo, setAnadiendo] = useState(false);
+  const [expandido, setExpandido] = useState(null);
+  const previsiones = datos.previsiones || [];
+
+  const crear = (nombre) => {
+    const id = `prev-${Date.now()}`;
+    onUpdateDatos(d => {
+      if (!d.previsiones) d.previsiones = [];
+      d.previsiones.push({ id, nombre, articulos: [], imprevistos: 0, notas: "", creadoEn: claveM, incorporado: false });
+    });
+    setAnadiendo(false);
+    setExpandido(id);
+  };
+  const actualizar = (id, cambios) => onUpdateDatos(d => {
+    d.previsiones = (d.previsiones || []).map(p => p.id === id ? { ...p, ...cambios } : p);
+  });
+  const eliminar = (id) => onUpdateDatos(d => {
+    d.previsiones = (d.previsiones || []).filter(p => p.id !== id);
+  });
+  const duplicar = (p) => {
+    const id = `prev-${Date.now()}`;
+    onUpdateDatos(d => {
+      d.previsiones.push({
+        ...JSON.parse(JSON.stringify(p)), id, nombre: `${p.nombre} (copia)`,
+        incorporado: false, creadoEn: claveM,
+      });
+    });
+  };
+
+  // Artículos
+  const addArticulo = (pid) => {
+    const aid = `art-${Date.now()}`;
+    onUpdateDatos(d => {
+      const p = d.previsiones.find(x => x.id === pid);
+      if (p) p.articulos.push({ id: aid, nombre: "", unidades: 1, precioUnidad: 0 });
+    });
+  };
+  const setArticulo = (pid, aid, campo, valor) => onUpdateDatos(d => {
+    const p = d.previsiones.find(x => x.id === pid);
+    if (p) p.articulos = p.articulos.map(a => a.id === aid ? { ...a, [campo]: valor } : a);
+  });
+  const delArticulo = (pid, aid) => onUpdateDatos(d => {
+    const p = d.previsiones.find(x => x.id === pid);
+    if (p) p.articulos = p.articulos.filter(a => a.id !== aid);
+  });
+
+  // Incorporar a gastos anuales: añade un concepto con el total en la categoría elegida
+  const incorporar = (p, categoria) => {
+    const { conImprevistos } = totalPrevision(p);
+    const cid = `concepto-${Date.now()}`;
+    onUpdateDatos(d => {
+      if (!d.anuales.catalogo[categoria]) d.anuales.catalogo[categoria] = { icono:"carpeta", conceptos:[] };
+      d.anuales.catalogo[categoria].conceptos.push({
+        nombre: p.nombre, importe: Math.round(conImprevistos), id: cid, pagado: 0, cerrado: false,
+      });
+      const pp = d.previsiones.find(x => x.id === p.id);
+      if (pp) pp.incorporado = true;
+    });
+  };
+
+  return (
+    <div className="slide-in">
+      {/* Intro */}
+      <div style={{ background:V("--surface"), borderRadius:14, padding:"12px 16px", marginBottom:12,
+        border:`1px solid ${V("--border")}` }}>
+        <div style={{ fontFamily:UI, fontSize:11, color:V("--text-dim"), lineHeight:1.5 }}>
+          Planifica una compra (mobiliario, reforma, electrodomésticos…) línea a línea con sus unidades y precio.
+          Cuando lo tengas claro, incorpóralo a tus gastos anuales con un toque.
+        </div>
+      </div>
+
+      {previsiones.length === 0 && !anadiendo && (
+        <div style={{ padding:"20px 8px", textAlign:"center" }}>
+          <div style={{ display:"flex", justifyContent:"center", marginBottom:8 }}>
+            <Icono nombre="compras" size={32} color={V("--text-dim")}/>
+          </div>
+          <div style={{ fontFamily:UI, fontSize:13, color:V("--text-mid"), marginBottom:2 }}>
+            Sin previsiones todavía
+          </div>
+          <div style={{ fontFamily:UI, fontSize:11, color:V("--text-dim") }}>
+            Crea tu primer presupuesto de compra.
+          </div>
+        </div>
+      )}
+
+      {previsiones.map(p => {
+        const { base, conImprevistos, extra } = totalPrevision(p);
+        const abierto = expandido === p.id;
+        return (
+          <div key={p.id} style={{ background:V("--surface"), borderRadius:16, marginBottom:12,
+            border:`1px solid ${V("--border")}`, overflow:"hidden" }}>
+            {/* Cabecera */}
+            <div onClick={() => setExpandido(abierto ? null : p.id)}
+              style={{ display:"flex", alignItems:"center", gap:10, padding:"14px 16px", cursor:"pointer" }}>
+              <Icono nombre="compras" size={18} color={V("--accent")}/>
+              <div style={{ flex:1, minWidth:0 }}>
+                <div style={{ fontFamily:UI, fontSize:14, fontWeight:700, color:V("--text"),
+                  overflow:"hidden", textOverflow:"ellipsis", whiteSpace:"nowrap" }}>
+                  {p.nombre}
+                  {p.incorporado && <span style={{ fontFamily:UI, fontSize:8, fontWeight:700, color:V("--accent"),
+                    background:mix(V("--accent"),0.15), padding:"1px 6px", borderRadius:4, marginLeft:6,
+                    textTransform:"uppercase", letterSpacing:"0.05em" }}>Incorporado</span>}
+                </div>
+                <div style={{ fontFamily:UI, fontSize:10, color:V("--text-dim"), marginTop:1 }}>
+                  {p.articulos.length} {p.articulos.length === 1 ? "artículo" : "artículos"}
+                </div>
+              </div>
+              <div style={{ textAlign:"right" }}>
+                <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:15, fontWeight:700, color:V("--accent") }}>
+                  {conImprevistos.toLocaleString("es-ES",{minimumFractionDigits:2,maximumFractionDigits:2})}€
+                </div>
+                <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:V("--text-dim") }}>
+                  {abierto ? "▲" : "▼"}
+                </div>
+              </div>
+            </div>
+
+            {abierto && (
+              <div style={{ padding:"0 16px 16px" }}>
+                {/* Cabecera de columnas */}
+                {p.articulos.length > 0 && (
+                  <div style={{ display:"flex", gap:8, padding:"0 0 6px", fontFamily:UI, fontSize:9,
+                    color:V("--text-dim"), textTransform:"uppercase", letterSpacing:"0.05em" }}>
+                    <span style={{ flex:1 }}>Artículo</span>
+                    <span style={{ width:42, textAlign:"center" }}>Uds</span>
+                    <span style={{ width:70, textAlign:"right" }}>Precio/ud</span>
+                    <span style={{ width:70, textAlign:"right" }}>Total</span>
+                    <span style={{ width:18 }}/>
+                  </div>
+                )}
+                {/* Líneas */}
+                {p.articulos.map(a => (
+                  <div key={a.id} style={{ display:"flex", gap:8, alignItems:"center", marginBottom:7 }}>
+                    <input value={a.nombre} placeholder="Concepto"
+                      onChange={e => setArticulo(p.id, a.id, "nombre", e.target.value)}
+                      style={{ flex:1, minWidth:0, background:V("--surface-2"), border:`1px solid ${V("--border")}`,
+                        borderRadius:8, padding:"7px 9px", color:V("--text"), fontSize:12, outline:"none", fontFamily:UI }}/>
+                    <div style={{ width:42 }}><InputNumero valor={a.unidades} onChange={v => setArticulo(p.id, a.id, "unidades", v)}/></div>
+                    <div style={{ width:70 }}><InputMoneda valor={a.precioUnidad} onChange={v => setArticulo(p.id, a.id, "precioUnidad", v)}/></div>
+                    <span style={{ width:70, textAlign:"right", fontFamily:"'JetBrains Mono',monospace", fontSize:12, fontWeight:600, color:V("--text-mid") }}>
+                      {((a.unidades||0)*(a.precioUnidad||0)).toLocaleString("es-ES",{minimumFractionDigits:0})}€
+                    </span>
+                    <button onClick={() => delArticulo(p.id, a.id)} style={{ width:18, background:"none", border:"none",
+                      cursor:"pointer", color:mix(V("--negative"),0.6), fontSize:14, padding:0 }}>×</button>
+                  </div>
+                ))}
+                <button onClick={() => addArticulo(p.id)} style={{ width:"100%", marginTop:4, background:"none",
+                  border:`1px dashed ${mix(V("--accent"),0.4)}`, borderRadius:8, padding:"9px", cursor:"pointer",
+                  color:V("--accent"), fontFamily:UI, fontSize:12, fontWeight:600 }}>+ Añadir línea</button>
+
+                {/* Imprevistos + totales */}
+                <div style={{ display:"flex", alignItems:"center", gap:8, marginTop:12, paddingTop:10,
+                  borderTop:`1px solid ${V("--border")}` }}>
+                  <span style={{ fontFamily:UI, fontSize:11, color:V("--text-dim"), flex:1 }}>Margen de imprevistos (%)</span>
+                  <div style={{ width:56 }}><InputNumero valor={p.imprevistos} onChange={v => actualizar(p.id, { imprevistos: v })}/></div>
+                </div>
+                <div style={{ display:"flex", justifyContent:"space-between", marginTop:8 }}>
+                  <span style={{ fontFamily:UI, fontSize:11, color:V("--text-dim") }}>Subtotal</span>
+                  <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:12, color:V("--text-mid") }}>
+                    {base.toLocaleString("es-ES",{minimumFractionDigits:2,maximumFractionDigits:2})}€
+                  </span>
+                </div>
+                {extra > 0 && (
+                  <div style={{ display:"flex", justifyContent:"space-between", marginTop:3 }}>
+                    <span style={{ fontFamily:UI, fontSize:11, color:V("--text-dim") }}>Imprevistos ({p.imprevistos}%)</span>
+                    <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:12, color:V("--text-dim") }}>
+                      +{extra.toLocaleString("es-ES",{minimumFractionDigits:2,maximumFractionDigits:2})}€
+                    </span>
+                  </div>
+                )}
+                <div style={{ display:"flex", justifyContent:"space-between", marginTop:6, paddingTop:6,
+                  borderTop:`1px solid ${V("--border")}` }}>
+                  <span style={{ fontFamily:UI, fontSize:13, fontWeight:700, color:V("--text") }}>Total estimado</span>
+                  <span style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:15, fontWeight:700, color:V("--accent") }}>
+                    {conImprevistos.toLocaleString("es-ES",{minimumFractionDigits:2,maximumFractionDigits:2})}€
+                  </span>
+                </div>
+
+                {/* Notas */}
+                <textarea value={p.notas || ""} placeholder="Notas (tienda, enlaces, plazos…)"
+                  onChange={e => actualizar(p.id, { notas: e.target.value })}
+                  style={{ width:"100%", marginTop:10, background:V("--surface-2"), border:`1px solid ${V("--border")}`,
+                    borderRadius:8, padding:"8px 10px", color:V("--text"), fontSize:12, outline:"none", fontFamily:UI,
+                    resize:"vertical", minHeight:38, boxSizing:"border-box" }}/>
+
+                {/* Incorporar a anuales */}
+                <IncorporarAnual datos={datos} onIncorporar={cat => incorporar(p, cat)} incorporado={p.incorporado}/>
+
+                {/* Acciones */}
+                <div style={{ display:"flex", gap:8, marginTop:10 }}>
+                  <button onClick={() => duplicar(p)} style={{ flex:1, background:V("--surface-2"), color:V("--text-mid"),
+                    border:`1px solid ${V("--border")}`, borderRadius:8, padding:"8px", cursor:"pointer",
+                    fontFamily:UI, fontSize:11, fontWeight:600 }}>Duplicar</button>
+                  <button onClick={() => { if (confirm(`¿Eliminar "${p.nombre}"?`)) eliminar(p.id); }}
+                    style={{ flex:1, background:mix(V("--negative"),0.1), color:V("--negative"),
+                    border:`1px solid ${mix(V("--negative"),0.25)}`, borderRadius:8, padding:"8px", cursor:"pointer",
+                    fontFamily:UI, fontSize:11, fontWeight:600 }}>Eliminar</button>
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
+
+      {anadiendo
+        ? <FormularioNuevaPrevision onGuardar={crear} onCancelar={() => setAnadiendo(false)}/>
+        : <button onClick={() => setAnadiendo(true)} style={{ width:"100%", marginTop:4, background:mix(V("--accent"),0.12),
+            border:`1px solid ${mix(V("--accent"),0.3)}`, borderRadius:12, padding:"13px", cursor:"pointer",
+            color:V("--accent"), fontFamily:UI, fontSize:13, fontWeight:700 }}>+ Nuevo presupuesto</button>}
+    </div>
+  );
+}
+
+function FormularioNuevaPrevision({ onGuardar, onCancelar }) {
+  const [nombre, setNombre] = useState("");
+  return (
+    <div style={{ marginTop:8, padding:"12px", background:V("--surface-2"), borderRadius:12,
+      border:`1px solid ${V("--border")}` }}>
+      <input placeholder="Nombre (ej. Mobiliario de exterior)" value={nombre} autoFocus
+        onChange={e => setNombre(e.target.value)}
+        onKeyDown={e => { if (e.key === "Enter" && nombre.trim()) onGuardar(nombre.trim()); }}
+        style={{ width:"100%", background:V("--surface"), border:`1px solid ${V("--border")}`,
+          borderRadius:10, padding:"10px 12px", color:V("--text"), fontSize:14, outline:"none",
+          fontFamily:UI, marginBottom:10, boxSizing:"border-box" }}/>
+      <div style={{ display:"flex", gap:8 }}>
+        <button onClick={() => { if (nombre.trim()) onGuardar(nombre.trim()); }}
+          style={{ flex:1, background:V("--accent"), color:V("--bg"), border:"none", borderRadius:999,
+            fontFamily:UI, fontWeight:800, fontSize:14, cursor:"pointer", padding:"12px" }}>Crear</button>
+        <button onClick={onCancelar} style={{ padding:"0 16px", background:V("--surface"), color:V("--text-dim"),
+          border:"none", borderRadius:999, cursor:"pointer", fontSize:14 }}>✕</button>
+      </div>
+    </div>
+  );
+}
+
+function IncorporarAnual({ datos, onIncorporar, incorporado }) {
+  const [abierto, setAbierto] = useState(false);
+  const categorias = Object.keys(datos.anuales.catalogo || {});
+  return (
+    <div style={{ marginTop:10 }}>
+      {!abierto ? (
+        <button onClick={() => setAbierto(true)} style={{
+          width:"100%", background:mix(V("--accent"),0.12), color:V("--accent"),
+          border:`1px solid ${mix(V("--accent"),0.3)}`, borderRadius:10, padding:"10px", cursor:"pointer",
+          fontFamily:UI, fontSize:12, fontWeight:700, display:"flex", alignItems:"center",
+          justifyContent:"center", gap:6 }}>
+          <Icono nombre="calendario" size={15} color={V("--accent")}/>
+          {incorporado ? "Volver a incorporar a gastos anuales" : "Incorporar a gastos anuales"}
+        </button>
+      ) : (
+        <div style={{ background:V("--surface-2"), borderRadius:10, padding:"10px" }}>
+          <div style={{ fontFamily:UI, fontSize:10, fontWeight:600, color:V("--text-dim"),
+            textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:8 }}>Elige la categoría anual</div>
+          {categorias.length === 0 && (
+            <div style={{ fontFamily:UI, fontSize:11, color:V("--text-dim"), marginBottom:8 }}>
+              No tienes categorías anuales. Crea una primero en la pestaña Anuales.
+            </div>
+          )}
+          <div style={{ display:"flex", flexWrap:"wrap", gap:6 }}>
+            {categorias.map(cat => (
+              <button key={cat} onClick={() => { onIncorporar(cat); setAbierto(false); }} style={{
+                background:V("--surface"), color:V("--text-mid"), border:`1px solid ${V("--border")}`,
+                borderRadius:8, padding:"7px 11px", cursor:"pointer", fontFamily:UI, fontSize:12, fontWeight:600 }}>
+                {cat}
+              </button>
+            ))}
+          </div>
+          <button onClick={() => setAbierto(false)} style={{ marginTop:8, width:"100%", background:"none",
+            border:"none", color:V("--text-dim"), cursor:"pointer", fontFamily:UI, fontSize:11 }}>Cancelar</button>
+        </div>
+      )}
     </div>
   );
 }

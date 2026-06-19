@@ -2042,6 +2042,29 @@ function BloqueAportacionAnual({ datos, claveM, mesNum, onUpdateDatos }) {
   );
 }
 
+// Sección plegable de gastos (top-level: identidad estable, no remonta los inputs)
+function Section({ id, titulo, icono, total, children, seccionAbierta, setSeccionAbierta }) {
+  const abierta = seccionAbierta[id];
+  return (
+    <div style={{ background:V("--surface"), borderRadius:14, marginBottom:10,
+      border:`1px solid ${V("--border")}`, overflow:"hidden" }}>
+      <div onClick={() => setSeccionAbierta(s => ({...s,[id]:!s[id]}))}
+        style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
+          padding:"12px 14px", cursor:"pointer" }}>
+        <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+          <Icono nombre={icono} size={17} color={V("--text-mid")}/>
+          <span style={{ fontFamily:UI, fontSize:12, fontWeight:700, color:V("--text-mid"), letterSpacing:"0.06em", textTransform:"uppercase" }}>{titulo}</span>
+        </div>
+        <div style={{ display:"flex", alignItems:"center", gap:8 }}>
+          <Num v={total} decimals={2} color={V("--c3")} size={13}/>
+          <span style={{ color:V("--text-dim"), fontSize:12 }}>{abierta ? "^" : "v"}</span>
+        </div>
+      </div>
+      {abierta && <div style={{ padding:"0 14px 12px" }}>{children}</div>}
+    </div>
+  );
+}
+
 function VistaGastos({ datos, claveM, mesNum, onUpdateDatos }) {
   const [subGasto, setSubGasto] = useState("mensuales");
   const [seccionAbierta, setSeccionAbierta] = useState({ fijos:true, variables:true, ahorro:true, puntuales:true });
@@ -2103,25 +2126,6 @@ function VistaGastos({ datos, claveM, mesNum, onUpdateDatos }) {
     });
     setAnadiendo(null);
   };
-
-  const Section = ({ id, titulo, icono, total, children }) => (
-    <div style={{ background:V("--surface"), borderRadius:14, marginBottom:10,
-      border:`1px solid ${V("--border")}`, overflow:"hidden" }}>
-      <div onClick={() => setSeccionAbierta(s => ({...s,[id]:!s[id]}))}
-        style={{ display:"flex", justifyContent:"space-between", alignItems:"center",
-          padding:"12px 14px", cursor:"pointer" }}>
-        <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-          <Icono nombre={icono} size={17} color={V("--text-mid")}/>
-          <span style={{ fontFamily:UI, fontSize:12, fontWeight:700, color:V("--text-mid"), letterSpacing:"0.06em", textTransform:"uppercase" }}>{titulo}</span>
-        </div>
-        <div style={{ display:"flex", alignItems:"center", gap:8 }}>
-          <Num v={total} decimals={2} color={V("--c3")} size={13}/>
-          <span style={{ color:V("--text-dim"), fontSize:12 }}>{seccionAbierta[id] ? "^" : "v"}</span>
-        </div>
-      </div>
-      {seccionAbierta[id] && <div style={{ padding:"0 14px 12px" }}>{children}</div>}
-    </div>
-  );
 
   return (
     <div className="slide-in">
@@ -2185,7 +2189,7 @@ function VistaGastos({ datos, claveM, mesNum, onUpdateDatos }) {
       </div>
 
       {/* FIJOS */}
-      <Section id="fijos" titulo="Gastos Fijos" icono="inmueble" total={tFijos}>
+      <Section id="fijos" titulo="Gastos Fijos" icono="inmueble" total={tFijos} seccionAbierta={seccionAbierta} setSeccionAbierta={setSeccionAbierta}>
         {fijos.length === 0 && (
           <div style={{ padding:"12px 0", textAlign:"center", fontFamily:"'Inter',sans-serif",
             fontSize:12, color:V("--text-dim"), fontStyle:"italic" }}>Sin gastos fijos activos</div>
@@ -2208,7 +2212,7 @@ function VistaGastos({ datos, claveM, mesNum, onUpdateDatos }) {
       </Section>
 
       {/* VARIABLES */}
-      <Section id="variables" titulo="Gastos Variables" icono="movil" total={tVars}>
+      <Section id="variables" titulo="Gastos Variables" icono="movil" total={tVars} seccionAbierta={seccionAbierta} setSeccionAbierta={setSeccionAbierta}>
         {variables.length === 0 && (
           <div style={{ padding:"12px 0", textAlign:"center", fontFamily:"'Inter',sans-serif",
             fontSize:12, color:V("--text-dim"), fontStyle:"italic" }}>Sin gastos variables activos</div>
@@ -2231,7 +2235,7 @@ function VistaGastos({ datos, claveM, mesNum, onUpdateDatos }) {
       </Section>
 
       {/* AHORRO */}
-      <Section id="ahorro" titulo="Ahorro" icono="ahorro" total={tAhorro}>
+      <Section id="ahorro" titulo="Ahorro" icono="ahorro" total={tAhorro} seccionAbierta={seccionAbierta} setSeccionAbierta={setSeccionAbierta}>
         {ahorro.length === 0 && (
           <div style={{ padding:"12px 0", textAlign:"center", fontFamily:"'Inter',sans-serif",
             fontSize:12, color:V("--text-dim"), fontStyle:"italic" }}>Sin partidas de ahorro activas</div>
@@ -2278,7 +2282,7 @@ function VistaGastos({ datos, claveM, mesNum, onUpdateDatos }) {
       </Section>
 
       {/* PUNTUALES */}
-      <Section id="puntuales" titulo="Gastos Puntuales" icono="auto" total={tPunt}>
+      <Section id="puntuales" titulo="Gastos Puntuales" icono="auto" total={tPunt} seccionAbierta={seccionAbierta} setSeccionAbierta={setSeccionAbierta}>
         {puntuales.length === 0 && (
           <div style={{ padding:"12px 0", textAlign:"center", fontFamily:"'Inter',sans-serif",
             fontSize:12, color:V("--text-dim"), fontStyle:"italic" }}>Sin gastos puntuales este mes</div>
@@ -2343,6 +2347,7 @@ function VistaPrevision({ datos, claveM, onUpdateDatos }) {
   const duplicar = (p) => {
     const id = `prev-${Date.now()}`;
     onUpdateDatos(d => {
+      if (!d.previsiones) d.previsiones = [];
       d.previsiones.push({
         ...JSON.parse(JSON.stringify(p)), id, nombre: `${p.nombre} (copia)`,
         incorporado: false, creadoEn: claveM,
@@ -2354,16 +2359,16 @@ function VistaPrevision({ datos, claveM, onUpdateDatos }) {
   const addArticulo = (pid) => {
     const aid = `art-${Date.now()}`;
     onUpdateDatos(d => {
-      const p = d.previsiones.find(x => x.id === pid);
+      const p = (d.previsiones || []).find(x => x.id === pid);
       if (p) p.articulos.push({ id: aid, nombre: "", unidades: 1, precioUnidad: 0 });
     });
   };
   const setArticulo = (pid, aid, campo, valor) => onUpdateDatos(d => {
-    const p = d.previsiones.find(x => x.id === pid);
+    const p = (d.previsiones || []).find(x => x.id === pid);
     if (p) p.articulos = p.articulos.map(a => a.id === aid ? { ...a, [campo]: valor } : a);
   });
   const delArticulo = (pid, aid) => onUpdateDatos(d => {
-    const p = d.previsiones.find(x => x.id === pid);
+    const p = (d.previsiones || []).find(x => x.id === pid);
     if (p) p.articulos = p.articulos.filter(a => a.id !== aid);
   });
 
@@ -2376,7 +2381,7 @@ function VistaPrevision({ datos, claveM, onUpdateDatos }) {
       d.anuales.catalogo[categoria].conceptos.push({
         nombre: p.nombre, importe: Math.round(conImprevistos), id: cid, pagado: 0, cerrado: false,
       });
-      const pp = d.previsiones.find(x => x.id === p.id);
+      const pp = (d.previsiones || []).find(x => x.id === p.id);
       if (pp) pp.incorporado = true;
     });
   };

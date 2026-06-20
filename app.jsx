@@ -879,7 +879,7 @@ function IconoInline({ nombre, size = 14, color = "currentColor" }) {
 }
 
 // Deslizar hacia la izquierda para borrar (swipe-to-delete)
-function Deslizable({ children, onEliminar, radio = 12 }) {
+function Deslizable({ children, onEliminar, radio = 12, margen = 8, fondo }) {
   const [dx, setDx] = useState(0);
   const start = useRef(null);
   const horizontal = useRef(false);
@@ -908,17 +908,19 @@ function Deslizable({ children, onEliminar, radio = 12 }) {
   };
 
   const activo = dx < -UMBRAL;
+  // La capa roja solo se ve mientras se desliza (oculta en reposo)
+  const opacidadFondo = dx < 0 ? Math.min(1, -dx / UMBRAL) : 0;
   return (
-    <div style={{ position:"relative", overflow:"hidden", borderRadius:radio, marginBottom:8 }}>
-      <div style={{ position:"absolute", inset:0, borderRadius:radio,
-        background: activo ? mix(V("--negative"),0.35) : mix(V("--negative"),0.18),
+    <div style={{ position:"relative", overflow:"hidden", borderRadius:radio, marginBottom:margen }}>
+      <div style={{ position:"absolute", inset:0, borderRadius:radio, opacity:opacidadFondo,
+        background: activo ? mix(V("--negative"),0.4) : mix(V("--negative"),0.22),
         display:"flex", alignItems:"center", justifyContent:"flex-end", paddingRight:20,
-        transition:"background 0.15s" }}>
+        transition:"background 0.15s, opacity 0.15s", pointerEvents:"none" }}>
         <Icono nombre="papelera" size={20} color={V("--negative")}/>
       </div>
       <div onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}
-        style={{ position:"relative", transform:`translateX(${dx}px)`,
-          transition: dx === 0 ? "transform 0.2s ease" : "none" }}>
+        style={{ position:"relative", transform:`translateX(${dx}px)`, background: fondo || V("--bg"),
+          borderRadius:radio, transition: dx === 0 ? "transform 0.2s ease" : "none" }}>
         {children}
       </div>
     </div>
@@ -1307,6 +1309,7 @@ function BotonAnadir({ onClick, label, color=V("--accent") }) {
 function FilaGastoCatalogo({ gasto, onPagado, onImporte, onBanco, onEliminar }) {
   const esAuto = !!gasto.auto;
   return (
+    <Deslizable onEliminar={onEliminar} fondo={V("--surface")} radio={8} margen={4}>
     <div style={{
       display:"flex", alignItems:"center", gap:8, padding:"9px 0",
       borderBottom:`1px solid ${V("--border")}`,
@@ -1351,6 +1354,7 @@ function FilaGastoCatalogo({ gasto, onPagado, onImporte, onBanco, onEliminar }) 
           cursor:"pointer", color:mix(V("--negative"),"60"), fontSize:14, padding:"0 2px" }}>×</button>
       )}
     </div>
+    </Deslizable>
   );
 }
 
@@ -1946,6 +1950,7 @@ function VistaInicio({ datos, claveM, mesNum, onUpdateDatos }) {
 function FilaIngreso({ fuente, onNombre, onImporte, onEliminar, soloMes=false }) {
   const [editando, setEditando] = useState(false);
   return (
+    <Deslizable onEliminar={onEliminar} fondo={V("--surface")} radio={8} margen={4}>
     <div style={{ display:"flex", alignItems:"center", gap:6, padding:"7px 0",
       borderBottom:`1px solid ${V("--border")}` }}>
       {editando ? (
@@ -1973,6 +1978,7 @@ function FilaIngreso({ fuente, onNombre, onImporte, onEliminar, soloMes=false })
       <button onClick={onEliminar} style={{ background:"none", border:"none",
         cursor:"pointer", color:mix(V("--negative"),"60"), fontSize:14, padding:"0 2px" }}>×</button>
     </div>
+    </Deslizable>
   );
 }
 
@@ -2515,7 +2521,8 @@ function VistaPrevision({ datos, claveM, onUpdateDatos }) {
         const { base, conImprevistos, extra } = totalPrevision(p);
         const abierto = expandido === p.id;
         return (
-          <div key={p.id} style={{ background:V("--surface"), borderRadius:16, marginBottom:12,
+          <Deslizable key={p.id} onEliminar={() => eliminar(p.id)} fondo={V("--bg")} radio={16} margen={12}>
+          <div style={{ background:V("--surface"), borderRadius:16,
             border:`1px solid ${V("--border")}`, overflow:"hidden" }}>
             {/* Cabecera */}
             <div onClick={() => setExpandido(abierto ? null : p.id)}
@@ -2643,6 +2650,7 @@ function VistaPrevision({ datos, claveM, onUpdateDatos }) {
               </div>
             )}
           </div>
+          </Deslizable>
         );
       })}
 
@@ -2959,6 +2967,7 @@ function FilaConcepto({ concepto, onCerrado, onPagadoImporte, onNombre, onImport
   const pct = importe > 0 ? Math.min(100, (pagado / importe) * 100) : 0;
 
   return (
+    <Deslizable onEliminar={onEliminar} fondo={V("--surface")} radio={8} margen={4}>
     <div style={{ padding:"6px 0", borderBottom:"1px solid rgba(255,255,255,0.03)" }}>
       {/* Fila principal: check, nombre, importe total */}
       <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:5 }}>
@@ -3025,6 +3034,7 @@ function FilaConcepto({ concepto, onCerrado, onPagadoImporte, onNombre, onImport
         </div>
       )}
     </div>
+    </Deslizable>
   );
 }
 
@@ -3088,6 +3098,7 @@ function FilaInversion({ inv, onUpdate, onEliminar }) {
   const [editandoMeta, setEditandoMeta] = useState(false);
 
   return (
+    <Deslizable onEliminar={onEliminar} fondo={V("--bg")} radio={12} margen={8}>
     <div style={{
       background:V("--surface"), borderRadius:12,
       border:`1px solid ${tipo.color}25`, padding:"12px 14px", marginBottom:8,
@@ -3221,6 +3232,7 @@ function FilaInversion({ inv, onUpdate, onEliminar }) {
         </>
       )}
     </div>
+    </Deslizable>
   );
 }
 
@@ -3671,6 +3683,7 @@ function FilaDeuda({ deuda, claveM, onActualizar, onEliminar }) {
   const fmtTiempo = (t) => t.anios > 0 ? `${t.anios}a ${t.meses}m` : `${t.meses}m`;
 
   return (
+    <Deslizable onEliminar={onEliminar} fondo={V("--surface")} radio={8} margen={4}>
     <div style={{ padding:"10px 0", borderBottom:`1px solid ${V("--border")}` }}>
       {/* Cabecera: nombre + saldo + cuota */}
       <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginBottom:6 }}>
@@ -3740,6 +3753,7 @@ function FilaDeuda({ deuda, claveM, onActualizar, onEliminar }) {
         </div>
       )}
     </div>
+    </Deslizable>
   );
 }
 
@@ -4326,6 +4340,7 @@ function FilaObjetivo({ objetivo, cuentas, claveM, onActualizar, onEliminar }) {
   else if (ev.ritmo === "alDia")      { estadoColor = V("--c2"); estadoLabel = "Al día"; }
 
   return (
+    <Deslizable onEliminar={onEliminar} fondo={V("--bg")} radio={12} margen={10}>
     <div style={{ background:"rgba(255,255,255,0.02)", borderRadius:12, padding:"12px 14px",
       border:`1px solid ${estadoColor}25`, marginBottom:10 }}>
 
@@ -4390,6 +4405,7 @@ function FilaObjetivo({ objetivo, cuentas, claveM, onActualizar, onEliminar }) {
         </div>
       )}
     </div>
+    </Deslizable>
   );
 }
 

@@ -768,8 +768,12 @@ function calcularTotalCartera(inversiones) {
 
 const css = `
   @import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
-  *, *::before, *::after { box-sizing: border-box; margin:0; padding:0; }
-  body { background:var(--bg); transition: background 0.3s; }
+  *, *::before, *::after { box-sizing: border-box; margin:0; padding:0; -webkit-tap-highlight-color: transparent; }
+  html, body { touch-action: manipulation; overscroll-behavior-y: contain; }
+  body { background:var(--bg); transition: background 0.3s; -webkit-user-select:none; user-select:none; -webkit-text-size-adjust:100%; }
+  input, textarea { -webkit-user-select:text; user-select:text; }
+  button { -webkit-tap-highlight-color: transparent; }
+  .app-root { min-height:100vh; min-height:100dvh; }
   ::-webkit-scrollbar { width:3px; }
   ::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.12); border-radius:2px; }
   input[type=number]::-webkit-inner-spin-button,
@@ -2383,7 +2387,7 @@ function VistaPrevision({ datos, claveM, onUpdateDatos }) {
     onUpdateDatos(d => {
       if (!d.anuales.catalogo[categoria]) d.anuales.catalogo[categoria] = { icono:"carpeta", conceptos:[] };
       d.anuales.catalogo[categoria].conceptos.push({
-        nombre: p.nombre, importe: Math.round(conImprevistos), id: cid, pagado: 0, cerrado: false,
+        nombre: p.nombre, importe: redondear50(conImprevistos), id: cid, pagado: 0, cerrado: false,
       });
       const pp = (d.previsiones || []).find(x => x.id === p.id);
       if (pp) pp.incorporado = true;
@@ -2529,7 +2533,7 @@ function VistaPrevision({ datos, claveM, onUpdateDatos }) {
                     resize:"vertical", minHeight:38, boxSizing:"border-box" }}/>
 
                 {/* Incorporar a anuales */}
-                <IncorporarAnual datos={datos} onIncorporar={cat => incorporar(p, cat)} incorporado={p.incorporado}/>
+                <IncorporarAnual datos={datos} onIncorporar={cat => incorporar(p, cat)} incorporado={p.incorporado} importe={redondear50(conImprevistos)}/>
 
                 {/* Acciones */}
                 <div style={{ display:"flex", gap:8, marginTop:10 }}>
@@ -2578,9 +2582,10 @@ function FormularioNuevaPrevision({ onGuardar, onCancelar }) {
   );
 }
 
-function IncorporarAnual({ datos, onIncorporar, incorporado }) {
+function IncorporarAnual({ datos, onIncorporar, incorporado, importe }) {
   const [abierto, setAbierto] = useState(false);
   const categorias = Object.keys(datos.anuales.catalogo || {});
+  const impTxt = (importe || 0).toLocaleString("es-ES");
   return (
     <div style={{ marginTop:10 }}>
       {!abierto ? (
@@ -2590,12 +2595,15 @@ function IncorporarAnual({ datos, onIncorporar, incorporado }) {
           fontFamily:UI, fontSize:12, fontWeight:700, display:"flex", alignItems:"center",
           justifyContent:"center", gap:6 }}>
           <Icono nombre="calendario" size={15} color={V("--accent")}/>
-          {incorporado ? "Volver a incorporar a gastos anuales" : "Incorporar a gastos anuales"}
+          {incorporado ? "Volver a incorporar" : "Incorporar a gastos anuales"} ({impTxt}€)
         </button>
       ) : (
         <div style={{ background:V("--surface-2"), borderRadius:10, padding:"10px" }}>
           <div style={{ fontFamily:UI, fontSize:10, fontWeight:600, color:V("--text-dim"),
-            textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:8 }}>Elige la categoría anual</div>
+            textTransform:"uppercase", letterSpacing:"0.05em", marginBottom:4 }}>Elige la categoría anual</div>
+          <div style={{ fontFamily:UI, fontSize:10, color:V("--text-dim"), marginBottom:8 }}>
+            Se añadirá un concepto de {impTxt}€ (redondeado a 50€).
+          </div>
           {categorias.length === 0 && (
             <div style={{ fontFamily:UI, fontSize:11, color:V("--text-dim"), marginBottom:8 }}>
               No tienes categorías anuales. Crea una primero en la pestaña Anuales.
@@ -4867,7 +4875,7 @@ function App() {
   sincronizarBancoMeta(datosEfectivosMes(datos, claveM).bancosConfig);
 
   return (
-    <div style={{ background:V("--bg"), minHeight:"100vh", maxWidth:480, margin:"0 auto",
+    <div className="app-root" style={{ background:V("--bg"), maxWidth:480, margin:"0 auto",
       fontFamily:"'Inter',sans-serif", color:V("--text"), paddingBottom:80 }}>
       <style>{css}</style>
 

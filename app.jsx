@@ -1,4 +1,4 @@
-const { useState, useEffect, useCallback } = React;
+const { useState, useEffect, useCallback, useRef } = React;
 
 
 // =======================================================
@@ -875,6 +875,98 @@ function IconoInline({ nombre, size = 14, color = "currentColor" }) {
     <span style={{ display:"inline-flex", verticalAlign:"middle", marginRight:5, position:"relative", top:"-1px" }}>
       <Icono nombre={nombre} size={size} color={color}/>
     </span>
+  );
+}
+
+// Deslizar hacia la izquierda para borrar (swipe-to-delete)
+function Deslizable({ children, onEliminar, radio = 12 }) {
+  const [dx, setDx] = useState(0);
+  const start = useRef(null);
+  const horizontal = useRef(false);
+  const UMBRAL = 75;
+
+  const onTouchStart = (e) => {
+    start.current = { x: e.touches[0].clientX, y: e.touches[0].clientY };
+    horizontal.current = false;
+  };
+  const onTouchMove = (e) => {
+    if (!start.current) return;
+    const ddx = e.touches[0].clientX - start.current.x;
+    const ddy = e.touches[0].clientY - start.current.y;
+    if (!horizontal.current && Math.abs(ddx) > Math.abs(ddy) && Math.abs(ddx) > 10) {
+      horizontal.current = true;
+    }
+    if (horizontal.current) {
+      setDx(Math.max(-120, Math.min(0, ddx)));  // solo a la izquierda
+    }
+  };
+  const onTouchEnd = () => {
+    if (dx < -UMBRAL) onEliminar();
+    setDx(0);
+    start.current = null;
+    horizontal.current = false;
+  };
+
+  const activo = dx < -UMBRAL;
+  return (
+    <div style={{ position:"relative", overflow:"hidden", borderRadius:radio, marginBottom:8 }}>
+      <div style={{ position:"absolute", inset:0, borderRadius:radio,
+        background: activo ? mix(V("--negative"),0.35) : mix(V("--negative"),0.18),
+        display:"flex", alignItems:"center", justifyContent:"flex-end", paddingRight:20,
+        transition:"background 0.15s" }}>
+        <Icono nombre="papelera" size={20} color={V("--negative")}/>
+      </div>
+      <div onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}
+        style={{ position:"relative", transform:`translateX(${dx}px)`,
+          transition: dx === 0 ? "transform 0.2s ease" : "none" }}>
+        {children}
+      </div>
+    </div>
+  );
+}
+
+// Tirar hacia abajo para refrescar / buscar actualización (pull-to-refresh)
+function PullToRefresh({ children }) {
+  const [pull, setPull] = useState(0);
+  const [refrescando, setRefrescando] = useState(false);
+  const start = useRef(null);
+  const UMBRAL = 70;
+
+  const onTouchStart = (e) => {
+    start.current = (window.scrollY || 0) <= 0 ? e.touches[0].clientY : null;
+  };
+  const onTouchMove = (e) => {
+    if (start.current == null || refrescando) return;
+    const dy = e.touches[0].clientY - start.current;
+    if (dy > 0 && (window.scrollY || 0) <= 0) {
+      setPull(Math.min(dy * 0.5, 95));  // resistencia
+    }
+  };
+  const onTouchEnd = () => {
+    if (pull > UMBRAL) {
+      setRefrescando(true);
+      setPull(UMBRAL);
+      setTimeout(() => { try { location.reload(); } catch(e){} }, 350);
+    } else {
+      setPull(0);
+    }
+    start.current = null;
+  };
+
+  const rot = Math.min(360, (pull / UMBRAL) * 360);
+  return (
+    <div onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
+      <div style={{ height:pull, overflow:"hidden", display:"flex", alignItems:"center",
+        justifyContent:"center", transition: pull === 0 ? "height 0.25s ease" : "none" }}>
+        <div style={{ transform:`rotate(${refrescando ? 0 : rot}deg)`,
+          opacity: Math.min(1, pull / 40) }}>
+          <Icono nombre="refresh" size={20} color={V("--accent")} stroke={2}/>
+        </div>
+      </div>
+      <div style={{ transform:`translateY(${pull ? 0 : 0}px)` }}>
+        {children}
+      </div>
+    </div>
   );
 }
 
@@ -2455,18 +2547,20 @@ function VistaPrevision({ datos, claveM, onUpdateDatos }) {
               <div style={{ padding:"0 16px 16px" }}>
                 {/* Líneas: una tarjeta por artículo */}
                 {p.articulos.map(a => (
-                  <div key={a.id} style={{ background:V("--surface-2"), borderRadius:10, padding:"10px",
-                    marginBottom:8, border:`1px solid ${V("--border")}` }}>
+                  <Deslizable key={a.id} radio={10} onEliminar={() => delArticulo(p.id, a.id)}>
+                  <div style={{ background:V("--surface-2"), borderRadius:10, padding:"10px",
+                    border:`1px solid ${V("--border")}` }}>
                     {/* Fila 1: nombre + eliminar */}
                     <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:9 }}>
                       <input value={a.nombre} placeholder="Concepto"
                         onChange={e => setArticulo(p.id, a.id, "nombre", e.target.value)}
                         style={{ flex:1, minWidth:0, background:V("--surface"), border:`1px solid ${V("--border")}`,
-                          borderRadius:8, padding:"8px 10px", color:V("--text"), fontSize:13, outline:"none",
+                          borderRadius:8, padding:"10px 10px", color:V("--text"), fontSize:13, outline:"none",
                           fontFamily:UI, boxSizing:"border-box" }}/>
-                      <button onClick={() => delArticulo(p.id, a.id)} style={{ width:26, height:26, flexShrink:0,
-                        background:mix(V("--negative"),0.1), border:"none", borderRadius:7, cursor:"pointer",
-                        color:V("--negative"), fontSize:15, lineHeight:1, padding:0 }}>×</button>
+                      <button onClick={() => delArticulo(p.id, a.id)} style={{ width:38, height:38, flexShrink:0,
+                        background:mix(V("--negative"),0.1), border:"none", borderRadius:9, cursor:"pointer",
+                        color:V("--negative"), fontSize:18, lineHeight:1, padding:0,
+                        display:"flex", alignItems:"center", justifyContent:"center" }}>×</button>
                     </div>
                     {/* Fila 2: uds x precio = total */}
                     <div style={{ display:"flex", gap:8, alignItems:"flex-end" }}>
@@ -2492,9 +2586,10 @@ function VistaPrevision({ datos, claveM, onUpdateDatos }) {
                       </div>
                     </div>
                   </div>
+                  </Deslizable>
                 ))}
                 <button onClick={() => addArticulo(p.id)} style={{ width:"100%", marginTop:4, background:"none",
-                  border:`1px dashed ${mix(V("--accent"),0.4)}`, borderRadius:8, padding:"9px", cursor:"pointer",
+                  border:`1px dashed ${mix(V("--accent"),0.4)}`, borderRadius:8, padding:"11px", cursor:"pointer",
                   color:V("--accent"), fontFamily:UI, fontSize:12, fontWeight:600 }}>+ Añadir línea</button>
 
                 {/* Imprevistos + totales */}
@@ -4893,8 +4988,8 @@ function App() {
 
         <div style={{ display:"flex", alignItems:"center", justifyContent:"space-between", marginBottom:14 }}>
           <button onClick={()=>irMes(-1)} style={{ background:V("--border"), border:"none",
-            color:V("--text-dim"), cursor:"pointer", fontSize:16, width:32, height:32, borderRadius:8,
-            display:"flex", alignItems:"center", justifyContent:"center" }}>‹</button>
+            color:V("--text-dim"), cursor:"pointer", fontSize:20, width:40, height:40, borderRadius:10,
+            display:"flex", alignItems:"center", justifyContent:"center", flexShrink:0 }}>‹</button>
           <div style={{ textAlign:"center", display:"flex", alignItems:"center", gap:8 }}>
             <div>
               <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:9, color:V("--text-dim"),
@@ -4914,7 +5009,7 @@ function App() {
           </div>
           <div style={{ display:"flex", alignItems:"center", gap:6 }}>
             <button onClick={()=>irMes(1)} style={{ background:V("--border"), border:"none",
-              color:V("--text-dim"), cursor:"pointer", fontSize:16, width:32, height:32, borderRadius:8,
+              color:V("--text-dim"), cursor:"pointer", fontSize:20, width:40, height:40, borderRadius:10,
               display:"flex", alignItems:"center", justifyContent:"center" }}>›</button>
             <BotonAjustes tema={tema} setTema={setTema}/>
           </div>
@@ -4958,6 +5053,7 @@ function App() {
       )}
 
       {/* Contenido de la vista (capa pointer-events:none si está cerrado) */}
+      <PullToRefresh>
       <div style={{
         padding:"16px 16px 0",
         pointerEvents: cerrado ? "none" : "auto",
@@ -4968,6 +5064,7 @@ function App() {
         {vista === "cartera"  && <VistaCartera  datos={datos} claveM={claveM} onUpdateDatos={onUpdateDatosMes}/>}
         {vista === "analisis" && <VistaAnalisis datos={datos} claveM={claveM} mesNum={nav.mes} onUpdateDatos={onUpdateDatosMes}/>}
       </div>
+      </PullToRefresh>
     </div>
   );
 }

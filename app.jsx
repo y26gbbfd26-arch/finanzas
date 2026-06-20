@@ -978,7 +978,7 @@ function BarraProgreso({ valor, maximo, color=V("--c2"), altura=6 }) {
   );
 }
 
-function InputMoneda({ valor, onChange, placeholder="0", compact=false, ancho }) {
+function InputMoneda({ valor, onChange, placeholder="0", compact=false, ancho, fill=false }) {
   // Estado de texto local: permite editar la cifra completa con libertad
   // (borrar todo, seleccionar y sobrescribir) sin que React normalice en cada tecla.
   const [txt, setTxt] = useState(String(valor || ""));
@@ -1000,6 +1000,7 @@ function InputMoneda({ valor, onChange, placeholder="0", compact=false, ancho })
     <div style={{ display:"flex", alignItems:"center", gap:3,
       background:V("--surface-2"), border:"1px solid rgba(255,255,255,0.1)",
       borderRadius:8, padding: compact ? "4px 8px" : "7px 10px",
+      width: fill ? "100%" : undefined, boxSizing:"border-box",
     }}>
       <span style={{ color:V("--text-dim"), fontFamily:"'JetBrains Mono',monospace", fontSize: compact?11:13 }}>€</span>
       <input type="text" inputMode="decimal" value={txt} placeholder={placeholder}
@@ -1008,7 +1009,8 @@ function InputMoneda({ valor, onChange, placeholder="0", compact=false, ancho })
         onChange={manejarCambio}
         style={{
           background:"transparent", border:"none", outline:"none",
-          width: ancho || (compact ? 65 : 85),
+          width: fill ? "100%" : (ancho || (compact ? 65 : 85)),
+          flex: fill ? 1 : undefined, minWidth: fill ? 0 : undefined,
           color:V("--text"), fontFamily:"'JetBrains Mono',monospace", fontSize: compact?12:14,
           textAlign:"right",
         }}
@@ -1017,7 +1019,7 @@ function InputMoneda({ valor, onChange, placeholder="0", compact=false, ancho })
   );
 }
 
-function InputNumero({ valor, onChange, placeholder="0", sufijo="", compact=false, ancho=85, step=1 }) {
+function InputNumero({ valor, onChange, placeholder="0", sufijo="", compact=false, ancho=85, step=1, fill=false }) {
   const [txt, setTxt] = useState(String(valor || ""));
   const [enfocado, setEnfocado] = useState(false);
 
@@ -1036,13 +1038,15 @@ function InputNumero({ valor, onChange, placeholder="0", sufijo="", compact=fals
     <div style={{ display:"flex", alignItems:"center", gap:3,
       background:V("--surface-2"), border:"1px solid rgba(255,255,255,0.1)",
       borderRadius:8, padding: compact ? "4px 8px" : "7px 10px",
+      width: fill ? "100%" : undefined, boxSizing:"border-box",
     }}>
       <input type="text" inputMode="decimal" value={txt} placeholder={placeholder}
         onFocus={e => { setEnfocado(true); e.target.select(); }}
         onBlur={() => setEnfocado(false)}
         onChange={manejarCambio}
         style={{
-          background:"transparent", border:"none", outline:"none", width: ancho,
+          background:"transparent", border:"none", outline:"none",
+          width: fill ? "100%" : ancho, flex: fill ? 1 : undefined, minWidth: fill ? 0 : undefined,
           color:V("--text"), fontFamily:"'JetBrains Mono',monospace", fontSize: compact?12:14,
           textAlign:"right",
         }}
@@ -2445,31 +2449,44 @@ function VistaPrevision({ datos, claveM, onUpdateDatos }) {
 
             {abierto && (
               <div style={{ padding:"0 16px 16px" }}>
-                {/* Cabecera de columnas */}
-                {p.articulos.length > 0 && (
-                  <div style={{ display:"flex", gap:8, padding:"0 0 6px", fontFamily:UI, fontSize:9,
-                    color:V("--text-dim"), textTransform:"uppercase", letterSpacing:"0.05em" }}>
-                    <span style={{ flex:1 }}>Artículo</span>
-                    <span style={{ width:42, textAlign:"center" }}>Uds</span>
-                    <span style={{ width:70, textAlign:"right" }}>Precio/ud</span>
-                    <span style={{ width:70, textAlign:"right" }}>Total</span>
-                    <span style={{ width:18 }}/>
-                  </div>
-                )}
-                {/* Líneas */}
+                {/* Líneas: una tarjeta por artículo */}
                 {p.articulos.map(a => (
-                  <div key={a.id} style={{ display:"flex", gap:8, alignItems:"center", marginBottom:7 }}>
-                    <input value={a.nombre} placeholder="Concepto"
-                      onChange={e => setArticulo(p.id, a.id, "nombre", e.target.value)}
-                      style={{ flex:1, minWidth:0, background:V("--surface-2"), border:`1px solid ${V("--border")}`,
-                        borderRadius:8, padding:"7px 9px", color:V("--text"), fontSize:12, outline:"none", fontFamily:UI }}/>
-                    <div style={{ width:42 }}><InputNumero valor={a.unidades} onChange={v => setArticulo(p.id, a.id, "unidades", v)}/></div>
-                    <div style={{ width:70 }}><InputMoneda valor={a.precioUnidad} onChange={v => setArticulo(p.id, a.id, "precioUnidad", v)}/></div>
-                    <span style={{ width:70, textAlign:"right", fontFamily:"'JetBrains Mono',monospace", fontSize:12, fontWeight:600, color:V("--text-mid") }}>
-                      {((a.unidades||0)*(a.precioUnidad||0)).toLocaleString("es-ES",{minimumFractionDigits:0})}€
-                    </span>
-                    <button onClick={() => delArticulo(p.id, a.id)} style={{ width:18, background:"none", border:"none",
-                      cursor:"pointer", color:mix(V("--negative"),0.6), fontSize:14, padding:0 }}>×</button>
+                  <div key={a.id} style={{ background:V("--surface-2"), borderRadius:10, padding:"10px",
+                    marginBottom:8, border:`1px solid ${V("--border")}` }}>
+                    {/* Fila 1: nombre + eliminar */}
+                    <div style={{ display:"flex", gap:8, alignItems:"center", marginBottom:9 }}>
+                      <input value={a.nombre} placeholder="Concepto"
+                        onChange={e => setArticulo(p.id, a.id, "nombre", e.target.value)}
+                        style={{ flex:1, minWidth:0, background:V("--surface"), border:`1px solid ${V("--border")}`,
+                          borderRadius:8, padding:"8px 10px", color:V("--text"), fontSize:13, outline:"none",
+                          fontFamily:UI, boxSizing:"border-box" }}/>
+                      <button onClick={() => delArticulo(p.id, a.id)} style={{ width:26, height:26, flexShrink:0,
+                        background:mix(V("--negative"),0.1), border:"none", borderRadius:7, cursor:"pointer",
+                        color:V("--negative"), fontSize:15, lineHeight:1, padding:0 }}>×</button>
+                    </div>
+                    {/* Fila 2: uds x precio = total */}
+                    <div style={{ display:"flex", gap:8, alignItems:"flex-end" }}>
+                      <div style={{ flex:1 }}>
+                        <div style={{ fontFamily:UI, fontSize:9, color:V("--text-dim"), textTransform:"uppercase",
+                          letterSpacing:"0.05em", marginBottom:3 }}>Uds</div>
+                        <InputNumero valor={a.unidades} onChange={v => setArticulo(p.id, a.id, "unidades", v)} compact fill/>
+                      </div>
+                      <span style={{ color:V("--text-dim"), fontSize:13, paddingBottom:7 }}>×</span>
+                      <div style={{ flex:1.6 }}>
+                        <div style={{ fontFamily:UI, fontSize:9, color:V("--text-dim"), textTransform:"uppercase",
+                          letterSpacing:"0.05em", marginBottom:3 }}>Precio/ud</div>
+                        <InputMoneda valor={a.precioUnidad} onChange={v => setArticulo(p.id, a.id, "precioUnidad", v)} compact fill/>
+                      </div>
+                      <span style={{ color:V("--text-dim"), fontSize:13, paddingBottom:7 }}>=</span>
+                      <div style={{ flex:1.3, textAlign:"right" }}>
+                        <div style={{ fontFamily:UI, fontSize:9, color:V("--text-dim"), textTransform:"uppercase",
+                          letterSpacing:"0.05em", marginBottom:3 }}>Total</div>
+                        <div style={{ fontFamily:"'JetBrains Mono',monospace", fontSize:14, fontWeight:700,
+                          color:V("--text"), paddingBottom:5 }}>
+                          {((a.unidades||0)*(a.precioUnidad||0)).toLocaleString("es-ES",{minimumFractionDigits:0})}€
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 ))}
                 <button onClick={() => addArticulo(p.id)} style={{ width:"100%", marginTop:4, background:"none",
@@ -2480,7 +2497,7 @@ function VistaPrevision({ datos, claveM, onUpdateDatos }) {
                 <div style={{ display:"flex", alignItems:"center", gap:8, marginTop:12, paddingTop:10,
                   borderTop:`1px solid ${V("--border")}` }}>
                   <span style={{ fontFamily:UI, fontSize:11, color:V("--text-dim"), flex:1 }}>Margen de imprevistos (%)</span>
-                  <div style={{ width:56 }}><InputNumero valor={p.imprevistos} onChange={v => actualizar(p.id, { imprevistos: v })}/></div>
+                  <div style={{ width:72 }}><InputNumero valor={p.imprevistos} onChange={v => actualizar(p.id, { imprevistos: v })} compact fill/></div>
                 </div>
                 <div style={{ display:"flex", justifyContent:"space-between", marginTop:8 }}>
                   <span style={{ fontFamily:UI, fontSize:11, color:V("--text-dim") }}>Subtotal</span>
